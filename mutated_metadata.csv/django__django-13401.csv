@@ -1,0 +1,42 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/db/models/fields/__init__.py,__eq__,compare_creation_counter,516,520,"def __eq__(self, other):
+    if isinstance(other, Field):
+        return self.creation_counter == other.creation_counter
+    return NotImplemented","def compare_creation_counter(self, other):
+    if isinstance(other, Field):
+        return self.creation_counter == other.creation_counter
+    return NotImplemented",[]
+./django/db/models/fields/__init__.py,__lt__,compare_by_creation_counter_lt,522,526,"def __lt__(self, other):
+    if isinstance(other, Field):
+        return self.creation_counter < other.creation_counter
+    return NotImplemented","def compare_by_creation_counter_lt(self, other):
+    if isinstance(other, Field):
+        return self.creation_counter < other.creation_counter
+    return NotImplemented",[]
+./django/db/models/fields/__init__.py,__hash__,calculate_creation_counter_hash,528,529,"def __hash__(self):
+    return hash(self.creation_counter)","def calculate_creation_counter_hash(self):
+    return hash(self.creation_counter)",[]
+./django/db/models/fields/__init__.py,__deepcopy__,custom_deep_clone_with_memoization,531,540,"def __deepcopy__(self, memodict):
+    obj = copy.copy(self)
+    if self.remote_field:
+        obj.remote_field = copy.copy(self.remote_field)
+        if hasattr(self.remote_field, 'field') and self.remote_field.field is self:
+            obj.remote_field.field = obj
+    memodict[id(self)] = obj
+    return obj","def custom_deep_clone_with_memoization(self, memodict):
+    obj = copy.copy(self)
+    if self.remote_field:
+        obj.remote_field = copy.copy(self.remote_field)
+        if hasattr(self.remote_field, 'field') and self.remote_field.field is self:
+            obj.remote_field.field = obj
+    memodict[id(self)] = obj
+    return obj","[{""var"": ""obj"", ""rename"": ""deepcopied_instance""}]"
+./django/db/models/fields/__init__.py,__copy__,create_shallow_duplicate,542,548,"def __copy__(self):
+    obj = Empty()
+    obj.__class__ = self.__class__
+    obj.__dict__ = self.__dict__.copy()
+    return obj","def create_shallow_duplicate(self):
+    obj = Empty()
+    obj.__class__ = self.__class__
+    obj.__dict__ = self.__dict__.copy()
+    return obj","[{""var"": ""obj"", ""rename"": ""copied_instance""}]"

@@ -1,0 +1,168 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./sympy/core/sympify.py,kernS,prevent_auto_distribution,442,541,"def kernS(s):
+    """"""Use a hack to try keep autosimplification from distributing a
+    a number into an Add; this modification doesn't
+    prevent the 2-arg Mul from becoming an Add, however.
+
+    Examples
+    ========
+
+    >>> from sympy.core.sympify import kernS
+    >>> from sympy.abc import x, y
+
+    The 2-arg Mul distributes a number (or minus sign) across the terms
+    of an expression, but kernS will prevent that:
+
+    >>> 2*(x + y), -(x + 1)
+    (2*x + 2*y, -x - 1)
+    >>> kernS('2*(x + y)')
+    2*(x + y)
+    >>> kernS('-(x + 1)')
+    -(x + 1)
+
+    If use of the hack fails, the un-hacked string will be passed to sympify...
+    and you get what you get.
+
+    XXX This hack should not be necessary once issue 4596 has been resolved.
+    """"""
+    import string
+    from random import choice
+    from sympy.core.symbol import Symbol
+    hit = False
+    quoted = '""' in s or ""'"" in s
+    if '(' in s and (not quoted):
+        if s.count('(') != s.count(')'):
+            raise SympifyError('unmatched left parenthesis')
+        s = ''.join(s.split())
+        olds = s
+        s = s.replace('*(', '* *(')
+        s = s.replace('** *', '**')
+        target = '-( *('
+        s = s.replace('-(', target)
+        i = nest = 0
+        assert target.endswith('(')
+        while True:
+            j = s.find(target, i)
+            if j == -1:
+                break
+            j += len(target) - 1
+            for j in range(j, len(s)):
+                if s[j] == '(':
+                    nest += 1
+                elif s[j] == ')':
+                    nest -= 1
+                if nest == 0:
+                    break
+            s = s[:j] + ')' + s[j:]
+            i = j + 2
+        if ' ' in s:
+            kern = '_'
+            while kern in s:
+                kern += choice(string.ascii_letters + string.digits)
+            s = s.replace(' ', kern)
+        hit = kern in s
+    for i in range(2):
+        try:
+            expr = sympify(s)
+            break
+        except TypeError:
+            if hit:
+                s = olds
+                hit = False
+                continue
+            expr = sympify(s)
+    if not hit:
+        return expr
+    rep = {Symbol(kern): 1}
+
+    def _clear(expr):
+        if isinstance(expr, (list, tuple, set)):
+            return type(expr)([_clear(e) for e in expr])
+        if hasattr(expr, 'subs'):
+            return expr.subs(rep, hack2=True)
+        return expr
+    expr = _clear(expr)
+    return expr","def prevent_auto_distribution(s):
+    """"""Use a hack to try keep autosimplification from distributing a
+    a number into an Add; this modification doesn't
+    prevent the 2-arg Mul from becoming an Add, however.
+
+    Examples
+    ========
+
+    >>> from sympy.core.sympify import kernS
+    >>> from sympy.abc import x, y
+
+    The 2-arg Mul distributes a number (or minus sign) across the terms
+    of an expression, but kernS will prevent that:
+
+    >>> 2*(x + y), -(x + 1)
+    (2*x + 2*y, -x - 1)
+    >>> kernS('2*(x + y)')
+    2*(x + y)
+    >>> kernS('-(x + 1)')
+    -(x + 1)
+
+    If use of the hack fails, the un-hacked string will be passed to sympify...
+    and you get what you get.
+
+    XXX This hack should not be necessary once issue 4596 has been resolved.
+    """"""
+    import string
+    from random import choice
+    from sympy.core.symbol import Symbol
+    hit = False
+    quoted = '""' in s or ""'"" in s
+    if '(' in s and (not quoted):
+        if s.count('(') != s.count(')'):
+            raise SympifyError('unmatched left parenthesis')
+        s = ''.join(s.split())
+        olds = s
+        s = s.replace('*(', '* *(')
+        s = s.replace('** *', '**')
+        target = '-( *('
+        s = s.replace('-(', target)
+        i = nest = 0
+        assert target.endswith('(')
+        while True:
+            j = s.find(target, i)
+            if j == -1:
+                break
+            j += len(target) - 1
+            for j in range(j, len(s)):
+                if s[j] == '(':
+                    nest += 1
+                elif s[j] == ')':
+                    nest -= 1
+                if nest == 0:
+                    break
+            s = s[:j] + ')' + s[j:]
+            i = j + 2
+        if ' ' in s:
+            kern = '_'
+            while kern in s:
+                kern += choice(string.ascii_letters + string.digits)
+            s = s.replace(' ', kern)
+        hit = kern in s
+    for i in range(2):
+        try:
+            expr = sympify(s)
+            break
+        except TypeError:
+            if hit:
+                s = olds
+                hit = False
+                continue
+            expr = sympify(s)
+    if not hit:
+        return expr
+    rep = {Symbol(kern): 1}
+
+    def _clear(expr):
+        if isinstance(expr, (list, tuple, set)):
+            return type(expr)([_clear(e) for e in expr])
+        if hasattr(expr, 'subs'):
+            return expr.subs(rep, hack2=True)
+        return expr
+    expr = _clear(expr)
+    return expr","[{""var"": ""rep"", ""rename"": ""kernel_substitution_map""}, {""var"": ""hit"", ""rename"": ""autosimplificationHackApplied""}, {""var"": ""i"", ""rename"": ""current_index""}, {""var"": ""kern"", ""rename"": ""kern_replacement_token""}, {""var"": ""target"", ""rename"": ""negated_multiplication_placeholder""}, {""var"": ""j"", ""rename"": ""target_position""}, {""var"": ""olds"", ""rename"": ""original_expression_string""}, {""var"": ""e"", ""rename"": ""expression_input""}, {""var"": ""expr"", ""rename"": ""simplified_expression""}, {""var"": ""nest"", ""rename"": ""parenthesis_balance_counter""}, {""var"": ""quoted"", ""rename"": ""contains_quotes""}]"

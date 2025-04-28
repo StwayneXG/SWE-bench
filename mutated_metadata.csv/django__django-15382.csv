@@ -1,0 +1,19 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/db/models/expressions.py,as_sql,generate_existence_check_sql,1212,1223,"def as_sql(self, compiler, connection, template=None, **extra_context):
+    query = self.query.exists(using=connection.alias)
+    sql, params = super().as_sql(compiler, connection, template=template, query=query, **extra_context)
+    if self.negated:
+        sql = 'NOT {}'.format(sql)
+    return (sql, params)","def generate_existence_check_sql(self, compiler, connection, template=None, **extra_context):
+    query = self.query.exists(using=connection.alias)
+    sql, params = super().as_sql(compiler, connection, template=template, query=query, **extra_context)
+    if self.negated:
+        sql = 'NOT {}'.format(sql)
+    return (sql, params)","[{""var"": ""sql"", ""rename"": ""formatted_sql_statement""}, {""var"": ""query"", ""rename"": ""exists_query_statement""}, {""var"": ""params"", ""rename"": ""compiled_query_parameters""}]"
+./django/db/models/expressions.py,select_format,adapt_sql_for_boolean_support,1225,1231,"def select_format(self, compiler, sql, params):
+    if not compiler.connection.features.supports_boolean_expr_in_select_clause:
+        sql = 'CASE WHEN {} THEN 1 ELSE 0 END'.format(sql)
+    return (sql, params)","def adapt_sql_for_boolean_support(self, compiler, sql, params):
+    if not compiler.connection.features.supports_boolean_expr_in_select_clause:
+        sql = 'CASE WHEN {} THEN 1 ELSE 0 END'.format(sql)
+    return (sql, params)",[]

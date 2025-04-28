@@ -1,0 +1,54 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/core/management/commands/runserver.py,inner_run,start_development_server,122,183,"def inner_run(self, *args, **options):
+    autoreload.raise_last_exception()
+    threading = options['use_threading']
+    shutdown_message = options.get('shutdown_message', '')
+    quit_command = 'CTRL-BREAK' if sys.platform == 'win32' else 'CONTROL-C'
+    if not options['skip_checks']:
+        self.stdout.write('Performing system checks...\n\n')
+        self.check(display_num_errors=True)
+    self.check_migrations()
+    now = datetime.now().strftime('%B %d, %Y - %X')
+    self.stdout.write(now)
+    self.stdout.write('Django version %(version)s, using settings %(settings)r\nStarting development server at %(protocol)s://%(addr)s:%(port)s/\nQuit the server with %(quit_command)s.' % {'version': self.get_version(), 'settings': settings.SETTINGS_MODULE, 'protocol': self.protocol, 'addr': '[%s]' % self.addr if self._raw_ipv6 else self.addr, 'port': self.port, 'quit_command': quit_command})
+    try:
+        handler = self.get_handler(*args, **options)
+        run(self.addr, int(self.port), handler, ipv6=self.use_ipv6, threading=threading, server_cls=self.server_cls)
+    except OSError as e:
+        ERRORS = {errno.EACCES: ""You don't have permission to access that port."", errno.EADDRINUSE: 'That port is already in use.', errno.EADDRNOTAVAIL: ""That IP address can't be assigned to.""}
+        try:
+            error_text = ERRORS[e.errno]
+        except KeyError:
+            error_text = e
+        self.stderr.write('Error: %s' % error_text)
+        os._exit(1)
+    except KeyboardInterrupt:
+        if shutdown_message:
+            self.stdout.write(shutdown_message)
+        sys.exit(0)","def start_development_server(self, *args, **options):
+    autoreload.raise_last_exception()
+    threading = options['use_threading']
+    shutdown_message = options.get('shutdown_message', '')
+    quit_command = 'CTRL-BREAK' if sys.platform == 'win32' else 'CONTROL-C'
+    if not options['skip_checks']:
+        self.stdout.write('Performing system checks...\n\n')
+        self.check(display_num_errors=True)
+    self.check_migrations()
+    now = datetime.now().strftime('%B %d, %Y - %X')
+    self.stdout.write(now)
+    self.stdout.write('Django version %(version)s, using settings %(settings)r\nStarting development server at %(protocol)s://%(addr)s:%(port)s/\nQuit the server with %(quit_command)s.' % {'version': self.get_version(), 'settings': settings.SETTINGS_MODULE, 'protocol': self.protocol, 'addr': '[%s]' % self.addr if self._raw_ipv6 else self.addr, 'port': self.port, 'quit_command': quit_command})
+    try:
+        handler = self.get_handler(*args, **options)
+        run(self.addr, int(self.port), handler, ipv6=self.use_ipv6, threading=threading, server_cls=self.server_cls)
+    except OSError as e:
+        ERRORS = {errno.EACCES: ""You don't have permission to access that port."", errno.EADDRINUSE: 'That port is already in use.', errno.EADDRNOTAVAIL: ""That IP address can't be assigned to.""}
+        try:
+            error_text = ERRORS[e.errno]
+        except KeyError:
+            error_text = e
+        self.stderr.write('Error: %s' % error_text)
+        os._exit(1)
+    except KeyboardInterrupt:
+        if shutdown_message:
+            self.stdout.write(shutdown_message)
+        sys.exit(0)","[{""var"": ""now"", ""rename"": ""current_timestamp""}, {""var"": ""shutdown_message"", ""rename"": ""final_shutdown_notice""}, {""var"": ""quit_command"", ""rename"": ""server_termination_command""}, {""var"": ""handler"", ""rename"": ""request_handler""}, {""var"": ""threading"", ""rename"": ""use_multithreading""}, {""var"": ""error_text"", ""rename"": ""port_access_error_message""}, {""var"": ""ERRORS"", ""rename"": ""PORT_ERROR_MESSAGES""}]"

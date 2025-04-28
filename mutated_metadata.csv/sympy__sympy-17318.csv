@@ -1,0 +1,252 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./sympy/simplify/radsimp.py,rad_rationalize,rationalize_square_root_denominator,920,939,"def rad_rationalize(num, den):
+    """"""
+    Rationalize num/den by removing square roots in the denominator;
+    num and den are sum of terms whose squares are rationals
+
+    Examples
+    ========
+
+    >>> from sympy import sqrt
+    >>> from sympy.simplify.radsimp import rad_rationalize
+    >>> rad_rationalize(sqrt(3), 1 + sqrt(2)/3)
+    (-sqrt(3) + sqrt(6)/3, -7/9)
+    """"""
+    if not den.is_Add:
+        return (num, den)
+    g, a, b = split_surds(den)
+    a = a * sqrt(g)
+    num = _mexpand((a - b) * num)
+    den = _mexpand(a ** 2 - b ** 2)
+    return rad_rationalize(num, den)","def rationalize_square_root_denominator(num, den):
+    """"""
+    Rationalize num/den by removing square roots in the denominator;
+    num and den are sum of terms whose squares are rationals
+
+    Examples
+    ========
+
+    >>> from sympy import sqrt
+    >>> from sympy.simplify.radsimp import rad_rationalize
+    >>> rad_rationalize(sqrt(3), 1 + sqrt(2)/3)
+    (-sqrt(3) + sqrt(6)/3, -7/9)
+    """"""
+    if not den.is_Add:
+        return (num, den)
+    g, a, b = split_surds(den)
+    a = a * sqrt(g)
+    num = _mexpand((a - b) * num)
+    den = _mexpand(a ** 2 - b ** 2)
+    return rad_rationalize(num, den)","[{""var"": ""a"", ""rename"": ""den_surd_component""}, {""var"": ""g"", ""rename"": ""common_square_factor""}, {""var"": ""b"", ""rename"": ""surds_component""}]"
+./sympy/simplify/radsimp.py,split_surds,separate_rational_sqr_surds,1062,1100,"def split_surds(expr):
+    """"""
+    split an expression with terms whose squares are rationals
+    into a sum of terms whose surds squared have gcd equal to g
+    and a sum of terms with surds squared prime with g
+
+    Examples
+    ========
+
+    >>> from sympy import sqrt
+    >>> from sympy.simplify.radsimp import split_surds
+    >>> split_surds(3*sqrt(3) + sqrt(5)/7 + sqrt(6) + sqrt(10) + sqrt(15))
+    (3, sqrt(2) + sqrt(5) + 3, sqrt(5)/7 + sqrt(10))
+    """"""
+    args = sorted(expr.args, key=default_sort_key)
+    coeff_muls = [x.as_coeff_Mul() for x in args]
+    surds = [x[1] ** 2 for x in coeff_muls if x[1].is_Pow]
+    surds.sort(key=default_sort_key)
+    g, b1, b2 = _split_gcd(*surds)
+    g2 = g
+    if not b2 and len(b1) >= 2:
+        b1n = [x / g for x in b1]
+        b1n = [x for x in b1n if x != 1]
+        g1, b1n, b2 = _split_gcd(*b1n)
+        g2 = g * g1
+    a1v, a2v = ([], [])
+    for c, s in coeff_muls:
+        if s.is_Pow and s.exp == S.Half:
+            s1 = s.base
+            if s1 in b1:
+                a1v.append(c * sqrt(s1 / g2))
+            else:
+                a2v.append(c * s)
+        else:
+            a2v.append(c * s)
+    a = Add(*a1v)
+    b = Add(*a2v)
+    return (g2, a, b)","def separate_rational_sqr_surds(expr):
+    """"""
+    split an expression with terms whose squares are rationals
+    into a sum of terms whose surds squared have gcd equal to g
+    and a sum of terms with surds squared prime with g
+
+    Examples
+    ========
+
+    >>> from sympy import sqrt
+    >>> from sympy.simplify.radsimp import split_surds
+    >>> split_surds(3*sqrt(3) + sqrt(5)/7 + sqrt(6) + sqrt(10) + sqrt(15))
+    (3, sqrt(2) + sqrt(5) + 3, sqrt(5)/7 + sqrt(10))
+    """"""
+    args = sorted(expr.args, key=default_sort_key)
+    coeff_muls = [x.as_coeff_Mul() for x in args]
+    surds = [x[1] ** 2 for x in coeff_muls if x[1].is_Pow]
+    surds.sort(key=default_sort_key)
+    g, b1, b2 = _split_gcd(*surds)
+    g2 = g
+    if not b2 and len(b1) >= 2:
+        b1n = [x / g for x in b1]
+        b1n = [x for x in b1n if x != 1]
+        g1, b1n, b2 = _split_gcd(*b1n)
+        g2 = g * g1
+    a1v, a2v = ([], [])
+    for c, s in coeff_muls:
+        if s.is_Pow and s.exp == S.Half:
+            s1 = s.base
+            if s1 in b1:
+                a1v.append(c * sqrt(s1 / g2))
+            else:
+                a2v.append(c * s)
+        else:
+            a2v.append(c * s)
+    a = Add(*a1v)
+    b = Add(*a2v)
+    return (g2, a, b)","[{""var"": ""b1n"", ""rename"": ""reduced_surds_terms""}, {""var"": ""c"", ""rename"": ""original_expr_components""}, {""var"": ""s"", ""rename"": ""squared_terms""}, {""var"": ""g2"", ""rename"": ""gcd_of_surds_g2""}, {""var"": ""s1"", ""rename"": ""surd_base""}, {""var"": ""g1"", ""rename"": ""gcd_factor1""}, {""var"": ""x"", ""rename"": ""coeff_surds""}, {""var"": ""a"", ""rename"": ""simplified_surds_sum""}, {""var"": ""a1v"", ""rename"": ""gcd_related_terms""}, {""var"": ""b2"", ""rename"": ""prime_surds""}, {""var"": ""coeff_muls"", ""rename"": ""coefficients_and_multipliers""}, {""var"": ""a2v"", ""rename"": ""non_gcd_surds_terms""}, {""var"": ""args"", ""rename"": ""expression_terms""}, {""var"": ""g"", ""rename"": ""gcd_of_surds""}, {""var"": ""b1"", ""rename"": ""gcd_prime_terms""}, {""var"": ""surds"", ""rename"": ""squared_terms""}, {""var"": ""b"", ""rename"": ""prime_coefficient_terms""}]"
+./sympy/simplify/sqrtdenest.py,_sqrt_match,_decompose_expression_with_max_sqrt_depth,140,215,"def _sqrt_match(p):
+    """"""Return [a, b, r] for p.match(a + b*sqrt(r)) where, in addition to
+    matching, sqrt(r) also has then maximal sqrt_depth among addends of p.
+
+    Examples
+    ========
+
+    >>> from sympy.functions.elementary.miscellaneous import sqrt
+    >>> from sympy.simplify.sqrtdenest import _sqrt_match
+    >>> _sqrt_match(1 + sqrt(2) + sqrt(2)*sqrt(3) +  2*sqrt(1+sqrt(5)))
+    [1 + sqrt(2) + sqrt(6), 2, 1 + sqrt(5)]
+    """"""
+    from sympy.simplify.radsimp import split_surds
+    p = _mexpand(p)
+    if p.is_Number:
+        res = (p, S.Zero, S.Zero)
+    elif p.is_Add:
+        pargs = sorted(p.args, key=default_sort_key)
+        if all(((x ** 2).is_Rational for x in pargs)):
+            r, b, a = split_surds(p)
+            res = (a, b, r)
+            return list(res)
+        v = [(sqrt_depth(x), x, i) for i, x in enumerate(pargs)]
+        nmax = max(v, key=default_sort_key)
+        if nmax[0] == 0:
+            res = []
+        else:
+            depth, _, i = nmax
+            r = pargs.pop(i)
+            v.pop(i)
+            b = S.One
+            if r.is_Mul:
+                bv = []
+                rv = []
+                for x in r.args:
+                    if sqrt_depth(x) < depth:
+                        bv.append(x)
+                    else:
+                        rv.append(x)
+                b = Mul._from_args(bv)
+                r = Mul._from_args(rv)
+            a1 = []
+            b1 = [b]
+            for x in v:
+                if x[0] < depth:
+                    a1.append(x[1])
+                else:
+                    x1 = x[1]
+                    if x1 == r:
+                        b1.append(1)
+                    elif x1.is_Mul:
+                        x1args = list(x1.args)
+                        if r in x1args:
+                            x1args.remove(r)
+                            b1.append(Mul(*x1args))
+                        else:
+                            a1.append(x[1])
+                    else:
+                        a1.append(x[1])
+            a = Add(*a1)
+            b = Add(*b1)
+            res = (a, b, r ** 2)
+    else:
+        b, r = p.as_coeff_Mul()
+        if is_sqrt(r):
+            res = (S.Zero, b, r ** 2)
+        else:
+            res = []
+    return list(res)","def _decompose_expression_with_max_sqrt_depth(p):
+    """"""Return [a, b, r] for p.match(a + b*sqrt(r)) where, in addition to
+    matching, sqrt(r) also has then maximal sqrt_depth among addends of p.
+
+    Examples
+    ========
+
+    >>> from sympy.functions.elementary.miscellaneous import sqrt
+    >>> from sympy.simplify.sqrtdenest import _sqrt_match
+    >>> _sqrt_match(1 + sqrt(2) + sqrt(2)*sqrt(3) +  2*sqrt(1+sqrt(5)))
+    [1 + sqrt(2) + sqrt(6), 2, 1 + sqrt(5)]
+    """"""
+    from sympy.simplify.radsimp import split_surds
+    p = _mexpand(p)
+    if p.is_Number:
+        res = (p, S.Zero, S.Zero)
+    elif p.is_Add:
+        pargs = sorted(p.args, key=default_sort_key)
+        if all(((x ** 2).is_Rational for x in pargs)):
+            r, b, a = split_surds(p)
+            res = (a, b, r)
+            return list(res)
+        v = [(sqrt_depth(x), x, i) for i, x in enumerate(pargs)]
+        nmax = max(v, key=default_sort_key)
+        if nmax[0] == 0:
+            res = []
+        else:
+            depth, _, i = nmax
+            r = pargs.pop(i)
+            v.pop(i)
+            b = S.One
+            if r.is_Mul:
+                bv = []
+                rv = []
+                for x in r.args:
+                    if sqrt_depth(x) < depth:
+                        bv.append(x)
+                    else:
+                        rv.append(x)
+                b = Mul._from_args(bv)
+                r = Mul._from_args(rv)
+            a1 = []
+            b1 = [b]
+            for x in v:
+                if x[0] < depth:
+                    a1.append(x[1])
+                else:
+                    x1 = x[1]
+                    if x1 == r:
+                        b1.append(1)
+                    elif x1.is_Mul:
+                        x1args = list(x1.args)
+                        if r in x1args:
+                            x1args.remove(r)
+                            b1.append(Mul(*x1args))
+                        else:
+                            a1.append(x[1])
+                    else:
+                        a1.append(x[1])
+            a = Add(*a1)
+            b = Add(*b1)
+            res = (a, b, r ** 2)
+    else:
+        b, r = p.as_coeff_Mul()
+        if is_sqrt(r):
+            res = (S.Zero, b, r ** 2)
+        else:
+            res = []
+    return list(res)","[{""var"": ""x1"", ""rename"": ""addend_expression""}, {""var"": ""r"", ""rename"": ""max_sqrt_component""}, {""var"": ""i"", ""rename"": ""index_in_sqrt_depth_list""}, {""var"": ""x"", ""rename"": ""addend""}, {""var"": ""a"", ""rename"": ""addend_part_a""}, {""var"": ""_"", ""rename"": ""sqrt_match_result""}, {""var"": ""b1"", ""rename"": ""matching_coefficient_list""}, {""var"": ""res"", ""rename"": ""sqrt_expression_components""}, {""var"": ""v"", ""rename"": ""sqrt_depth_indexed_list""}, {""var"": ""bv"", ""rename"": ""base_factors""}, {""var"": ""depth"", ""rename"": ""maximum_sqrt_depth""}, {""var"": ""a1"", ""rename"": ""matched_addends_list""}, {""var"": ""x1args"", ""rename"": ""multiplier_factors_list""}, {""var"": ""rv"", ""rename"": ""remaining_radicands""}, {""var"": ""nmax"", ""rename"": ""max_sqrt_depth_element""}, {""var"": ""pargs"", ""rename"": ""sorted_p_addends""}, {""var"": ""b"", ""rename"": ""base_coeff""}]"

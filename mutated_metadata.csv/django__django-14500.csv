@@ -1,0 +1,30 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/db/migrations/executor.py,unapply_migration,rollback_migration_changes,246,262,"def unapply_migration(self, state, migration, fake=False):
+    """"""Run a migration backwards.""""""
+    if self.progress_callback:
+        self.progress_callback('unapply_start', migration, fake)
+    if not fake:
+        with self.connection.schema_editor(atomic=migration.atomic) as schema_editor:
+            state = migration.unapply(state, schema_editor)
+    if migration.replaces:
+        for app_label, name in migration.replaces:
+            self.recorder.record_unapplied(app_label, name)
+    else:
+        self.recorder.record_unapplied(migration.app_label, migration.name)
+    if self.progress_callback:
+        self.progress_callback('unapply_success', migration, fake)
+    return state","def rollback_migration_changes(self, state, migration, fake=False):
+    """"""Run a migration backwards.""""""
+    if self.progress_callback:
+        self.progress_callback('unapply_start', migration, fake)
+    if not fake:
+        with self.connection.schema_editor(atomic=migration.atomic) as schema_editor:
+            state = migration.unapply(state, schema_editor)
+    if migration.replaces:
+        for app_label, name in migration.replaces:
+            self.recorder.record_unapplied(app_label, name)
+    else:
+        self.recorder.record_unapplied(migration.app_label, migration.name)
+    if self.progress_callback:
+        self.progress_callback('unapply_success', migration, fake)
+    return state","[{""var"": ""schema_editor"", ""rename"": ""transactional_schema_editor""}, {""var"": ""app_label"", ""rename"": ""app_identifier""}, {""var"": ""name"", ""rename"": ""migration_name""}]"

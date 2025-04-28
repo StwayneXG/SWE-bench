@@ -1,0 +1,26 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/db/migrations/serializer.py,serialize,extract_function_serialization_data,165,189,"def serialize(self):
+    if getattr(self.value, '__self__', None) and isinstance(self.value.__self__, type):
+        klass = self.value.__self__
+        module = klass.__module__
+        return ('%s.%s.%s' % (module, klass.__name__, self.value.__name__), {'import %s' % module})
+    if self.value.__name__ == '<lambda>':
+        raise ValueError('Cannot serialize function: lambda')
+    if self.value.__module__ is None:
+        raise ValueError('Cannot serialize function %r: No module' % self.value)
+    module_name = self.value.__module__
+    if '<' not in self.value.__qualname__:
+        return ('%s.%s' % (module_name, self.value.__qualname__), {'import %s' % self.value.__module__})
+    raise ValueError('Could not find function %s in %s.\n' % (self.value.__name__, module_name))","def extract_function_serialization_data(self):
+    if getattr(self.value, '__self__', None) and isinstance(self.value.__self__, type):
+        klass = self.value.__self__
+        module = klass.__module__
+        return ('%s.%s.%s' % (module, klass.__name__, self.value.__name__), {'import %s' % module})
+    if self.value.__name__ == '<lambda>':
+        raise ValueError('Cannot serialize function: lambda')
+    if self.value.__module__ is None:
+        raise ValueError('Cannot serialize function %r: No module' % self.value)
+    module_name = self.value.__module__
+    if '<' not in self.value.__qualname__:
+        return ('%s.%s' % (module_name, self.value.__qualname__), {'import %s' % self.value.__module__})
+    raise ValueError('Could not find function %s in %s.\n' % (self.value.__name__, module_name))","[{""var"": ""module"", ""rename"": ""associated_module_name""}, {""var"": ""klass"", ""rename"": ""class_type""}, {""var"": ""module_name"", ""rename"": ""function_module_identifier""}]"

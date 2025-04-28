@@ -1,0 +1,11 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./astropy/io/ascii/rst.py,__init__,initializeWithCustomDefaults,60,61,"def __init__(self):
+    super().__init__(delimiter_pad=None, bookend=False)","def initializeWithCustomDefaults(self):
+    super().__init__(delimiter_pad=None, bookend=False)",[]
+./astropy/io/ascii/rst.py,write,surround_with_first_line_twice,63,66,"def write(self, lines):
+    lines = super().write(lines)
+    lines = [lines[1]] + lines + [lines[1]]
+    return lines","def surround_with_first_line_twice(self, lines):
+    lines = super().write(lines)
+    lines = [lines[1]] + lines + [lines[1]]
+    return lines",[]

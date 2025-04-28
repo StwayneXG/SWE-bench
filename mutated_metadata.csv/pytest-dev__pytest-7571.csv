@@ -1,0 +1,58 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./src/_pytest/logging.py,__init__,initialize_funcarg_node,344,348,"def __init__(self, item: nodes.Node) -> None:
+    """"""Creates a new funcarg.""""""
+    self._item = item
+    self._initial_logger_levels = {}","def initialize_funcarg_node(self, item: nodes.Node) -> None:
+    """"""Creates a new funcarg.""""""
+    self._item = item
+    self._initial_logger_levels = {}",[]
+./src/_pytest/logging.py,_finalize,restore_initial_log_levels,350,358,"def _finalize(self) -> None:
+    """"""Finalizes the fixture.
+
+        This restores the log levels changed by :meth:`set_level`.
+        """"""
+    for logger_name, level in self._initial_logger_levels.items():
+        logger = logging.getLogger(logger_name)
+        logger.setLevel(level)","def restore_initial_log_levels(self) -> None:
+    """"""Finalizes the fixture.
+
+        This restores the log levels changed by :meth:`set_level`.
+        """"""
+    for logger_name, level in self._initial_logger_levels.items():
+        logger = logging.getLogger(logger_name)
+        logger.setLevel(level)","[{""var"": ""level"", ""rename"": ""restored_log_level""}, {""var"": ""logger"", ""rename"": ""restored_logger_instance""}, {""var"": ""logger_name"", ""rename"": ""restored_logger_name""}]"
+./src/_pytest/logging.py,at_level,temporary_logging_level,440,458,"@contextmanager
+def at_level(self, level: int, logger: Optional[str]=None) -> Generator[None, None, None]:
+    """"""Context manager that sets the level for capturing of logs. After the end of the 'with' statement the
+        level is restored to its original value.
+
+        :param int level: the logger to level.
+        :param str logger: the logger to update the level. If not given, the root logger level is updated.
+        """"""
+    logger_obj = logging.getLogger(logger)
+    orig_level = logger_obj.level
+    logger_obj.setLevel(level)
+    handler_orig_level = self.handler.level
+    self.handler.setLevel(level)
+    try:
+        yield
+    finally:
+        logger_obj.setLevel(orig_level)
+        self.handler.setLevel(handler_orig_level)","@contextmanager
+def temporary_logging_level(self, level: int, logger: Optional[str]=None) -> Generator[None, None, None]:
+    """"""Context manager that sets the level for capturing of logs. After the end of the 'with' statement the
+        level is restored to its original value.
+
+        :param int level: the logger to level.
+        :param str logger: the logger to update the level. If not given, the root logger level is updated.
+        """"""
+    logger_obj = logging.getLogger(logger)
+    orig_level = logger_obj.level
+    logger_obj.setLevel(level)
+    handler_orig_level = self.handler.level
+    self.handler.setLevel(level)
+    try:
+        yield
+    finally:
+        logger_obj.setLevel(orig_level)
+        self.handler.setLevel(handler_orig_level)","[{""var"": ""orig_level"", ""rename"": ""original_log_level""}, {""var"": ""logger_obj"", ""rename"": ""target_logger""}, {""var"": ""handler_orig_level"", ""rename"": ""handler_initial_log_level""}]"

@@ -1,0 +1,112 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./sphinx/ext/viewcode.py,collect_pages,generate_viewcode_pages_for_modules,181,276,"def collect_pages(app: Sphinx) -> Generator[Tuple[str, Dict[str, Any], str], None, None]:
+    env = app.builder.env
+    if not hasattr(env, '_viewcode_modules'):
+        return
+    highlighter = app.builder.highlighter
+    urito = app.builder.get_relative_uri
+    modnames = set(env._viewcode_modules)
+    for modname, entry in status_iterator(sorted(env._viewcode_modules.items()), __('highlighting module code... '), 'blue', len(env._viewcode_modules), app.verbosity, lambda x: x[0]):
+        if not entry:
+            continue
+        if not should_generate_module_page(app, modname):
+            continue
+        code, tags, used, refname = entry
+        pagename = posixpath.join(OUTPUT_DIRNAME, modname.replace('.', '/'))
+        if env.config.highlight_language in ('python3', 'default', 'none'):
+            lexer = env.config.highlight_language
+        else:
+            lexer = 'python'
+        highlighted = highlighter.highlight_block(code, lexer, linenos=False)
+        lines = highlighted.splitlines()
+        before, after = lines[0].split('<pre>')
+        lines[0:1] = [before + '<pre>', after]
+        maxindex = len(lines) - 1
+        for name, docname in used.items():
+            type, start, end = tags[name]
+            backlink = urito(pagename, docname) + '#' + refname + '.' + name
+            lines[start] = '<div class=""viewcode-block"" id=""%s""><a class=""viewcode-back"" href=""%s"">%s</a>' % (name, backlink, _('[docs]')) + lines[start]
+            lines[min(end, maxindex)] += '</div>'
+        parents = []
+        parent = modname
+        while '.' in parent:
+            parent = parent.rsplit('.', 1)[0]
+            if parent in modnames:
+                parents.append({'link': urito(pagename, posixpath.join(OUTPUT_DIRNAME, parent.replace('.', '/'))), 'title': parent})
+        parents.append({'link': urito(pagename, posixpath.join(OUTPUT_DIRNAME, 'index')), 'title': _('Module code')})
+        parents.reverse()
+        context = {'parents': parents, 'title': modname, 'body': _('<h1>Source code for %s</h1>') % modname + '\n'.join(lines)}
+        yield (pagename, context, 'page.html')
+    if not modnames:
+        return
+    html = ['\n']
+    stack = ['']
+    for modname in sorted(modnames):
+        if modname.startswith(stack[-1]):
+            stack.append(modname + '.')
+            html.append('<ul>')
+        else:
+            stack.pop()
+            while not modname.startswith(stack[-1]):
+                stack.pop()
+                html.append('</ul>')
+            stack.append(modname + '.')
+        html.append('<li><a href=""%s"">%s</a></li>\n' % (urito(posixpath.join(OUTPUT_DIRNAME, 'index'), posixpath.join(OUTPUT_DIRNAME, modname.replace('.', '/'))), modname))
+    html.append('</ul>' * (len(stack) - 1))
+    context = {'title': _('Overview: module code'), 'body': _('<h1>All modules for which code is available</h1>') + ''.join(html)}
+    yield (posixpath.join(OUTPUT_DIRNAME, 'index'), context, 'page.html')","def generate_viewcode_pages_for_modules(app: Sphinx) -> Generator[Tuple[str, Dict[str, Any], str], None, None]:
+    env = app.builder.env
+    if not hasattr(env, '_viewcode_modules'):
+        return
+    highlighter = app.builder.highlighter
+    urito = app.builder.get_relative_uri
+    modnames = set(env._viewcode_modules)
+    for modname, entry in status_iterator(sorted(env._viewcode_modules.items()), __('highlighting module code... '), 'blue', len(env._viewcode_modules), app.verbosity, lambda x: x[0]):
+        if not entry:
+            continue
+        if not should_generate_module_page(app, modname):
+            continue
+        code, tags, used, refname = entry
+        pagename = posixpath.join(OUTPUT_DIRNAME, modname.replace('.', '/'))
+        if env.config.highlight_language in ('python3', 'default', 'none'):
+            lexer = env.config.highlight_language
+        else:
+            lexer = 'python'
+        highlighted = highlighter.highlight_block(code, lexer, linenos=False)
+        lines = highlighted.splitlines()
+        before, after = lines[0].split('<pre>')
+        lines[0:1] = [before + '<pre>', after]
+        maxindex = len(lines) - 1
+        for name, docname in used.items():
+            type, start, end = tags[name]
+            backlink = urito(pagename, docname) + '#' + refname + '.' + name
+            lines[start] = '<div class=""viewcode-block"" id=""%s""><a class=""viewcode-back"" href=""%s"">%s</a>' % (name, backlink, _('[docs]')) + lines[start]
+            lines[min(end, maxindex)] += '</div>'
+        parents = []
+        parent = modname
+        while '.' in parent:
+            parent = parent.rsplit('.', 1)[0]
+            if parent in modnames:
+                parents.append({'link': urito(pagename, posixpath.join(OUTPUT_DIRNAME, parent.replace('.', '/'))), 'title': parent})
+        parents.append({'link': urito(pagename, posixpath.join(OUTPUT_DIRNAME, 'index')), 'title': _('Module code')})
+        parents.reverse()
+        context = {'parents': parents, 'title': modname, 'body': _('<h1>Source code for %s</h1>') % modname + '\n'.join(lines)}
+        yield (pagename, context, 'page.html')
+    if not modnames:
+        return
+    html = ['\n']
+    stack = ['']
+    for modname in sorted(modnames):
+        if modname.startswith(stack[-1]):
+            stack.append(modname + '.')
+            html.append('<ul>')
+        else:
+            stack.pop()
+            while not modname.startswith(stack[-1]):
+                stack.pop()
+                html.append('</ul>')
+            stack.append(modname + '.')
+        html.append('<li><a href=""%s"">%s</a></li>\n' % (urito(posixpath.join(OUTPUT_DIRNAME, 'index'), posixpath.join(OUTPUT_DIRNAME, modname.replace('.', '/'))), modname))
+    html.append('</ul>' * (len(stack) - 1))
+    context = {'title': _('Overview: module code'), 'body': _('<h1>All modules for which code is available</h1>') + ''.join(html)}
+    yield (posixpath.join(OUTPUT_DIRNAME, 'index'), context, 'page.html')","[{""var"": ""end"", ""rename"": ""end_line_index""}, {""var"": ""env"", ""rename"": ""sphinx_environment""}, {""var"": ""context"", ""rename"": ""page_content_context""}, {""var"": ""highlighted"", ""rename"": ""highlighted_code_html""}, {""var"": ""used"", ""rename"": ""symbol_usage_mapping""}, {""var"": ""lines"", ""rename"": ""highlighted_code_lines""}, {""var"": ""modname"", ""rename"": ""module_identifier""}, {""var"": ""name"", ""rename"": ""symbol_name""}, {""var"": ""html"", ""rename"": ""html_navigation_links""}, {""var"": ""pagename"", ""rename"": ""module_page_path""}, {""var"": ""entry"", ""rename"": ""module_entry_data""}, {""var"": ""before"", ""rename"": ""highlight_prefix""}, {""var"": ""refname"", ""rename"": ""reference_identifier""}, {""var"": ""code"", ""rename"": ""module_source_code""}, {""var"": ""start"", ""rename"": ""code_block_start""}, {""var"": ""highlighter"", ""rename"": ""codeBlockHighlighter""}, {""var"": ""docname"", ""rename"": ""document_reference_name""}, {""var"": ""parent"", ""rename"": ""current_module_prefix""}, {""var"": ""maxindex"", ""rename"": ""last_line_index""}, {""var"": ""lexer"", ""rename"": ""highlight_language_lexer""}, {""var"": ""tags"", ""rename"": ""code_navigation_tags""}, {""var"": ""urito"", ""rename"": ""get_relative_uri""}, {""var"": ""parents"", ""rename"": ""module_hierarchy_links""}, {""var"": ""backlink"", ""rename"": ""module_reference_link""}, {""var"": ""type"", ""rename"": ""code_block_type""}, {""var"": ""modnames"", ""rename"": ""module_names_set""}, {""var"": ""after"", ""rename"": ""post_pre_tag""}, {""var"": ""stack"", ""rename"": ""module_hierarchy_stack""}]"

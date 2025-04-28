@@ -1,0 +1,75 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./lib/matplotlib/cm.py,unregister,remove_custom_colormap,150,180,"def unregister(self, name):
+    """"""
+        Remove a colormap from the registry.
+
+        You cannot remove built-in colormaps.
+
+        If the named colormap is not registered, returns with no error, raises
+        if you try to de-register a default colormap.
+
+        .. warning::
+
+            Colormap names are currently a shared namespace that may be used
+            by multiple packages. Use `unregister` only if you know you
+            have registered that name before. In particular, do not
+            unregister just in case to clean the name before registering a
+            new colormap.
+
+        Parameters
+        ----------
+        name : str
+            The name of the colormap to be removed.
+
+        Raises
+        ------
+        ValueError
+            If you try to remove a default built-in colormap.
+        """"""
+    if name in self._builtin_cmaps:
+        raise ValueError(f'cannot unregister {name!r} which is a builtin colormap.')
+    self._cmaps.pop(name, None)","def remove_custom_colormap(self, name):
+    """"""
+        Remove a colormap from the registry.
+
+        You cannot remove built-in colormaps.
+
+        If the named colormap is not registered, returns with no error, raises
+        if you try to de-register a default colormap.
+
+        .. warning::
+
+            Colormap names are currently a shared namespace that may be used
+            by multiple packages. Use `unregister` only if you know you
+            have registered that name before. In particular, do not
+            unregister just in case to clean the name before registering a
+            new colormap.
+
+        Parameters
+        ----------
+        name : str
+            The name of the colormap to be removed.
+
+        Raises
+        ------
+        ValueError
+            If you try to remove a default built-in colormap.
+        """"""
+    if name in self._builtin_cmaps:
+        raise ValueError(f'cannot unregister {name!r} which is a builtin colormap.')
+    self._cmaps.pop(name, None)",[]
+./lib/matplotlib/colors.py,__eq__,compare_colormaps_for_equality,776,785,"def __eq__(self, other):
+    if not isinstance(other, Colormap) or self.name != other.name or self.colorbar_extend != other.colorbar_extend:
+        return False
+    if not self._isinit:
+        self._init()
+    if not other._isinit:
+        other._init()
+    return np.array_equal(self._lut, other._lut)","def compare_colormaps_for_equality(self, other):
+    if not isinstance(other, Colormap) or self.name != other.name or self.colorbar_extend != other.colorbar_extend:
+        return False
+    if not self._isinit:
+        self._init()
+    if not other._isinit:
+        other._init()
+    return np.array_equal(self._lut, other._lut)",[]

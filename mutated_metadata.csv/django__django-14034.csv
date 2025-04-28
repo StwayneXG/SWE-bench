@@ -1,0 +1,21 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/forms/boundfield.py,build_widget_attrs,construct_widget_attributes_with_required_flags,232,239,"def build_widget_attrs(self, attrs, widget=None):
+    widget = widget or self.field.widget
+    attrs = dict(attrs)
+    if widget.use_required_attribute(self.initial) and self.field.required and self.form.use_required_attribute:
+        attrs['required'] = True
+    if self.field.disabled:
+        attrs['disabled'] = True
+    return attrs","def construct_widget_attributes_with_required_flags(self, attrs, widget=None):
+    widget = widget or self.field.widget
+    attrs = dict(attrs)
+    if widget.use_required_attribute(self.initial) and self.field.required and self.form.use_required_attribute:
+        attrs['required'] = True
+    if self.field.disabled:
+        attrs['disabled'] = True
+    return attrs",[]
+./django/forms/boundfield.py,widget_type,get_field_base_name,242,243,"@property
+def widget_type(self):
+    return re.sub('widget$|input$', '', self.field.widget.__class__.__name__.lower())","@property
+def get_field_base_name(self):
+    return re.sub('widget$|input$', '', self.field.widget.__class__.__name__.lower())",[]

@@ -1,0 +1,100 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/db/models/sql/where.py,as_sql,generate_where_clause_sql,114,182,"def as_sql(self, compiler, connection):
+    """"""
+        Return the SQL version of the where clause and the value to be
+        substituted in. Return '', [] if this node matches everything,
+        None, [] if this node is empty, and raise EmptyResultSet if this
+        node can't match anything.
+        """"""
+    result = []
+    result_params = []
+    if self.connector == AND:
+        full_needed, empty_needed = (len(self.children), 1)
+    else:
+        full_needed, empty_needed = (1, len(self.children))
+    if self.connector == XOR and (not connection.features.supports_logical_xor):
+        lhs = self.__class__(self.children, OR)
+        rhs_sum = reduce(operator.add, (Case(When(c, then=1), default=0) for c in self.children))
+        rhs = Exact(1, rhs_sum)
+        return self.__class__([lhs, rhs], AND, self.negated).as_sql(compiler, connection)
+    for child in self.children:
+        try:
+            sql, params = compiler.compile(child)
+        except EmptyResultSet:
+            empty_needed -= 1
+        except FullResultSet:
+            full_needed -= 1
+        else:
+            if sql:
+                result.append(sql)
+                result_params.extend(params)
+            else:
+                full_needed -= 1
+        if empty_needed == 0:
+            if self.negated:
+                raise FullResultSet
+            else:
+                raise EmptyResultSet
+        if full_needed == 0:
+            if self.negated:
+                raise EmptyResultSet
+            else:
+                raise FullResultSet
+    conn = ' %s ' % self.connector
+    sql_string = conn.join(result)
+    if not sql_string:
+        raise FullResultSet
+    if self.negated:
+        sql_string = 'NOT (%s)' % sql_string
+    elif len(result) > 1 or self.resolved:
+        sql_string = '(%s)' % sql_string
+    return (sql_string, result_params)","def generate_where_clause_sql(self, compiler, connection):
+    """"""
+        Return the SQL version of the where clause and the value to be
+        substituted in. Return '', [] if this node matches everything,
+        None, [] if this node is empty, and raise EmptyResultSet if this
+        node can't match anything.
+        """"""
+    result = []
+    result_params = []
+    if self.connector == AND:
+        full_needed, empty_needed = (len(self.children), 1)
+    else:
+        full_needed, empty_needed = (1, len(self.children))
+    if self.connector == XOR and (not connection.features.supports_logical_xor):
+        lhs = self.__class__(self.children, OR)
+        rhs_sum = reduce(operator.add, (Case(When(c, then=1), default=0) for c in self.children))
+        rhs = Exact(1, rhs_sum)
+        return self.__class__([lhs, rhs], AND, self.negated).as_sql(compiler, connection)
+    for child in self.children:
+        try:
+            sql, params = compiler.compile(child)
+        except EmptyResultSet:
+            empty_needed -= 1
+        except FullResultSet:
+            full_needed -= 1
+        else:
+            if sql:
+                result.append(sql)
+                result_params.extend(params)
+            else:
+                full_needed -= 1
+        if empty_needed == 0:
+            if self.negated:
+                raise FullResultSet
+            else:
+                raise EmptyResultSet
+        if full_needed == 0:
+            if self.negated:
+                raise EmptyResultSet
+            else:
+                raise FullResultSet
+    conn = ' %s ' % self.connector
+    sql_string = conn.join(result)
+    if not sql_string:
+        raise FullResultSet
+    if self.negated:
+        sql_string = 'NOT (%s)' % sql_string
+    elif len(result) > 1 or self.resolved:
+        sql_string = '(%s)' % sql_string
+    return (sql_string, result_params)","[{""var"": ""c"", ""rename"": ""child_condition""}, {""var"": ""rhs"", ""rename"": ""exact_match_condition""}, {""var"": ""params"", ""rename"": ""compiled_params""}, {""var"": ""lhs"", ""rename"": ""left_hand_side_expression""}, {""var"": ""result"", ""rename"": ""constructed_sql_clauses""}, {""var"": ""conn"", ""rename"": ""connector_string""}, {""var"": ""sql"", ""rename"": ""clause_sql""}, {""var"": ""empty_needed"", ""rename"": ""required_non_empty_matches""}, {""var"": ""result_params"", ""rename"": ""sql_substitution_values""}, {""var"": ""rhs_sum"", ""rename"": ""conditional_sum_case_expression""}, {""var"": ""sql_string"", ""rename"": ""composed_sql_clause""}, {""var"": ""full_needed"", ""rename"": ""required_fulfilled_conditions""}, {""var"": ""child"", ""rename"": ""condition_node""}]"

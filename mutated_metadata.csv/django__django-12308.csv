@@ -1,0 +1,75 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/contrib/admin/utils.py,display_for_field,render_field_value_representation,380,402,"def display_for_field(value, field, empty_value_display):
+    from django.contrib.admin.templatetags.admin_list import _boolean_icon
+    if getattr(field, 'flatchoices', None):
+        return dict(field.flatchoices).get(value, empty_value_display)
+    elif isinstance(field, models.BooleanField):
+        return _boolean_icon(value)
+    elif value is None:
+        return empty_value_display
+    elif isinstance(field, models.DateTimeField):
+        return formats.localize(timezone.template_localtime(value))
+    elif isinstance(field, (models.DateField, models.TimeField)):
+        return formats.localize(value)
+    elif isinstance(field, models.DecimalField):
+        return formats.number_format(value, field.decimal_places)
+    elif isinstance(field, (models.IntegerField, models.FloatField)):
+        return formats.number_format(value)
+    elif isinstance(field, models.FileField) and value:
+        return format_html('<a href=""{}"">{}</a>', value.url, value)
+    else:
+        return display_for_value(value, empty_value_display)","def render_field_value_representation(value, field, empty_value_display):
+    from django.contrib.admin.templatetags.admin_list import _boolean_icon
+    if getattr(field, 'flatchoices', None):
+        return dict(field.flatchoices).get(value, empty_value_display)
+    elif isinstance(field, models.BooleanField):
+        return _boolean_icon(value)
+    elif value is None:
+        return empty_value_display
+    elif isinstance(field, models.DateTimeField):
+        return formats.localize(timezone.template_localtime(value))
+    elif isinstance(field, (models.DateField, models.TimeField)):
+        return formats.localize(value)
+    elif isinstance(field, models.DecimalField):
+        return formats.number_format(value, field.decimal_places)
+    elif isinstance(field, (models.IntegerField, models.FloatField)):
+        return formats.number_format(value)
+    elif isinstance(field, models.FileField) and value:
+        return format_html('<a href=""{}"">{}</a>', value.url, value)
+    else:
+        return display_for_value(value, empty_value_display)",[]
+./django/contrib/admin/utils.py,display_for_value,format_value_for_display,405,423,"def display_for_value(value, empty_value_display, boolean=False):
+    from django.contrib.admin.templatetags.admin_list import _boolean_icon
+    if boolean:
+        return _boolean_icon(value)
+    elif value is None:
+        return empty_value_display
+    elif isinstance(value, bool):
+        return str(value)
+    elif isinstance(value, datetime.datetime):
+        return formats.localize(timezone.template_localtime(value))
+    elif isinstance(value, (datetime.date, datetime.time)):
+        return formats.localize(value)
+    elif isinstance(value, (int, decimal.Decimal, float)):
+        return formats.number_format(value)
+    elif isinstance(value, (list, tuple)):
+        return ', '.join((str(v) for v in value))
+    else:
+        return str(value)","def format_value_for_display(value, empty_value_display, boolean=False):
+    from django.contrib.admin.templatetags.admin_list import _boolean_icon
+    if boolean:
+        return _boolean_icon(value)
+    elif value is None:
+        return empty_value_display
+    elif isinstance(value, bool):
+        return str(value)
+    elif isinstance(value, datetime.datetime):
+        return formats.localize(timezone.template_localtime(value))
+    elif isinstance(value, (datetime.date, datetime.time)):
+        return formats.localize(value)
+    elif isinstance(value, (int, decimal.Decimal, float)):
+        return formats.number_format(value)
+    elif isinstance(value, (list, tuple)):
+        return ', '.join((str(v) for v in value))
+    else:
+        return str(value)","[{""var"": ""v"", ""rename"": ""item_representation""}]"

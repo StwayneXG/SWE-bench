@@ -1,0 +1,166 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./astropy/io/ascii/html.py,write,convert_table_to_html,342,456,"def write(self, table):
+    """"""
+        Return data in ``table`` converted to HTML as a list of strings.
+        """"""
+    self._check_multidim_table(table)
+    cols = list(table.columns.values())
+    self.data.header.cols = cols
+    if isinstance(self.data.fill_values, tuple):
+        self.data.fill_values = [self.data.fill_values]
+    self.data._set_fill_values(cols)
+    lines = []
+    raw_html_cols = self.html.get('raw_html_cols', [])
+    if isinstance(raw_html_cols, str):
+        raw_html_cols = [raw_html_cols]
+    cols_escaped = [col.info.name not in raw_html_cols for col in cols]
+    raw_html_clean_kwargs = self.html.get('raw_html_clean_kwargs', {})
+    w = writer.XMLWriter(ListWriter(lines))
+    with w.tag('html'):
+        with w.tag('head'):
+            with w.tag('meta', attrib={'charset': 'utf-8'}):
+                pass
+            with w.tag('meta', attrib={'http-equiv': 'Content-type', 'content': 'text/html;charset=UTF-8'}):
+                pass
+            if 'css' in self.html:
+                with w.tag('style'):
+                    w.data(self.html['css'])
+            if 'cssfiles' in self.html:
+                for filename in self.html['cssfiles']:
+                    with w.tag('link', rel='stylesheet', href=filename, type='text/css'):
+                        pass
+            if 'jsfiles' in self.html:
+                for filename in self.html['jsfiles']:
+                    with w.tag('script', src=filename):
+                        w.data('')
+        with w.tag('body'):
+            if 'js' in self.html:
+                with w.xml_cleaning_method('none'):
+                    with w.tag('script'):
+                        w.data(self.html['js'])
+            if isinstance(self.html['table_id'], str):
+                html_table_id = self.html['table_id']
+            else:
+                html_table_id = None
+            if 'table_class' in self.html:
+                html_table_class = self.html['table_class']
+                attrib = {'class': html_table_class}
+            else:
+                attrib = {}
+            with w.tag('table', id=html_table_id, attrib=attrib):
+                with w.tag('thead'):
+                    with w.tag('tr'):
+                        for col in cols:
+                            if len(col.shape) > 1 and self.html['multicol']:
+                                w.start('th', colspan=col.shape[1])
+                            else:
+                                w.start('th')
+                            w.data(col.info.name.strip())
+                            w.end(indent=False)
+                    col_str_iters = []
+                    new_cols_escaped = []
+                    new_cols = []
+                    for col, col_escaped in zip(cols, cols_escaped):
+                        if len(col.shape) > 1 and self.html['multicol']:
+                            span = col.shape[1]
+                            for i in range(span):
+                                new_col = Column([el[i] for el in col])
+                                new_col_iter_str_vals = self.fill_values(col, new_col.info.iter_str_vals())
+                                col_str_iters.append(new_col_iter_str_vals)
+                                new_cols_escaped.append(col_escaped)
+                                new_cols.append(new_col)
+                        else:
+                            col_iter_str_vals = self.fill_values(col, col.info.iter_str_vals())
+                            col_str_iters.append(col_iter_str_vals)
+                            new_cols_escaped.append(col_escaped)
+                for row in zip(*col_str_iters):
+                    with w.tag('tr'):
+                        for el, col_escaped in zip(row, new_cols_escaped):
+                            method = 'escape_xml' if col_escaped else 'bleach_clean'
+                            with w.xml_cleaning_method(method, **raw_html_clean_kwargs):
+                                w.start('td')
+                                w.data(el.strip())
+                                w.end(indent=False)
+    return [''.join(lines)]","def convert_table_to_html(self, table):
+    """"""
+        Return data in ``table`` converted to HTML as a list of strings.
+        """"""
+    self._check_multidim_table(table)
+    cols = list(table.columns.values())
+    self.data.header.cols = cols
+    if isinstance(self.data.fill_values, tuple):
+        self.data.fill_values = [self.data.fill_values]
+    self.data._set_fill_values(cols)
+    lines = []
+    raw_html_cols = self.html.get('raw_html_cols', [])
+    if isinstance(raw_html_cols, str):
+        raw_html_cols = [raw_html_cols]
+    cols_escaped = [col.info.name not in raw_html_cols for col in cols]
+    raw_html_clean_kwargs = self.html.get('raw_html_clean_kwargs', {})
+    w = writer.XMLWriter(ListWriter(lines))
+    with w.tag('html'):
+        with w.tag('head'):
+            with w.tag('meta', attrib={'charset': 'utf-8'}):
+                pass
+            with w.tag('meta', attrib={'http-equiv': 'Content-type', 'content': 'text/html;charset=UTF-8'}):
+                pass
+            if 'css' in self.html:
+                with w.tag('style'):
+                    w.data(self.html['css'])
+            if 'cssfiles' in self.html:
+                for filename in self.html['cssfiles']:
+                    with w.tag('link', rel='stylesheet', href=filename, type='text/css'):
+                        pass
+            if 'jsfiles' in self.html:
+                for filename in self.html['jsfiles']:
+                    with w.tag('script', src=filename):
+                        w.data('')
+        with w.tag('body'):
+            if 'js' in self.html:
+                with w.xml_cleaning_method('none'):
+                    with w.tag('script'):
+                        w.data(self.html['js'])
+            if isinstance(self.html['table_id'], str):
+                html_table_id = self.html['table_id']
+            else:
+                html_table_id = None
+            if 'table_class' in self.html:
+                html_table_class = self.html['table_class']
+                attrib = {'class': html_table_class}
+            else:
+                attrib = {}
+            with w.tag('table', id=html_table_id, attrib=attrib):
+                with w.tag('thead'):
+                    with w.tag('tr'):
+                        for col in cols:
+                            if len(col.shape) > 1 and self.html['multicol']:
+                                w.start('th', colspan=col.shape[1])
+                            else:
+                                w.start('th')
+                            w.data(col.info.name.strip())
+                            w.end(indent=False)
+                    col_str_iters = []
+                    new_cols_escaped = []
+                    new_cols = []
+                    for col, col_escaped in zip(cols, cols_escaped):
+                        if len(col.shape) > 1 and self.html['multicol']:
+                            span = col.shape[1]
+                            for i in range(span):
+                                new_col = Column([el[i] for el in col])
+                                new_col_iter_str_vals = self.fill_values(col, new_col.info.iter_str_vals())
+                                col_str_iters.append(new_col_iter_str_vals)
+                                new_cols_escaped.append(col_escaped)
+                                new_cols.append(new_col)
+                        else:
+                            col_iter_str_vals = self.fill_values(col, col.info.iter_str_vals())
+                            col_str_iters.append(col_iter_str_vals)
+                            new_cols_escaped.append(col_escaped)
+                for row in zip(*col_str_iters):
+                    with w.tag('tr'):
+                        for el, col_escaped in zip(row, new_cols_escaped):
+                            method = 'escape_xml' if col_escaped else 'bleach_clean'
+                            with w.xml_cleaning_method(method, **raw_html_clean_kwargs):
+                                w.start('td')
+                                w.data(el.strip())
+                                w.end(indent=False)
+    return [''.join(lines)]","[{""var"": ""raw_html_cols"", ""rename"": ""unescaped_html_columns""}, {""var"": ""i"", ""rename"": ""column_index""}, {""var"": ""el"", ""rename"": ""element_data""}, {""var"": ""html_table_id"", ""rename"": ""html_table_identifier""}, {""var"": ""lines"", ""rename"": ""html_output_lines""}, {""var"": ""filename"", ""rename"": ""stylesheet_or_script_paths""}, {""var"": ""col_escaped"", ""rename"": ""columns_needing_escaping""}, {""var"": ""html_table_class"", ""rename"": ""html_table_css_class""}, {""var"": ""new_col_iter_str_vals"", ""rename"": ""transformed_column_string_values""}, {""var"": ""w"", ""rename"": ""xml_writer""}, {""var"": ""row"", ""rename"": ""table_row_data""}, {""var"": ""new_col"", ""rename"": ""transformed_column""}, {""var"": ""new_cols_escaped"", ""rename"": ""escaped_column_flags""}, {""var"": ""raw_html_clean_kwargs"", ""rename"": ""html_sanitization_options""}, {""var"": ""col"", ""rename"": ""column_definitions""}, {""var"": ""method"", ""rename"": ""html_cleaning_method_name""}, {""var"": ""cols"", ""rename"": ""column_headers""}, {""var"": ""span"", ""rename"": ""column_span""}, {""var"": ""cols_escaped"", ""rename"": ""columns_needing_escape""}, {""var"": ""col_iter_str_vals"", ""rename"": ""column_string_value_iterator""}, {""var"": ""attrib"", ""rename"": ""html_attributes""}, {""var"": ""new_cols"", ""rename"": ""processed_columns""}, {""var"": ""col_str_iters"", ""rename"": ""column_string_value_iterators""}]"

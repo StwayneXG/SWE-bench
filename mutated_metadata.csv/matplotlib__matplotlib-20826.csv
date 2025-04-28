@@ -1,0 +1,46 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./lib/matplotlib/axis.py,clear,reset_axis_to_defaults,788,816,"def clear(self):
+    """"""
+        Clear the axis.
+
+        This resets axis properties to their default values:
+
+        - the label
+        - the scale
+        - locators, formatters and ticks
+        - major and minor grid
+        - units
+        - registered callbacks
+        """"""
+    self.label.set_text('')
+    self._set_scale('linear')
+    self.callbacks = cbook.CallbackRegistry()
+    self._reset_major_tick_kw()
+    self._reset_minor_tick_kw()
+    self.reset_ticks()
+    self.converter = None
+    self.units = None
+    self.set_units(None)
+    self.stale = True","def reset_axis_to_defaults(self):
+    """"""
+        Clear the axis.
+
+        This resets axis properties to their default values:
+
+        - the label
+        - the scale
+        - locators, formatters and ticks
+        - major and minor grid
+        - units
+        - registered callbacks
+        """"""
+    self.label.set_text('')
+    self._set_scale('linear')
+    self.callbacks = cbook.CallbackRegistry()
+    self._reset_major_tick_kw()
+    self._reset_minor_tick_kw()
+    self.reset_ticks()
+    self.converter = None
+    self.units = None
+    self.set_units(None)
+    self.stale = True",[]

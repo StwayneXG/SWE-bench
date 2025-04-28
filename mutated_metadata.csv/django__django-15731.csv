@@ -1,0 +1,54 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/db/models/manager.py,_get_queryset_methods,generate_manager_methods_from_queryset,82,105,"@classmethod
+def _get_queryset_methods(cls, queryset_class):
+
+    def create_method(name, method):
+
+        def manager_method(self, *args, **kwargs):
+            return getattr(self.get_queryset(), name)(*args, **kwargs)
+        manager_method.__name__ = method.__name__
+        manager_method.__doc__ = method.__doc__
+        return manager_method
+    new_methods = {}
+    for name, method in inspect.getmembers(queryset_class, predicate=inspect.isfunction):
+        if hasattr(cls, name):
+            continue
+        queryset_only = getattr(method, 'queryset_only', None)
+        if queryset_only or (queryset_only is None and name.startswith('_')):
+            continue
+        new_methods[name] = create_method(name, method)
+    return new_methods","@classmethod
+def generate_manager_methods_from_queryset(cls, queryset_class):
+
+    def create_method(name, method):
+
+        def manager_method(self, *args, **kwargs):
+            return getattr(self.get_queryset(), name)(*args, **kwargs)
+        manager_method.__name__ = method.__name__
+        manager_method.__doc__ = method.__doc__
+        return manager_method
+    new_methods = {}
+    for name, method in inspect.getmembers(queryset_class, predicate=inspect.isfunction):
+        if hasattr(cls, name):
+            continue
+        queryset_only = getattr(method, 'queryset_only', None)
+        if queryset_only or (queryset_only is None and name.startswith('_')):
+            continue
+        new_methods[name] = create_method(name, method)
+    return new_methods","[{""var"": ""new_methods"", ""rename"": ""manager_query_methods""}, {""var"": ""queryset_only"", ""rename"": ""method_exclusivity_flag""}]"
+./django/db/models/manager.py,create_method,delegate_query_method,83,89,"def create_method(name, method):
+
+    def manager_method(self, *args, **kwargs):
+        return getattr(self.get_queryset(), name)(*args, **kwargs)
+    manager_method.__name__ = method.__name__
+    manager_method.__doc__ = method.__doc__
+    return manager_method","def delegate_query_method(name, method):
+
+    def manager_method(self, *args, **kwargs):
+        return getattr(self.get_queryset(), name)(*args, **kwargs)
+    manager_method.__name__ = method.__name__
+    manager_method.__doc__ = method.__doc__
+    return manager_method",[]
+./django/db/models/manager.py,manager_method,execute_queryset_method_via_manager,84,85,"def manager_method(self, *args, **kwargs):
+    return getattr(self.get_queryset(), name)(*args, **kwargs)","def execute_queryset_method_via_manager(self, *args, **kwargs):
+    return getattr(self.get_queryset(), name)(*args, **kwargs)",[]

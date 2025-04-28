@@ -1,0 +1,6 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/utils/dateformat.py,y,get_two_digit_year_suffix,327,329,"def y(self):
+    """"""Year, 2 digits; e.g. '99'""""""
+    return str(self.data.year)[2:]","def get_two_digit_year_suffix(self):
+    """"""Year, 2 digits; e.g. '99'""""""
+    return str(self.data.year)[2:]",[]

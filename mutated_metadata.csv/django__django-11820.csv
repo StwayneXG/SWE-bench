@@ -1,0 +1,86 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/db/models/base.py,_check_ordering,validate_ordering_configuration,1660,1751,"@classmethod
+def _check_ordering(cls):
+    """"""
+        Check ""ordering"" option -- is it a list of strings and do all fields
+        exist?
+        """"""
+    if cls._meta._ordering_clash:
+        return [checks.Error(""'ordering' and 'order_with_respect_to' cannot be used together."", obj=cls, id='models.E021')]
+    if cls._meta.order_with_respect_to or not cls._meta.ordering:
+        return []
+    if not isinstance(cls._meta.ordering, (list, tuple)):
+        return [checks.Error(""'ordering' must be a tuple or list (even if you want to order by only one field)."", obj=cls, id='models.E014')]
+    errors = []
+    fields = cls._meta.ordering
+    fields = (f for f in fields if isinstance(f, str) and f != '?')
+    fields = (f[1:] if f.startswith('-') else f for f in fields)
+    _fields = []
+    related_fields = []
+    for f in fields:
+        if LOOKUP_SEP in f:
+            related_fields.append(f)
+        else:
+            _fields.append(f)
+    fields = _fields
+    for field in related_fields:
+        _cls = cls
+        fld = None
+        for part in field.split(LOOKUP_SEP):
+            try:
+                fld = _cls._meta.get_field(part)
+                if fld.is_relation:
+                    _cls = fld.get_path_info()[-1].to_opts.model
+            except (FieldDoesNotExist, AttributeError):
+                if fld is None or fld.get_transform(part) is None:
+                    errors.append(checks.Error(""'ordering' refers to the nonexistent field, related field, or lookup '%s'."" % field, obj=cls, id='models.E015'))
+    fields = {f for f in fields if f != 'pk'}
+    invalid_fields = []
+    opts = cls._meta
+    valid_fields = set(chain.from_iterable(((f.name, f.attname) if not (f.auto_created and (not f.concrete)) else (f.field.related_query_name(),) for f in chain(opts.fields, opts.related_objects))))
+    invalid_fields.extend(fields - valid_fields)
+    for invalid_field in invalid_fields:
+        errors.append(checks.Error(""'ordering' refers to the nonexistent field, related field, or lookup '%s'."" % invalid_field, obj=cls, id='models.E015'))
+    return errors","@classmethod
+def validate_ordering_configuration(cls):
+    """"""
+        Check ""ordering"" option -- is it a list of strings and do all fields
+        exist?
+        """"""
+    if cls._meta._ordering_clash:
+        return [checks.Error(""'ordering' and 'order_with_respect_to' cannot be used together."", obj=cls, id='models.E021')]
+    if cls._meta.order_with_respect_to or not cls._meta.ordering:
+        return []
+    if not isinstance(cls._meta.ordering, (list, tuple)):
+        return [checks.Error(""'ordering' must be a tuple or list (even if you want to order by only one field)."", obj=cls, id='models.E014')]
+    errors = []
+    fields = cls._meta.ordering
+    fields = (f for f in fields if isinstance(f, str) and f != '?')
+    fields = (f[1:] if f.startswith('-') else f for f in fields)
+    _fields = []
+    related_fields = []
+    for f in fields:
+        if LOOKUP_SEP in f:
+            related_fields.append(f)
+        else:
+            _fields.append(f)
+    fields = _fields
+    for field in related_fields:
+        _cls = cls
+        fld = None
+        for part in field.split(LOOKUP_SEP):
+            try:
+                fld = _cls._meta.get_field(part)
+                if fld.is_relation:
+                    _cls = fld.get_path_info()[-1].to_opts.model
+            except (FieldDoesNotExist, AttributeError):
+                if fld is None or fld.get_transform(part) is None:
+                    errors.append(checks.Error(""'ordering' refers to the nonexistent field, related field, or lookup '%s'."" % field, obj=cls, id='models.E015'))
+    fields = {f for f in fields if f != 'pk'}
+    invalid_fields = []
+    opts = cls._meta
+    valid_fields = set(chain.from_iterable(((f.name, f.attname) if not (f.auto_created and (not f.concrete)) else (f.field.related_query_name(),) for f in chain(opts.fields, opts.related_objects))))
+    invalid_fields.extend(fields - valid_fields)
+    for invalid_field in invalid_fields:
+        errors.append(checks.Error(""'ordering' refers to the nonexistent field, related field, or lookup '%s'."" % invalid_field, obj=cls, id='models.E015'))
+    return errors","[{""var"": ""_fields"", ""rename"": ""ordering_fields""}, {""var"": ""related_fields"", ""rename"": ""nested_ordering_fields""}, {""var"": ""part"", ""rename"": ""field_component""}, {""var"": ""field"", ""rename"": ""ordering_field""}, {""var"": ""errors"", ""rename"": ""ordering_errors""}, {""var"": ""invalid_fields"", ""rename"": ""nonexistent_ordering_fields""}, {""var"": ""f"", ""rename"": ""order_field""}, {""var"": ""opts"", ""rename"": ""meta_options""}, {""var"": ""valid_fields"", ""rename"": ""existing_field_set""}, {""var"": ""invalid_field"", ""rename"": ""nonexistent_ordering_fields""}, {""var"": ""_cls"", ""rename"": ""current_class""}, {""var"": ""fields"", ""rename"": ""ordering_fields_to_check""}, {""var"": ""fld"", ""rename"": ""related_field""}]"

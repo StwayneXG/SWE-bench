@@ -1,0 +1,87 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./sklearn/compose/_column_transformer.py,set_output,configure_output_format,275,306,"def set_output(self, *, transform=None):
+    """"""Set the output container when `""transform""` and `""fit_transform""` are called.
+
+        Calling `set_output` will set the output of all estimators in `transformers`
+        and `transformers_`.
+
+        Parameters
+        ----------
+        transform : {""default"", ""pandas""}, default=None
+            Configure output of `transform` and `fit_transform`.
+
+            - `""default""`: Default output format of a transformer
+            - `""pandas""`: DataFrame output
+            - `None`: Transform configuration is unchanged
+
+        Returns
+        -------
+        self : estimator instance
+            Estimator instance.
+        """"""
+    super().set_output(transform=transform)
+    transformers = (trans for _, trans, _ in chain(self.transformers, getattr(self, 'transformers_', [])) if trans not in {'passthrough', 'drop'})
+    for trans in transformers:
+        _safe_set_output(trans, transform=transform)
+    return self","def configure_output_format(self, *, transform=None):
+    """"""Set the output container when `""transform""` and `""fit_transform""` are called.
+
+        Calling `set_output` will set the output of all estimators in `transformers`
+        and `transformers_`.
+
+        Parameters
+        ----------
+        transform : {""default"", ""pandas""}, default=None
+            Configure output of `transform` and `fit_transform`.
+
+            - `""default""`: Default output format of a transformer
+            - `""pandas""`: DataFrame output
+            - `None`: Transform configuration is unchanged
+
+        Returns
+        -------
+        self : estimator instance
+            Estimator instance.
+        """"""
+    super().set_output(transform=transform)
+    transformers = (trans for _, trans, _ in chain(self.transformers, getattr(self, 'transformers_', [])) if trans not in {'passthrough', 'drop'})
+    for trans in transformers:
+        _safe_set_output(trans, transform=transform)
+    return self","[{""var"": ""transformers"", ""rename"": ""active_transformer_estimators""}, {""var"": ""trans"", ""rename"": ""transformer_instance""}, {""var"": ""_"", ""rename"": ""output_configuration""}]"
+./sklearn/compose/_column_transformer.py,get_params,retrieve_estimator_parameters,308,326,"def get_params(self, deep=True):
+    """"""Get parameters for this estimator.
+
+        Returns the parameters given in the constructor as well as the
+        estimators contained within the `transformers` of the
+        `ColumnTransformer`.
+
+        Parameters
+        ----------
+        deep : bool, default=True
+            If True, will return the parameters for this estimator and
+            contained subobjects that are estimators.
+
+        Returns
+        -------
+        params : dict
+            Parameter names mapped to their values.
+        """"""
+    return self._get_params('_transformers', deep=deep)","def retrieve_estimator_parameters(self, deep=True):
+    """"""Get parameters for this estimator.
+
+        Returns the parameters given in the constructor as well as the
+        estimators contained within the `transformers` of the
+        `ColumnTransformer`.
+
+        Parameters
+        ----------
+        deep : bool, default=True
+            If True, will return the parameters for this estimator and
+            contained subobjects that are estimators.
+
+        Returns
+        -------
+        params : dict
+            Parameter names mapped to their values.
+        """"""
+    return self._get_params('_transformers', deep=deep)",[]

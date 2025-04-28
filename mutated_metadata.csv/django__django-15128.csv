@@ -1,0 +1,298 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/db/models/sql/query.py,combine,merge_queries_with_connector,557,660,"def combine(self, rhs, connector):
+    """"""
+        Merge the 'rhs' query into the current one (with any 'rhs' effects
+        being applied *after* (that is, ""to the right of"") anything in the
+        current query. 'rhs' is not modified during a call to this function.
+
+        The 'connector' parameter describes how to connect filters from the
+        'rhs' query.
+        """"""
+    if self.model != rhs.model:
+        raise TypeError('Cannot combine queries on two different base models.')
+    if self.is_sliced:
+        raise TypeError('Cannot combine queries once a slice has been taken.')
+    if self.distinct != rhs.distinct:
+        raise TypeError('Cannot combine a unique query with a non-unique query.')
+    if self.distinct_fields != rhs.distinct_fields:
+        raise TypeError('Cannot combine queries with different distinct fields.')
+    change_map = {}
+    conjunction = connector == AND
+    reuse = set() if conjunction else set(self.alias_map)
+    self.get_initial_alias()
+    joinpromoter = JoinPromoter(connector, 2, False)
+    joinpromoter.add_votes((j for j in self.alias_map if self.alias_map[j].join_type == INNER))
+    rhs_votes = set()
+    rhs_tables = list(rhs.alias_map)[1:]
+    for alias in rhs_tables:
+        join = rhs.alias_map[alias]
+        join = join.relabeled_clone(change_map)
+        new_alias = self.join(join, reuse=reuse)
+        if join.join_type == INNER:
+            rhs_votes.add(new_alias)
+        reuse.discard(new_alias)
+        if alias != new_alias:
+            change_map[alias] = new_alias
+        if not rhs.alias_refcount[alias]:
+            self.unref_alias(new_alias)
+    joinpromoter.add_votes(rhs_votes)
+    joinpromoter.update_join_types(self)
+    self.subq_aliases |= rhs.subq_aliases
+    w = rhs.where.clone()
+    w.relabel_aliases(change_map)
+    self.where.add(w, connector)
+    if rhs.select:
+        self.set_select([col.relabeled_clone(change_map) for col in rhs.select])
+    else:
+        self.select = ()
+    if connector == OR:
+        if self.extra and rhs.extra:
+            raise ValueError(""When merging querysets using 'or', you cannot have extra(select=...) on both sides."")
+    self.extra.update(rhs.extra)
+    extra_select_mask = set()
+    if self.extra_select_mask is not None:
+        extra_select_mask.update(self.extra_select_mask)
+    if rhs.extra_select_mask is not None:
+        extra_select_mask.update(rhs.extra_select_mask)
+    if extra_select_mask:
+        self.set_extra_mask(extra_select_mask)
+    self.extra_tables += rhs.extra_tables
+    self.order_by = rhs.order_by or self.order_by
+    self.extra_order_by = rhs.extra_order_by or self.extra_order_by","def merge_queries_with_connector(self, rhs, connector):
+    """"""
+        Merge the 'rhs' query into the current one (with any 'rhs' effects
+        being applied *after* (that is, ""to the right of"") anything in the
+        current query. 'rhs' is not modified during a call to this function.
+
+        The 'connector' parameter describes how to connect filters from the
+        'rhs' query.
+        """"""
+    if self.model != rhs.model:
+        raise TypeError('Cannot combine queries on two different base models.')
+    if self.is_sliced:
+        raise TypeError('Cannot combine queries once a slice has been taken.')
+    if self.distinct != rhs.distinct:
+        raise TypeError('Cannot combine a unique query with a non-unique query.')
+    if self.distinct_fields != rhs.distinct_fields:
+        raise TypeError('Cannot combine queries with different distinct fields.')
+    change_map = {}
+    conjunction = connector == AND
+    reuse = set() if conjunction else set(self.alias_map)
+    self.get_initial_alias()
+    joinpromoter = JoinPromoter(connector, 2, False)
+    joinpromoter.add_votes((j for j in self.alias_map if self.alias_map[j].join_type == INNER))
+    rhs_votes = set()
+    rhs_tables = list(rhs.alias_map)[1:]
+    for alias in rhs_tables:
+        join = rhs.alias_map[alias]
+        join = join.relabeled_clone(change_map)
+        new_alias = self.join(join, reuse=reuse)
+        if join.join_type == INNER:
+            rhs_votes.add(new_alias)
+        reuse.discard(new_alias)
+        if alias != new_alias:
+            change_map[alias] = new_alias
+        if not rhs.alias_refcount[alias]:
+            self.unref_alias(new_alias)
+    joinpromoter.add_votes(rhs_votes)
+    joinpromoter.update_join_types(self)
+    self.subq_aliases |= rhs.subq_aliases
+    w = rhs.where.clone()
+    w.relabel_aliases(change_map)
+    self.where.add(w, connector)
+    if rhs.select:
+        self.set_select([col.relabeled_clone(change_map) for col in rhs.select])
+    else:
+        self.select = ()
+    if connector == OR:
+        if self.extra and rhs.extra:
+            raise ValueError(""When merging querysets using 'or', you cannot have extra(select=...) on both sides."")
+    self.extra.update(rhs.extra)
+    extra_select_mask = set()
+    if self.extra_select_mask is not None:
+        extra_select_mask.update(self.extra_select_mask)
+    if rhs.extra_select_mask is not None:
+        extra_select_mask.update(rhs.extra_select_mask)
+    if extra_select_mask:
+        self.set_extra_mask(extra_select_mask)
+    self.extra_tables += rhs.extra_tables
+    self.order_by = rhs.order_by or self.order_by
+    self.extra_order_by = rhs.extra_order_by or self.extra_order_by","[{""var"": ""joinpromoter"", ""rename"": ""QueryJoinManager""}, {""var"": ""rhs_votes"", ""rename"": ""rhs_inner_join_aliases""}, {""var"": ""col"", ""rename"": ""column_alias""}, {""var"": ""new_alias"", ""rename"": ""merged_alias""}, {""var"": ""reuse"", ""rename"": ""alias_reuse_tracker""}, {""var"": ""conjunction"", ""rename"": ""is_logical_and""}, {""var"": ""j"", ""rename"": ""inner_join_alias""}, {""var"": ""join"", ""rename"": ""combine_queries""}, {""var"": ""change_map"", ""rename"": ""alias_change_mapping""}, {""var"": ""w"", ""rename"": ""rhs_where_clause_clone""}, {""var"": ""extra_select_mask"", ""rename"": ""combined_extra_select_mask""}, {""var"": ""alias"", ""rename"": ""alias_identifier""}, {""var"": ""rhs_tables"", ""rename"": ""rhs_aliases_list""}]"
+./django/db/models/sql/query.py,change_aliases,update_alias_mappings_and_references,843,880,"def change_aliases(self, change_map):
+    """"""
+        Change the aliases in change_map (which maps old-alias -> new-alias),
+        relabelling any references to them in select columns and the where
+        clause.
+        """"""
+    assert set(change_map).isdisjoint(change_map.values())
+    self.where.relabel_aliases(change_map)
+    if isinstance(self.group_by, tuple):
+        self.group_by = tuple([col.relabeled_clone(change_map) for col in self.group_by])
+    self.select = tuple([col.relabeled_clone(change_map) for col in self.select])
+    self.annotations = self.annotations and {key: col.relabeled_clone(change_map) for key, col in self.annotations.items()}
+    for old_alias, new_alias in change_map.items():
+        if old_alias not in self.alias_map:
+            continue
+        alias_data = self.alias_map[old_alias].relabeled_clone(change_map)
+        self.alias_map[new_alias] = alias_data
+        self.alias_refcount[new_alias] = self.alias_refcount[old_alias]
+        del self.alias_refcount[old_alias]
+        del self.alias_map[old_alias]
+        table_aliases = self.table_map[alias_data.table_name]
+        for pos, alias in enumerate(table_aliases):
+            if alias == old_alias:
+                table_aliases[pos] = new_alias
+                break
+    self.external_aliases = {change_map.get(alias, alias): aliased or alias in change_map for alias, aliased in self.external_aliases.items()}","def update_alias_mappings_and_references(self, change_map):
+    """"""
+        Change the aliases in change_map (which maps old-alias -> new-alias),
+        relabelling any references to them in select columns and the where
+        clause.
+        """"""
+    assert set(change_map).isdisjoint(change_map.values())
+    self.where.relabel_aliases(change_map)
+    if isinstance(self.group_by, tuple):
+        self.group_by = tuple([col.relabeled_clone(change_map) for col in self.group_by])
+    self.select = tuple([col.relabeled_clone(change_map) for col in self.select])
+    self.annotations = self.annotations and {key: col.relabeled_clone(change_map) for key, col in self.annotations.items()}
+    for old_alias, new_alias in change_map.items():
+        if old_alias not in self.alias_map:
+            continue
+        alias_data = self.alias_map[old_alias].relabeled_clone(change_map)
+        self.alias_map[new_alias] = alias_data
+        self.alias_refcount[new_alias] = self.alias_refcount[old_alias]
+        del self.alias_refcount[old_alias]
+        del self.alias_map[old_alias]
+        table_aliases = self.table_map[alias_data.table_name]
+        for pos, alias in enumerate(table_aliases):
+            if alias == old_alias:
+                table_aliases[pos] = new_alias
+                break
+    self.external_aliases = {change_map.get(alias, alias): aliased or alias in change_map for alias, aliased in self.external_aliases.items()}","[{""var"": ""pos"", ""rename"": ""alias_position""}, {""var"": ""key"", ""rename"": ""annotation_key""}, {""var"": ""col"", ""rename"": ""column_instance""}, {""var"": ""aliased"", ""rename"": ""is_external_alias_changed""}, {""var"": ""new_alias"", ""rename"": ""updated_alias""}, {""var"": ""alias_data"", ""rename"": ""relabeled_alias_data""}, {""var"": ""table_aliases"", ""rename"": ""updated_table_aliases""}, {""var"": ""old_alias"", ""rename"": ""previous_alias""}, {""var"": ""alias"", ""rename"": ""alias_change_map""}]"
+./django/db/models/sql/query.py,bump_prefix,update_alias_prefix_to_avoid_conflicts,882,929,"def bump_prefix(self, outer_query):
+    """"""
+        Change the alias prefix to the next letter in the alphabet in a way
+        that the outer query's aliases and this query's aliases will not
+        conflict. Even tables that previously had no alias will get an alias
+        after this call.
+        """"""
+
+    def prefix_gen():
+        """"""
+            Generate a sequence of characters in alphabetical order:
+                -> 'A', 'B', 'C', ...
+
+            When the alphabet is finished, the sequence will continue with the
+            Cartesian product:
+                -> 'AA', 'AB', 'AC', ...
+            """"""
+        alphabet = ascii_uppercase
+        prefix = chr(ord(self.alias_prefix) + 1)
+        yield prefix
+        for n in count(1):
+            seq = alphabet[alphabet.index(prefix):] if prefix else alphabet
+            for s in product(seq, repeat=n):
+                yield ''.join(s)
+            prefix = None
+    if self.alias_prefix != outer_query.alias_prefix:
+        return
+    local_recursion_limit = sys.getrecursionlimit() // 16
+    for pos, prefix in enumerate(prefix_gen()):
+        if prefix not in self.subq_aliases:
+            self.alias_prefix = prefix
+            break
+        if pos > local_recursion_limit:
+            raise RecursionError('Maximum recursion depth exceeded: too many subqueries.')
+    self.subq_aliases = self.subq_aliases.union([self.alias_prefix])
+    outer_query.subq_aliases = outer_query.subq_aliases.union(self.subq_aliases)
+    self.change_aliases({alias: '%s%d' % (self.alias_prefix, pos) for pos, alias in enumerate(self.alias_map)})","def update_alias_prefix_to_avoid_conflicts(self, outer_query):
+    """"""
+        Change the alias prefix to the next letter in the alphabet in a way
+        that the outer query's aliases and this query's aliases will not
+        conflict. Even tables that previously had no alias will get an alias
+        after this call.
+        """"""
+
+    def prefix_gen():
+        """"""
+            Generate a sequence of characters in alphabetical order:
+                -> 'A', 'B', 'C', ...
+
+            When the alphabet is finished, the sequence will continue with the
+            Cartesian product:
+                -> 'AA', 'AB', 'AC', ...
+            """"""
+        alphabet = ascii_uppercase
+        prefix = chr(ord(self.alias_prefix) + 1)
+        yield prefix
+        for n in count(1):
+            seq = alphabet[alphabet.index(prefix):] if prefix else alphabet
+            for s in product(seq, repeat=n):
+                yield ''.join(s)
+            prefix = None
+    if self.alias_prefix != outer_query.alias_prefix:
+        return
+    local_recursion_limit = sys.getrecursionlimit() // 16
+    for pos, prefix in enumerate(prefix_gen()):
+        if prefix not in self.subq_aliases:
+            self.alias_prefix = prefix
+            break
+        if pos > local_recursion_limit:
+            raise RecursionError('Maximum recursion depth exceeded: too many subqueries.')
+    self.subq_aliases = self.subq_aliases.union([self.alias_prefix])
+    outer_query.subq_aliases = outer_query.subq_aliases.union(self.subq_aliases)
+    self.change_aliases({alias: '%s%d' % (self.alias_prefix, pos) for pos, alias in enumerate(self.alias_map)})","[{""var"": ""pos"", ""rename"": ""enumeration_counter""}, {""var"": ""local_recursion_limit"", ""rename"": ""max_prefix_attempts""}, {""var"": ""s"", ""rename"": ""alias_prefix_sequence""}, {""var"": ""n"", ""rename"": ""current_repeat_length""}, {""var"": ""seq"", ""rename"": ""alphabet_sequence""}, {""var"": ""alphabet"", ""rename"": ""alias_generator_alphabet""}, {""var"": ""alias"", ""rename"": ""aliasPrefixUpdater""}, {""var"": ""prefix"", ""rename"": ""aliasPrefixSequence""}]"
+./django/db/models/sql/query.py,get_initial_alias,retrieve_and_increment_initial_alias,931,941,"def get_initial_alias(self):
+    """"""
+        Return the first alias for this query, after increasing its reference
+        count.
+        """"""
+    if self.alias_map:
+        alias = self.base_table
+        self.ref_alias(alias)
+    else:
+        alias = self.join(self.base_table_class(self.get_meta().db_table, None))
+    return alias","def retrieve_and_increment_initial_alias(self):
+    """"""
+        Return the first alias for this query, after increasing its reference
+        count.
+        """"""
+    if self.alias_map:
+        alias = self.base_table
+        self.ref_alias(alias)
+    else:
+        alias = self.join(self.base_table_class(self.get_meta().db_table, None))
+    return alias","[{""var"": ""alias"", ""rename"": ""primaryQueryAlias""}]"
+./django/db/models/sql/query.py,prefix_gen,sequential_alpha_generator,889,905,"def prefix_gen():
+    """"""
+            Generate a sequence of characters in alphabetical order:
+                -> 'A', 'B', 'C', ...
+
+            When the alphabet is finished, the sequence will continue with the
+            Cartesian product:
+                -> 'AA', 'AB', 'AC', ...
+            """"""
+    alphabet = ascii_uppercase
+    prefix = chr(ord(self.alias_prefix) + 1)
+    yield prefix
+    for n in count(1):
+        seq = alphabet[alphabet.index(prefix):] if prefix else alphabet
+        for s in product(seq, repeat=n):
+            yield ''.join(s)
+        prefix = None","def sequential_alpha_generator():
+    """"""
+            Generate a sequence of characters in alphabetical order:
+                -> 'A', 'B', 'C', ...
+
+            When the alphabet is finished, the sequence will continue with the
+            Cartesian product:
+                -> 'AA', 'AB', 'AC', ...
+            """"""
+    alphabet = ascii_uppercase
+    prefix = chr(ord(self.alias_prefix) + 1)
+    yield prefix
+    for n in count(1):
+        seq = alphabet[alphabet.index(prefix):] if prefix else alphabet
+        for s in product(seq, repeat=n):
+            yield ''.join(s)
+        prefix = None","[{""var"": ""s"", ""rename"": ""char_sequence""}, {""var"": ""n"", ""rename"": ""repeat_count""}, {""var"": ""seq"", ""rename"": ""alphabet_sequence""}, {""var"": ""alphabet"", ""rename"": ""upper_case_letters""}, {""var"": ""prefix"", ""rename"": ""sequence_prefix""}]"

@@ -1,0 +1,13 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/db/models/lookups.py,get_rhs_op,format_rhs_as_in_clause,409,410,"def get_rhs_op(self, connection, rhs):
+    return 'IN %s' % rhs","def format_rhs_as_in_clause(self, connection, rhs):
+    return 'IN %s' % rhs",[]
+./django/db/models/lookups.py,as_sql,generate_sql_with_chunked_parameters,412,416,"def as_sql(self, compiler, connection):
+    max_in_list_size = connection.ops.max_in_list_size()
+    if self.rhs_is_direct_value() and max_in_list_size and (len(self.rhs) > max_in_list_size):
+        return self.split_parameter_list_as_sql(compiler, connection)
+    return super().as_sql(compiler, connection)","def generate_sql_with_chunked_parameters(self, compiler, connection):
+    max_in_list_size = connection.ops.max_in_list_size()
+    if self.rhs_is_direct_value() and max_in_list_size and (len(self.rhs) > max_in_list_size):
+        return self.split_parameter_list_as_sql(compiler, connection)
+    return super().as_sql(compiler, connection)","[{""var"": ""max_in_list_size"", ""rename"": ""maximum_permissible_list_size""}]"

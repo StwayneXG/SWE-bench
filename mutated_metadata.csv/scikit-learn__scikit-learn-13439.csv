@@ -1,0 +1,36 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./sklearn/pipeline.py,__getitem__,get_pipeline_component,202,220,"def __getitem__(self, ind):
+    """"""Returns a sub-pipeline or a single esimtator in the pipeline
+
+        Indexing with an integer will return an estimator; using a slice
+        returns another Pipeline instance which copies a slice of this
+        Pipeline. This copy is shallow: modifying (or fitting) estimators in
+        the sub-pipeline will affect the larger pipeline and vice-versa.
+        However, replacing a value in `step` will not affect a copy.
+        """"""
+    if isinstance(ind, slice):
+        if ind.step not in (1, None):
+            raise ValueError('Pipeline slicing only supports a step of 1')
+        return self.__class__(self.steps[ind])
+    try:
+        name, est = self.steps[ind]
+    except TypeError:
+        return self.named_steps[ind]
+    return est","def get_pipeline_component(self, ind):
+    """"""Returns a sub-pipeline or a single esimtator in the pipeline
+
+        Indexing with an integer will return an estimator; using a slice
+        returns another Pipeline instance which copies a slice of this
+        Pipeline. This copy is shallow: modifying (or fitting) estimators in
+        the sub-pipeline will affect the larger pipeline and vice-versa.
+        However, replacing a value in `step` will not affect a copy.
+        """"""
+    if isinstance(ind, slice):
+        if ind.step not in (1, None):
+            raise ValueError('Pipeline slicing only supports a step of 1')
+        return self.__class__(self.steps[ind])
+    try:
+        name, est = self.steps[ind]
+    except TypeError:
+        return self.named_steps[ind]
+    return est","[{""var"": ""est"", ""rename"": ""estimator""}, {""var"": ""name"", ""rename"": ""estimator_name""}]"

@@ -1,0 +1,198 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/core/management/commands/inspectdb.py,handle_inspection,generate_django_model_from_db,38,173,"def handle_inspection(self, options):
+    connection = connections[options['database']]
+    table_name_filter = options.get('table_name_filter')
+
+    def table2model(table_name):
+        return re.sub('[^a-zA-Z0-9]', '', table_name.title())
+    with connection.cursor() as cursor:
+        yield '# This is an auto-generated Django model module.'
+        yield ""# You'll have to do the following manually to clean this up:""
+        yield ""#   * Rearrange models' order""
+        yield '#   * Make sure each model has one field with primary_key=True'
+        yield '#   * Make sure each ForeignKey and OneToOneField has `on_delete` set to the desired behavior'
+        yield '#   * Remove `managed = False` lines if you wish to allow Django to create, modify, and delete the table'
+        yield ""# Feel free to rename the models, but don't rename db_table values or field names.""
+        yield ('from %s import models' % self.db_module)
+        known_models = []
+        table_info = connection.introspection.get_table_list(cursor)
+        types = {'t'}
+        if options['include_partitions']:
+            types.add('p')
+        if options['include_views']:
+            types.add('v')
+        for table_name in options['table'] or sorted((info.name for info in table_info if info.type in types)):
+            if table_name_filter is not None and callable(table_name_filter):
+                if not table_name_filter(table_name):
+                    continue
+            try:
+                try:
+                    relations = connection.introspection.get_relations(cursor, table_name)
+                except NotImplementedError:
+                    relations = {}
+                try:
+                    constraints = connection.introspection.get_constraints(cursor, table_name)
+                except NotImplementedError:
+                    constraints = {}
+                primary_key_column = connection.introspection.get_primary_key_column(cursor, table_name)
+                unique_columns = [c['columns'][0] for c in constraints.values() if c['unique'] and len(c['columns']) == 1]
+                table_description = connection.introspection.get_table_description(cursor, table_name)
+            except Exception as e:
+                yield (""# Unable to inspect table '%s'"" % table_name)
+                yield ('# The error was: %s' % e)
+                continue
+            yield ''
+            yield ''
+            yield ('class %s(models.Model):' % table2model(table_name))
+            known_models.append(table2model(table_name))
+            used_column_names = []
+            column_to_field_name = {}
+            for row in table_description:
+                comment_notes = []
+                extra_params = {}
+                column_name = row.name
+                is_relation = column_name in relations
+                att_name, params, notes = self.normalize_col_name(column_name, used_column_names, is_relation)
+                extra_params.update(params)
+                comment_notes.extend(notes)
+                used_column_names.append(att_name)
+                column_to_field_name[column_name] = att_name
+                if column_name == primary_key_column:
+                    extra_params['primary_key'] = True
+                elif column_name in unique_columns:
+                    extra_params['unique'] = True
+                if is_relation:
+                    if extra_params.pop('unique', False) or extra_params.get('primary_key'):
+                        rel_type = 'OneToOneField'
+                    else:
+                        rel_type = 'ForeignKey'
+                    rel_to = 'self' if relations[column_name][1] == table_name else table2model(relations[column_name][1])
+                    if rel_to in known_models:
+                        field_type = '%s(%s' % (rel_type, rel_to)
+                    else:
+                        field_type = ""%s('%s'"" % (rel_type, rel_to)
+                else:
+                    field_type, field_params, field_notes = self.get_field_type(connection, table_name, row)
+                    extra_params.update(field_params)
+                    comment_notes.extend(field_notes)
+                    field_type += '('
+                if att_name == 'id' and extra_params == {'primary_key': True}:
+                    if field_type == 'AutoField(':
+                        continue
+                    elif field_type == connection.features.introspected_field_types['AutoField'] + '(':
+                        comment_notes.append('AutoField?')
+                if row.null_ok:
+                    extra_params['blank'] = True
+                    extra_params['null'] = True
+                field_desc = '%s = %s%s' % (att_name, '' if '.' in field_type else 'models.', field_type)
+                if field_type.startswith(('ForeignKey(', 'OneToOneField(')):
+                    field_desc += ', models.DO_NOTHING'
+                if extra_params:
+                    if not field_desc.endswith('('):
+                        field_desc += ', '
+                    field_desc += ', '.join(('%s=%r' % (k, v) for k, v in extra_params.items()))
+                field_desc += ')'
+                if comment_notes:
+                    field_desc += '  # ' + ' '.join(comment_notes)
+                yield ('    %s' % field_desc)
+            is_view = any((info.name == table_name and info.type == 'v' for info in table_info))
+            is_partition = any((info.name == table_name and info.type == 'p' for info in table_info))
+            yield from self.get_meta(table_name, constraints, column_to_field_name, is_view, is_partition)","def generate_django_model_from_db(self, options):
+    connection = connections[options['database']]
+    table_name_filter = options.get('table_name_filter')
+
+    def table2model(table_name):
+        return re.sub('[^a-zA-Z0-9]', '', table_name.title())
+    with connection.cursor() as cursor:
+        yield '# This is an auto-generated Django model module.'
+        yield ""# You'll have to do the following manually to clean this up:""
+        yield ""#   * Rearrange models' order""
+        yield '#   * Make sure each model has one field with primary_key=True'
+        yield '#   * Make sure each ForeignKey and OneToOneField has `on_delete` set to the desired behavior'
+        yield '#   * Remove `managed = False` lines if you wish to allow Django to create, modify, and delete the table'
+        yield ""# Feel free to rename the models, but don't rename db_table values or field names.""
+        yield ('from %s import models' % self.db_module)
+        known_models = []
+        table_info = connection.introspection.get_table_list(cursor)
+        types = {'t'}
+        if options['include_partitions']:
+            types.add('p')
+        if options['include_views']:
+            types.add('v')
+        for table_name in options['table'] or sorted((info.name for info in table_info if info.type in types)):
+            if table_name_filter is not None and callable(table_name_filter):
+                if not table_name_filter(table_name):
+                    continue
+            try:
+                try:
+                    relations = connection.introspection.get_relations(cursor, table_name)
+                except NotImplementedError:
+                    relations = {}
+                try:
+                    constraints = connection.introspection.get_constraints(cursor, table_name)
+                except NotImplementedError:
+                    constraints = {}
+                primary_key_column = connection.introspection.get_primary_key_column(cursor, table_name)
+                unique_columns = [c['columns'][0] for c in constraints.values() if c['unique'] and len(c['columns']) == 1]
+                table_description = connection.introspection.get_table_description(cursor, table_name)
+            except Exception as e:
+                yield (""# Unable to inspect table '%s'"" % table_name)
+                yield ('# The error was: %s' % e)
+                continue
+            yield ''
+            yield ''
+            yield ('class %s(models.Model):' % table2model(table_name))
+            known_models.append(table2model(table_name))
+            used_column_names = []
+            column_to_field_name = {}
+            for row in table_description:
+                comment_notes = []
+                extra_params = {}
+                column_name = row.name
+                is_relation = column_name in relations
+                att_name, params, notes = self.normalize_col_name(column_name, used_column_names, is_relation)
+                extra_params.update(params)
+                comment_notes.extend(notes)
+                used_column_names.append(att_name)
+                column_to_field_name[column_name] = att_name
+                if column_name == primary_key_column:
+                    extra_params['primary_key'] = True
+                elif column_name in unique_columns:
+                    extra_params['unique'] = True
+                if is_relation:
+                    if extra_params.pop('unique', False) or extra_params.get('primary_key'):
+                        rel_type = 'OneToOneField'
+                    else:
+                        rel_type = 'ForeignKey'
+                    rel_to = 'self' if relations[column_name][1] == table_name else table2model(relations[column_name][1])
+                    if rel_to in known_models:
+                        field_type = '%s(%s' % (rel_type, rel_to)
+                    else:
+                        field_type = ""%s('%s'"" % (rel_type, rel_to)
+                else:
+                    field_type, field_params, field_notes = self.get_field_type(connection, table_name, row)
+                    extra_params.update(field_params)
+                    comment_notes.extend(field_notes)
+                    field_type += '('
+                if att_name == 'id' and extra_params == {'primary_key': True}:
+                    if field_type == 'AutoField(':
+                        continue
+                    elif field_type == connection.features.introspected_field_types['AutoField'] + '(':
+                        comment_notes.append('AutoField?')
+                if row.null_ok:
+                    extra_params['blank'] = True
+                    extra_params['null'] = True
+                field_desc = '%s = %s%s' % (att_name, '' if '.' in field_type else 'models.', field_type)
+                if field_type.startswith(('ForeignKey(', 'OneToOneField(')):
+                    field_desc += ', models.DO_NOTHING'
+                if extra_params:
+                    if not field_desc.endswith('('):
+                        field_desc += ', '
+                    field_desc += ', '.join(('%s=%r' % (k, v) for k, v in extra_params.items()))
+                field_desc += ')'
+                if comment_notes:
+                    field_desc += '  # ' + ' '.join(comment_notes)
+                yield ('    %s' % field_desc)
+            is_view = any((info.name == table_name and info.type == 'v' for info in table_info))
+            is_partition = any((info.name == table_name and info.type == 'p' for info in table_info))
+            yield from self.get_meta(table_name, constraints, column_to_field_name, is_view, is_partition)","[{""var"": ""column_to_field_name"", ""rename"": ""columnNameToFieldNameMap""}, {""var"": ""is_partition"", ""rename"": ""is_current_table_partition""}, {""var"": ""params"", ""rename"": ""column_parameters""}, {""var"": ""att_name"", ""rename"": ""attribute_name""}, {""var"": ""unique_columns"", ""rename"": ""unique_constraint_columns""}, {""var"": ""info"", ""rename"": ""table_metadata""}, {""var"": ""c"", ""rename"": ""constraint_columns""}, {""var"": ""field_params"", ""rename"": ""field_attribute_parameters""}, {""var"": ""rel_type"", ""rename"": ""relationship_field_type""}, {""var"": ""k"", ""rename"": ""field_options""}, {""var"": ""constraints"", ""rename"": ""table_constraints""}, {""var"": ""field_type"", ""rename"": ""field_representation""}, {""var"": ""used_column_names"", ""rename"": ""processed_column_names""}, {""var"": ""relations"", ""rename"": ""table_relationships""}, {""var"": ""column_name"", ""rename"": ""column_identifier""}, {""var"": ""row"", ""rename"": ""column_info""}, {""var"": ""rel_to"", ""rename"": ""related_model_name""}, {""var"": ""known_models"", ""rename"": ""processed_model_classes""}, {""var"": ""cursor"", ""rename"": ""database_cursor""}, {""var"": ""v"", ""rename"": ""view_includes""}, {""var"": ""field_notes"", ""rename"": ""model_generation_notes""}, {""var"": ""types"", ""rename"": ""table_types""}, {""var"": ""table_name_filter"", ""rename"": ""table_name_criteria""}, {""var"": ""notes"", ""rename"": ""model_field_notes""}, {""var"": ""extra_params"", ""rename"": ""column_field_attributes""}, {""var"": ""is_relation"", ""rename"": ""is_foreign_key_column""}, {""var"": ""connection"", ""rename"": ""database_connection""}, {""var"": ""table_description"", ""rename"": ""table_schema_details""}, {""var"": ""table_info"", ""rename"": ""database_table_metadata""}, {""var"": ""comment_notes"", ""rename"": ""field_comment_notes""}, {""var"": ""primary_key_column"", ""rename"": ""primary_key_column_name""}, {""var"": ""field_desc"", ""rename"": ""field_definition""}, {""var"": ""is_view"", ""rename"": ""is_view_based_table""}]"

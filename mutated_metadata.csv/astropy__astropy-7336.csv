@@ -1,0 +1,139 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./astropy/units/decorators.py,__call__,validate_and_invoke_with_defaults,155,228,"def __call__(self, wrapped_function):
+    wrapped_signature = inspect.signature(wrapped_function)
+
+    @wraps(wrapped_function)
+    def wrapper(*func_args, **func_kwargs):
+        bound_args = wrapped_signature.bind(*func_args, **func_kwargs)
+        for param in wrapped_signature.parameters.values():
+            if param.kind in (inspect.Parameter.VAR_KEYWORD, inspect.Parameter.VAR_POSITIONAL):
+                continue
+            if param.name not in bound_args.arguments and param.default is not param.empty:
+                bound_args.arguments[param.name] = param.default
+            arg = bound_args.arguments[param.name]
+            if param.name in self.decorator_kwargs:
+                targets = self.decorator_kwargs[param.name]
+            else:
+                targets = param.annotation
+            if targets is inspect.Parameter.empty:
+                continue
+            if arg is None and param.default is None:
+                continue
+            if isinstance(targets, str) or not isiterable(targets):
+                valid_targets = [targets]
+            elif None in targets:
+                if arg is None:
+                    continue
+                else:
+                    valid_targets = [t for t in targets if t is not None]
+            else:
+                valid_targets = targets
+            _validate_arg_value(param.name, wrapped_function.__name__, arg, valid_targets, self.equivalencies)
+        with add_enabled_equivalencies(self.equivalencies):
+            return_ = wrapped_function(*func_args, **func_kwargs)
+        if wrapped_signature.return_annotation is not inspect.Signature.empty:
+            return return_.to(wrapped_signature.return_annotation)
+        else:
+            return return_
+    return wrapper","def validate_and_invoke_with_defaults(self, wrapped_function):
+    wrapped_signature = inspect.signature(wrapped_function)
+
+    @wraps(wrapped_function)
+    def wrapper(*func_args, **func_kwargs):
+        bound_args = wrapped_signature.bind(*func_args, **func_kwargs)
+        for param in wrapped_signature.parameters.values():
+            if param.kind in (inspect.Parameter.VAR_KEYWORD, inspect.Parameter.VAR_POSITIONAL):
+                continue
+            if param.name not in bound_args.arguments and param.default is not param.empty:
+                bound_args.arguments[param.name] = param.default
+            arg = bound_args.arguments[param.name]
+            if param.name in self.decorator_kwargs:
+                targets = self.decorator_kwargs[param.name]
+            else:
+                targets = param.annotation
+            if targets is inspect.Parameter.empty:
+                continue
+            if arg is None and param.default is None:
+                continue
+            if isinstance(targets, str) or not isiterable(targets):
+                valid_targets = [targets]
+            elif None in targets:
+                if arg is None:
+                    continue
+                else:
+                    valid_targets = [t for t in targets if t is not None]
+            else:
+                valid_targets = targets
+            _validate_arg_value(param.name, wrapped_function.__name__, arg, valid_targets, self.equivalencies)
+        with add_enabled_equivalencies(self.equivalencies):
+            return_ = wrapped_function(*func_args, **func_kwargs)
+        if wrapped_signature.return_annotation is not inspect.Signature.empty:
+            return return_.to(wrapped_signature.return_annotation)
+        else:
+            return return_
+    return wrapper","[{""var"": ""param"", ""rename"": ""parameter_details""}, {""var"": ""return_"", ""rename"": ""function_result""}, {""var"": ""arg"", ""rename"": ""validated_argument""}, {""var"": ""valid_targets"", ""rename"": ""permitted_argument_targets""}, {""var"": ""t"", ""rename"": ""transform_parameter""}, {""var"": ""wrapped_signature"", ""rename"": ""function_signature""}, {""var"": ""bound_args"", ""rename"": ""resolved_function_arguments""}, {""var"": ""targets"", ""rename"": ""validation_targets""}]"
+./astropy/units/decorators.py,wrapper,validate_and_invoke_function,162,226,"@wraps(wrapped_function)
+def wrapper(*func_args, **func_kwargs):
+    bound_args = wrapped_signature.bind(*func_args, **func_kwargs)
+    for param in wrapped_signature.parameters.values():
+        if param.kind in (inspect.Parameter.VAR_KEYWORD, inspect.Parameter.VAR_POSITIONAL):
+            continue
+        if param.name not in bound_args.arguments and param.default is not param.empty:
+            bound_args.arguments[param.name] = param.default
+        arg = bound_args.arguments[param.name]
+        if param.name in self.decorator_kwargs:
+            targets = self.decorator_kwargs[param.name]
+        else:
+            targets = param.annotation
+        if targets is inspect.Parameter.empty:
+            continue
+        if arg is None and param.default is None:
+            continue
+        if isinstance(targets, str) or not isiterable(targets):
+            valid_targets = [targets]
+        elif None in targets:
+            if arg is None:
+                continue
+            else:
+                valid_targets = [t for t in targets if t is not None]
+        else:
+            valid_targets = targets
+        _validate_arg_value(param.name, wrapped_function.__name__, arg, valid_targets, self.equivalencies)
+    with add_enabled_equivalencies(self.equivalencies):
+        return_ = wrapped_function(*func_args, **func_kwargs)
+    if wrapped_signature.return_annotation is not inspect.Signature.empty:
+        return return_.to(wrapped_signature.return_annotation)
+    else:
+        return return_","@wraps(wrapped_function)
+def validate_and_invoke_function(*func_args, **func_kwargs):
+    bound_args = wrapped_signature.bind(*func_args, **func_kwargs)
+    for param in wrapped_signature.parameters.values():
+        if param.kind in (inspect.Parameter.VAR_KEYWORD, inspect.Parameter.VAR_POSITIONAL):
+            continue
+        if param.name not in bound_args.arguments and param.default is not param.empty:
+            bound_args.arguments[param.name] = param.default
+        arg = bound_args.arguments[param.name]
+        if param.name in self.decorator_kwargs:
+            targets = self.decorator_kwargs[param.name]
+        else:
+            targets = param.annotation
+        if targets is inspect.Parameter.empty:
+            continue
+        if arg is None and param.default is None:
+            continue
+        if isinstance(targets, str) or not isiterable(targets):
+            valid_targets = [targets]
+        elif None in targets:
+            if arg is None:
+                continue
+            else:
+                valid_targets = [t for t in targets if t is not None]
+        else:
+            valid_targets = targets
+        _validate_arg_value(param.name, wrapped_function.__name__, arg, valid_targets, self.equivalencies)
+    with add_enabled_equivalencies(self.equivalencies):
+        return_ = wrapped_function(*func_args, **func_kwargs)
+    if wrapped_signature.return_annotation is not inspect.Signature.empty:
+        return return_.to(wrapped_signature.return_annotation)
+    else:
+        return return_","[{""var"": ""param"", ""rename"": ""parameter_descriptor""}, {""var"": ""return_"", ""rename"": ""function_result""}, {""var"": ""arg"", ""rename"": ""current_argument_value""}, {""var"": ""targets"", ""rename"": ""validation_targets""}, {""var"": ""t"", ""rename"": ""current_target""}, {""var"": ""valid_targets"", ""rename"": ""applicable_targets""}, {""var"": ""bound_args"", ""rename"": ""validated_arguments""}]"

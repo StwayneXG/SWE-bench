@@ -1,0 +1,66 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./sympy/core/add.py,_eval_is_zero,evaluate_zero_status,532,566,"def _eval_is_zero(self):
+    if self.is_commutative is False:
+        return
+    nz = []
+    z = 0
+    im_or_z = False
+    im = False
+    for a in self.args:
+        if a.is_real:
+            if a.is_zero:
+                z += 1
+            elif a.is_zero is False:
+                nz.append(a)
+            else:
+                return
+        elif a.is_imaginary:
+            im = True
+        elif (S.ImaginaryUnit * a).is_real:
+            im_or_z = True
+        else:
+            return
+    if z == len(self.args):
+        return True
+    if len(nz) == len(self.args):
+        return None
+    b = self.func(*nz)
+    if b.is_zero:
+        if not im_or_z and (not im):
+            return True
+        if im and (not im_or_z):
+            return False
+    if b.is_zero is False:
+        return False","def evaluate_zero_status(self):
+    if self.is_commutative is False:
+        return
+    nz = []
+    z = 0
+    im_or_z = False
+    im = False
+    for a in self.args:
+        if a.is_real:
+            if a.is_zero:
+                z += 1
+            elif a.is_zero is False:
+                nz.append(a)
+            else:
+                return
+        elif a.is_imaginary:
+            im = True
+        elif (S.ImaginaryUnit * a).is_real:
+            im_or_z = True
+        else:
+            return
+    if z == len(self.args):
+        return True
+    if len(nz) == len(self.args):
+        return None
+    b = self.func(*nz)
+    if b.is_zero:
+        if not im_or_z and (not im):
+            return True
+        if im and (not im_or_z):
+            return False
+    if b.is_zero is False:
+        return False","[{""var"": ""im_or_z"", ""rename"": ""has_imaginary_or_zero_component""}, {""var"": ""a"", ""rename"": ""term""}, {""var"": ""z"", ""rename"": ""real_zero_count""}, {""var"": ""im"", ""rename"": ""contains_imaginary""}, {""var"": ""nz"", ""rename"": ""non_zero_elements""}, {""var"": ""b"", ""rename"": ""non_zero_combination""}]"

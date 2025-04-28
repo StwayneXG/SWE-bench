@@ -1,0 +1,30 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./sphinx/util/rst.py,prepend_prolog,insert_prolog_to_document_content,78,97,"def prepend_prolog(content: StringList, prolog: str) -> None:
+    """"""Prepend a string to content body as prolog.""""""
+    if prolog:
+        pos = 0
+        for line in content:
+            if docinfo_re.match(line):
+                pos += 1
+            else:
+                break
+        if pos > 0:
+            content.insert(pos, '', '<generated>', 0)
+            pos += 1
+        for lineno, line in enumerate(prolog.splitlines()):
+            content.insert(pos + lineno, line, '<rst_prolog>', lineno)
+        content.insert(pos + lineno + 1, '', '<generated>', 0)","def insert_prolog_to_document_content(content: StringList, prolog: str) -> None:
+    """"""Prepend a string to content body as prolog.""""""
+    if prolog:
+        pos = 0
+        for line in content:
+            if docinfo_re.match(line):
+                pos += 1
+            else:
+                break
+        if pos > 0:
+            content.insert(pos, '', '<generated>', 0)
+            pos += 1
+        for lineno, line in enumerate(prolog.splitlines()):
+            content.insert(pos + lineno, line, '<rst_prolog>', lineno)
+        content.insert(pos + lineno + 1, '', '<generated>', 0)","[{""var"": ""pos"", ""rename"": ""prolog_insertion_index""}, {""var"": ""lineno"", ""rename"": ""prolog_line_index""}, {""var"": ""line"", ""rename"": ""content_line""}]"

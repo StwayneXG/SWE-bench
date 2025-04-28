@@ -1,0 +1,76 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/contrib/admin/filters.py,field_choices,get_ordered_field_choices,196,201,"def field_choices(self, field, request, model_admin):
+    ordering = ()
+    related_admin = model_admin.admin_site._registry.get(field.remote_field.model)
+    if related_admin is not None:
+        ordering = related_admin.get_ordering(request)
+    return field.get_choices(include_blank=False, ordering=ordering)","def get_ordered_field_choices(self, field, request, model_admin):
+    ordering = ()
+    related_admin = model_admin.admin_site._registry.get(field.remote_field.model)
+    if related_admin is not None:
+        ordering = related_admin.get_ordering(request)
+    return field.get_choices(include_blank=False, ordering=ordering)","[{""var"": ""ordering"", ""rename"": ""field_choices_ordering""}, {""var"": ""related_admin"", ""rename"": ""related_model_admin_instance""}]"
+./django/contrib/admin/filters.py,choices,generate_filter_options,203,220,"def choices(self, changelist):
+    yield {'selected': self.lookup_val is None and (not self.lookup_val_isnull), 'query_string': changelist.get_query_string(remove=[self.lookup_kwarg, self.lookup_kwarg_isnull]), 'display': _('All')}
+    for pk_val, val in self.lookup_choices:
+        yield {'selected': self.lookup_val == str(pk_val), 'query_string': changelist.get_query_string({self.lookup_kwarg: pk_val}, [self.lookup_kwarg_isnull]), 'display': val}
+    if self.include_empty_choice:
+        yield {'selected': bool(self.lookup_val_isnull), 'query_string': changelist.get_query_string({self.lookup_kwarg_isnull: 'True'}, [self.lookup_kwarg]), 'display': self.empty_value_display}","def generate_filter_options(self, changelist):
+    yield {'selected': self.lookup_val is None and (not self.lookup_val_isnull), 'query_string': changelist.get_query_string(remove=[self.lookup_kwarg, self.lookup_kwarg_isnull]), 'display': _('All')}
+    for pk_val, val in self.lookup_choices:
+        yield {'selected': self.lookup_val == str(pk_val), 'query_string': changelist.get_query_string({self.lookup_kwarg: pk_val}, [self.lookup_kwarg_isnull]), 'display': val}
+    if self.include_empty_choice:
+        yield {'selected': bool(self.lookup_val_isnull), 'query_string': changelist.get_query_string({self.lookup_kwarg_isnull: 'True'}, [self.lookup_kwarg]), 'display': self.empty_value_display}","[{""var"": ""val"", ""rename"": ""choice_display_value""}, {""var"": ""pk_val"", ""rename"": ""primary_key_value""}]"
+./django/db/models/fields/__init__.py,get_choices,generate_select_field_choices,809,831,"def get_choices(self, include_blank=True, blank_choice=BLANK_CHOICE_DASH, limit_choices_to=None, ordering=()):
+    """"""
+        Return choices with a default blank choices included, for use
+        as <select> choices for this field.
+        """"""
+    if self.choices is not None:
+        choices = list(self.choices)
+        if include_blank:
+            blank_defined = any((choice in ('', None) for choice, _ in self.flatchoices))
+            if not blank_defined:
+                choices = blank_choice + choices
+        return choices
+    rel_model = self.remote_field.model
+    limit_choices_to = limit_choices_to or self.get_limit_choices_to()
+    choice_func = operator.attrgetter(self.remote_field.get_related_field().attname if hasattr(self.remote_field, 'get_related_field') else 'pk')
+    return (blank_choice if include_blank else []) + [(choice_func(x), str(x)) for x in rel_model._default_manager.complex_filter(limit_choices_to).order_by(*ordering)]","def generate_select_field_choices(self, include_blank=True, blank_choice=BLANK_CHOICE_DASH, limit_choices_to=None, ordering=()):
+    """"""
+        Return choices with a default blank choices included, for use
+        as <select> choices for this field.
+        """"""
+    if self.choices is not None:
+        choices = list(self.choices)
+        if include_blank:
+            blank_defined = any((choice in ('', None) for choice, _ in self.flatchoices))
+            if not blank_defined:
+                choices = blank_choice + choices
+        return choices
+    rel_model = self.remote_field.model
+    limit_choices_to = limit_choices_to or self.get_limit_choices_to()
+    choice_func = operator.attrgetter(self.remote_field.get_related_field().attname if hasattr(self.remote_field, 'get_related_field') else 'pk')
+    return (blank_choice if include_blank else []) + [(choice_func(x), str(x)) for x in rel_model._default_manager.complex_filter(limit_choices_to).order_by(*ordering)]","[{""var"": ""choices"", ""rename"": ""select_field_options""}, {""var"": ""blank_defined"", ""rename"": ""blank_option_present""}, {""var"": ""x"", ""rename"": ""related_instance""}, {""var"": ""_"", ""rename"": ""blank_choice_options""}, {""var"": ""choice"", ""rename"": ""select_field_choices""}, {""var"": ""rel_model"", ""rename"": ""related_model_instance""}, {""var"": ""choice_func"", ""rename"": ""related_field_attribute_retriever""}]"
+./django/db/models/fields/reverse_related.py,get_choices,generate_select_field_choices,117,127,"def get_choices(self, include_blank=True, blank_choice=BLANK_CHOICE_DASH, ordering=()):
+    """"""
+        Return choices with a default blank choices included, for use
+        as <select> choices for this field.
+
+        Analog of django.db.models.fields.Field.get_choices(), provided
+        initially for utilization by RelatedFieldListFilter.
+        """"""
+    return (blank_choice if include_blank else []) + [(x.pk, str(x)) for x in self.related_model._default_manager.order_by(*ordering)]","def generate_select_field_choices(self, include_blank=True, blank_choice=BLANK_CHOICE_DASH, ordering=()):
+    """"""
+        Return choices with a default blank choices included, for use
+        as <select> choices for this field.
+
+        Analog of django.db.models.fields.Field.get_choices(), provided
+        initially for utilization by RelatedFieldListFilter.
+        """"""
+    return (blank_choice if include_blank else []) + [(x.pk, str(x)) for x in self.related_model._default_manager.order_by(*ordering)]","[{""var"": ""x"", ""rename"": ""related_instance""}]"
+./django/db/models/fields/reverse_related.py,is_hidden,should_hide_related_object_based_on_suffix,129,131,"def is_hidden(self):
+    """"""Should the related object be hidden?""""""
+    return bool(self.related_name) and self.related_name[-1] == '+'","def should_hide_related_object_based_on_suffix(self):
+    """"""Should the related object be hidden?""""""
+    return bool(self.related_name) and self.related_name[-1] == '+'",[]

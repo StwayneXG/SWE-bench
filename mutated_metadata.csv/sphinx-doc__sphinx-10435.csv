@@ -1,0 +1,36 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./sphinx/writers/latex.py,visit_literal,process_literal_node_for_highlighting,1695,1718,"def visit_literal(self, node: Element) -> None:
+    if self.in_title:
+        self.body.append('\\sphinxstyleliteralintitle{\\sphinxupquote{')
+        return
+    elif 'kbd' in node['classes']:
+        self.body.append('\\sphinxkeyboard{\\sphinxupquote{')
+        return
+    lang = node.get('language', None)
+    if 'code' not in node['classes'] or not lang:
+        self.body.append('\\sphinxcode{\\sphinxupquote{')
+        return
+    opts = self.config.highlight_options.get(lang, {})
+    hlcode = self.highlighter.highlight_block(node.astext(), lang, opts=opts, location=node)
+    hlcode = hlcode.replace('\\begin{Verbatim}[commandchars=\\\\\\{\\}]', '\\sphinxcode{\\sphinxupquote{')
+    hlcode = hlcode.rstrip()[:-14]
+    self.body.append(hlcode)
+    self.body.append('}}')
+    raise nodes.SkipNode","def process_literal_node_for_highlighting(self, node: Element) -> None:
+    if self.in_title:
+        self.body.append('\\sphinxstyleliteralintitle{\\sphinxupquote{')
+        return
+    elif 'kbd' in node['classes']:
+        self.body.append('\\sphinxkeyboard{\\sphinxupquote{')
+        return
+    lang = node.get('language', None)
+    if 'code' not in node['classes'] or not lang:
+        self.body.append('\\sphinxcode{\\sphinxupquote{')
+        return
+    opts = self.config.highlight_options.get(lang, {})
+    hlcode = self.highlighter.highlight_block(node.astext(), lang, opts=opts, location=node)
+    hlcode = hlcode.replace('\\begin{Verbatim}[commandchars=\\\\\\{\\}]', '\\sphinxcode{\\sphinxupquote{')
+    hlcode = hlcode.rstrip()[:-14]
+    self.body.append(hlcode)
+    self.body.append('}}')
+    raise nodes.SkipNode","[{""var"": ""opts"", ""rename"": ""language_highlight_options""}, {""var"": ""lang"", ""rename"": ""source_code_language""}, {""var"": ""hlcode"", ""rename"": ""highlighted_code_block""}]"

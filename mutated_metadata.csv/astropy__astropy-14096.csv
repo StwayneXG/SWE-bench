@@ -1,0 +1,38 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./astropy/coordinates/sky_coordinate.py,__getattr__,retrieve_transformed_coordinates,869,900,"def __getattr__(self, attr):
+    """"""
+        Overrides getattr to return coordinates that this can be transformed
+        to, based on the alias attr in the primary transform graph.
+        """"""
+    if '_sky_coord_frame' in self.__dict__:
+        if self._is_name(attr):
+            return self
+        if attr in frame_transform_graph.frame_attributes:
+            if attr in self.frame.frame_attributes:
+                return getattr(self.frame, attr)
+            else:
+                return getattr(self, '_' + attr, None)
+        if not attr.startswith('_') and hasattr(self._sky_coord_frame, attr):
+            return getattr(self._sky_coord_frame, attr)
+        frame_cls = frame_transform_graph.lookup_name(attr)
+        if frame_cls is not None and self.frame.is_transformable_to(frame_cls):
+            return self.transform_to(attr)
+    raise AttributeError(f""'{self.__class__.__name__}' object has no attribute '{attr}'"")","def retrieve_transformed_coordinates(self, attr):
+    """"""
+        Overrides getattr to return coordinates that this can be transformed
+        to, based on the alias attr in the primary transform graph.
+        """"""
+    if '_sky_coord_frame' in self.__dict__:
+        if self._is_name(attr):
+            return self
+        if attr in frame_transform_graph.frame_attributes:
+            if attr in self.frame.frame_attributes:
+                return getattr(self.frame, attr)
+            else:
+                return getattr(self, '_' + attr, None)
+        if not attr.startswith('_') and hasattr(self._sky_coord_frame, attr):
+            return getattr(self._sky_coord_frame, attr)
+        frame_cls = frame_transform_graph.lookup_name(attr)
+        if frame_cls is not None and self.frame.is_transformable_to(frame_cls):
+            return self.transform_to(attr)
+    raise AttributeError(f""'{self.__class__.__name__}' object has no attribute '{attr}'"")","[{""var"": ""frame_cls"", ""rename"": ""coordinate_frame_class""}]"

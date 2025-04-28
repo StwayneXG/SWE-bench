@@ -1,0 +1,35 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/db/backends/sqlite3/schema.py,add_field,conditionally_create_or_remake_field,325,333,"def add_field(self, model, field):
+    """"""Create a field on a model.""""""
+    if not field.null or self.effective_default(field) is not None:
+        self._remake_table(model, create_field=field)
+    else:
+        super().add_field(model, field)","def conditionally_create_or_remake_field(self, model, field):
+    """"""Create a field on a model.""""""
+    if not field.null or self.effective_default(field) is not None:
+        self._remake_table(model, create_field=field)
+    else:
+        super().add_field(model, field)",[]
+./django/db/backends/sqlite3/schema.py,remove_field,process_and_remove_model_field,335,351,"def remove_field(self, model, field):
+    """"""
+        Remove a field from a model. Usually involves deleting a column,
+        but for M2Ms may involve deleting a table.
+        """"""
+    if field.many_to_many:
+        if field.remote_field.through._meta.auto_created:
+            self.delete_model(field.remote_field.through)
+    else:
+        if field.db_parameters(connection=self.connection)['type'] is None:
+            return
+        self._remake_table(model, delete_field=field)","def process_and_remove_model_field(self, model, field):
+    """"""
+        Remove a field from a model. Usually involves deleting a column,
+        but for M2Ms may involve deleting a table.
+        """"""
+    if field.many_to_many:
+        if field.remote_field.through._meta.auto_created:
+            self.delete_model(field.remote_field.through)
+    else:
+        if field.db_parameters(connection=self.connection)['type'] is None:
+            return
+        self._remake_table(model, delete_field=field)",[]

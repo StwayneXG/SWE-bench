@@ -1,0 +1,125 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./sympy/combinatorics/homomorphisms.py,_check_homomorphism,verify_homomorphism_validity,310,368,"def _check_homomorphism(domain, codomain, images):
+    if hasattr(domain, 'relators'):
+        rels = domain.relators
+    else:
+        gens = domain.presentation().generators
+        rels = domain.presentation().relators
+    identity = codomain.identity
+
+    def _image(r):
+        if r.is_identity:
+            return identity
+        else:
+            w = identity
+            r_arr = r.array_form
+            i = 0
+            j = 0
+            while i < len(r):
+                power = r_arr[j][1]
+                if isinstance(domain, PermutationGroup) and r[i] in gens:
+                    s = domain.generators[gens.index(r[i])]
+                else:
+                    s = r[i]
+                if s in images:
+                    w = w * images[s] ** power
+                elif s ** (-1) in images:
+                    w = w * images[s ** (-1)] ** power
+                i += abs(power)
+                j += 1
+            return w
+    for r in rels:
+        if isinstance(codomain, FpGroup):
+            s = codomain.equals(_image(r), identity)
+            if s is None:
+                success = codomain.make_confluent()
+                s = codomain.equals(_image(r), identity)
+                if s is None and (not success):
+                    raise RuntimeError(""Can't determine if the images define a homomorphism. Try increasing the maximum number of rewriting rules (group._rewriting_system.set_max(new_value); the current value is stored in group._rewriting_system.maxeqns)"")
+        else:
+            s = _image(r).is_identity
+        if not s:
+            return False
+    return True","def verify_homomorphism_validity(domain, codomain, images):
+    if hasattr(domain, 'relators'):
+        rels = domain.relators
+    else:
+        gens = domain.presentation().generators
+        rels = domain.presentation().relators
+    identity = codomain.identity
+
+    def _image(r):
+        if r.is_identity:
+            return identity
+        else:
+            w = identity
+            r_arr = r.array_form
+            i = 0
+            j = 0
+            while i < len(r):
+                power = r_arr[j][1]
+                if isinstance(domain, PermutationGroup) and r[i] in gens:
+                    s = domain.generators[gens.index(r[i])]
+                else:
+                    s = r[i]
+                if s in images:
+                    w = w * images[s] ** power
+                elif s ** (-1) in images:
+                    w = w * images[s ** (-1)] ** power
+                i += abs(power)
+                j += 1
+            return w
+    for r in rels:
+        if isinstance(codomain, FpGroup):
+            s = codomain.equals(_image(r), identity)
+            if s is None:
+                success = codomain.make_confluent()
+                s = codomain.equals(_image(r), identity)
+                if s is None and (not success):
+                    raise RuntimeError(""Can't determine if the images define a homomorphism. Try increasing the maximum number of rewriting rules (group._rewriting_system.set_max(new_value); the current value is stored in group._rewriting_system.maxeqns)"")
+        else:
+            s = _image(r).is_identity
+        if not s:
+            return False
+    return True","[{""var"": ""s"", ""rename"": ""is_homomorphism_valid""}, {""var"": ""rels"", ""rename"": ""relation_list""}, {""var"": ""i"", ""rename"": ""relator_index""}, {""var"": ""r_arr"", ""rename"": ""relation_array_form""}, {""var"": ""gens"", ""rename"": ""domain_generators""}, {""var"": ""j"", ""rename"": ""relation_index""}, {""var"": ""success"", ""rename"": ""confluent_check_success""}, {""var"": ""w"", ""rename"": ""computed_image""}, {""var"": ""identity"", ""rename"": ""codomain_identity_element""}, {""var"": ""power"", ""rename"": ""exponent_value""}]"
+./sympy/combinatorics/homomorphisms.py,_image,compute_permutation_image,318,346,"def _image(r):
+    if r.is_identity:
+        return identity
+    else:
+        w = identity
+        r_arr = r.array_form
+        i = 0
+        j = 0
+        while i < len(r):
+            power = r_arr[j][1]
+            if isinstance(domain, PermutationGroup) and r[i] in gens:
+                s = domain.generators[gens.index(r[i])]
+            else:
+                s = r[i]
+            if s in images:
+                w = w * images[s] ** power
+            elif s ** (-1) in images:
+                w = w * images[s ** (-1)] ** power
+            i += abs(power)
+            j += 1
+        return w","def compute_permutation_image(r):
+    if r.is_identity:
+        return identity
+    else:
+        w = identity
+        r_arr = r.array_form
+        i = 0
+        j = 0
+        while i < len(r):
+            power = r_arr[j][1]
+            if isinstance(domain, PermutationGroup) and r[i] in gens:
+                s = domain.generators[gens.index(r[i])]
+            else:
+                s = r[i]
+            if s in images:
+                w = w * images[s] ** power
+            elif s ** (-1) in images:
+                w = w * images[s ** (-1)] ** power
+            i += abs(power)
+            j += 1
+        return w","[{""var"": ""s"", ""rename"": ""element_representation""}, {""var"": ""i"", ""rename"": ""current_position""}, {""var"": ""r_arr"", ""rename"": ""permutation_array_representation""}, {""var"": ""j"", ""rename"": ""permutation_index""}, {""var"": ""w"", ""rename"": ""transformed_image""}, {""var"": ""power"", ""rename"": ""exponent_count""}]"

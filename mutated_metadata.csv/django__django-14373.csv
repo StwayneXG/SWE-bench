@@ -1,0 +1,6 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/utils/dateformat.py,Y,get_full_year,315,317,"def Y(self):
+    """"""Year, 4 digits; e.g. '1999'""""""
+    return self.data.year","def get_full_year(self):
+    """"""Year, 4 digits; e.g. '1999'""""""
+    return self.data.year",[]

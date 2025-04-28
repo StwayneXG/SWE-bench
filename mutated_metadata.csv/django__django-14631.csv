@@ -1,0 +1,245 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/forms/boundfield.py,label_tag,wrap_contents_in_label_tag,133,168,"def label_tag(self, contents=None, attrs=None, label_suffix=None):
+    """"""
+        Wrap the given contents in a <label>, if the field has an ID attribute.
+        contents should be mark_safe'd to avoid HTML escaping. If contents
+        aren't given, use the field's HTML-escaped label.
+
+        If attrs are given, use them as HTML attributes on the <label> tag.
+
+        label_suffix overrides the form's label_suffix.
+        """"""
+    contents = contents or self.label
+    if label_suffix is None:
+        label_suffix = self.field.label_suffix if self.field.label_suffix is not None else self.form.label_suffix
+    if label_suffix and contents and (contents[-1] not in _(':?.!')):
+        contents = format_html('{}{}', contents, label_suffix)
+    widget = self.field.widget
+    id_ = widget.attrs.get('id') or self.auto_id
+    if id_:
+        id_for_label = widget.id_for_label(id_)
+        if id_for_label:
+            attrs = {**(attrs or {}), 'for': id_for_label}
+        if self.field.required and hasattr(self.form, 'required_css_class'):
+            attrs = attrs or {}
+            if 'class' in attrs:
+                attrs['class'] += ' ' + self.form.required_css_class
+            else:
+                attrs['class'] = self.form.required_css_class
+        attrs = flatatt(attrs) if attrs else ''
+        contents = format_html('<label{}>{}</label>', attrs, contents)
+    else:
+        contents = conditional_escape(contents)
+    return mark_safe(contents)","def wrap_contents_in_label_tag(self, contents=None, attrs=None, label_suffix=None):
+    """"""
+        Wrap the given contents in a <label>, if the field has an ID attribute.
+        contents should be mark_safe'd to avoid HTML escaping. If contents
+        aren't given, use the field's HTML-escaped label.
+
+        If attrs are given, use them as HTML attributes on the <label> tag.
+
+        label_suffix overrides the form's label_suffix.
+        """"""
+    contents = contents or self.label
+    if label_suffix is None:
+        label_suffix = self.field.label_suffix if self.field.label_suffix is not None else self.form.label_suffix
+    if label_suffix and contents and (contents[-1] not in _(':?.!')):
+        contents = format_html('{}{}', contents, label_suffix)
+    widget = self.field.widget
+    id_ = widget.attrs.get('id') or self.auto_id
+    if id_:
+        id_for_label = widget.id_for_label(id_)
+        if id_for_label:
+            attrs = {**(attrs or {}), 'for': id_for_label}
+        if self.field.required and hasattr(self.form, 'required_css_class'):
+            attrs = attrs or {}
+            if 'class' in attrs:
+                attrs['class'] += ' ' + self.form.required_css_class
+            else:
+                attrs['class'] = self.form.required_css_class
+        attrs = flatatt(attrs) if attrs else ''
+        contents = format_html('<label{}>{}</label>', attrs, contents)
+    else:
+        contents = conditional_escape(contents)
+    return mark_safe(contents)","[{""var"": ""widget"", ""rename"": ""field_widget""}, {""var"": ""id_for_label"", ""rename"": ""label_for_element_id""}, {""var"": ""id_"", ""rename"": ""widget_id""}]"
+./django/forms/forms.py,__iter__,iterate_field_values,146,148,"def __iter__(self):
+    for name in self.fields:
+        yield self[name]","def iterate_field_values(self):
+    for name in self.fields:
+        yield self[name]","[{""var"": ""name"", ""rename"": ""field_name_iterator""}]"
+./django/forms/forms.py,__getitem__,get_or_cache_bound_field,150,168,"def __getitem__(self, name):
+    """"""Return a BoundField with the given name.""""""
+    try:
+        return self._bound_fields_cache[name]
+    except KeyError:
+        pass
+    try:
+        field = self.fields[name]
+    except KeyError:
+        raise KeyError(""Key '%s' not found in '%s'. Choices are: %s."" % (name, self.__class__.__name__, ', '.join(sorted(self.fields))))
+    bound_field = field.get_bound_field(self, name)
+    self._bound_fields_cache[name] = bound_field
+    return bound_field","def get_or_cache_bound_field(self, name):
+    """"""Return a BoundField with the given name.""""""
+    try:
+        return self._bound_fields_cache[name]
+    except KeyError:
+        pass
+    try:
+        field = self.fields[name]
+    except KeyError:
+        raise KeyError(""Key '%s' not found in '%s'. Choices are: %s."" % (name, self.__class__.__name__, ', '.join(sorted(self.fields))))
+    bound_field = field.get_bound_field(self, name)
+    self._bound_fields_cache[name] = bound_field
+    return bound_field","[{""var"": ""bound_field"", ""rename"": ""associated_field_instance""}, {""var"": ""field"", ""rename"": ""retrieved_field_object""}]"
+./django/forms/forms.py,_html_output,render_form_as_html,203,279,"def _html_output(self, normal_row, error_row, row_ender, help_text_html, errors_on_separate_row):
+    """"""Output HTML. Used by as_table(), as_ul(), as_p().""""""
+    top_errors = self.non_field_errors().copy()
+    output, hidden_fields = ([], [])
+    for name, field in self.fields.items():
+        html_class_attr = ''
+        bf = self[name]
+        bf_errors = self.error_class(bf.errors)
+        if bf.is_hidden:
+            if bf_errors:
+                top_errors.extend([_('(Hidden field %(name)s) %(error)s') % {'name': name, 'error': str(e)} for e in bf_errors])
+            hidden_fields.append(str(bf))
+        else:
+            css_classes = bf.css_classes()
+            if css_classes:
+                html_class_attr = ' class=""%s""' % css_classes
+            if errors_on_separate_row and bf_errors:
+                output.append(error_row % str(bf_errors))
+            if bf.label:
+                label = conditional_escape(bf.label)
+                label = bf.label_tag(label) or ''
+            else:
+                label = ''
+            if field.help_text:
+                help_text = help_text_html % field.help_text
+            else:
+                help_text = ''
+            output.append(normal_row % {'errors': bf_errors, 'label': label, 'field': bf, 'help_text': help_text, 'html_class_attr': html_class_attr, 'css_classes': css_classes, 'field_name': bf.html_name})
+    if top_errors:
+        output.insert(0, error_row % top_errors)
+    if hidden_fields:
+        str_hidden = ''.join(hidden_fields)
+        if output:
+            last_row = output[-1]
+            if not last_row.endswith(row_ender):
+                last_row = normal_row % {'errors': '', 'label': '', 'field': '', 'help_text': '', 'html_class_attr': html_class_attr, 'css_classes': '', 'field_name': ''}
+                output.append(last_row)
+            output[-1] = last_row[:-len(row_ender)] + str_hidden + row_ender
+        else:
+            output.append(str_hidden)
+    return mark_safe('\n'.join(output))","def render_form_as_html(self, normal_row, error_row, row_ender, help_text_html, errors_on_separate_row):
+    """"""Output HTML. Used by as_table(), as_ul(), as_p().""""""
+    top_errors = self.non_field_errors().copy()
+    output, hidden_fields = ([], [])
+    for name, field in self.fields.items():
+        html_class_attr = ''
+        bf = self[name]
+        bf_errors = self.error_class(bf.errors)
+        if bf.is_hidden:
+            if bf_errors:
+                top_errors.extend([_('(Hidden field %(name)s) %(error)s') % {'name': name, 'error': str(e)} for e in bf_errors])
+            hidden_fields.append(str(bf))
+        else:
+            css_classes = bf.css_classes()
+            if css_classes:
+                html_class_attr = ' class=""%s""' % css_classes
+            if errors_on_separate_row and bf_errors:
+                output.append(error_row % str(bf_errors))
+            if bf.label:
+                label = conditional_escape(bf.label)
+                label = bf.label_tag(label) or ''
+            else:
+                label = ''
+            if field.help_text:
+                help_text = help_text_html % field.help_text
+            else:
+                help_text = ''
+            output.append(normal_row % {'errors': bf_errors, 'label': label, 'field': bf, 'help_text': help_text, 'html_class_attr': html_class_attr, 'css_classes': css_classes, 'field_name': bf.html_name})
+    if top_errors:
+        output.insert(0, error_row % top_errors)
+    if hidden_fields:
+        str_hidden = ''.join(hidden_fields)
+        if output:
+            last_row = output[-1]
+            if not last_row.endswith(row_ender):
+                last_row = normal_row % {'errors': '', 'label': '', 'field': '', 'help_text': '', 'html_class_attr': html_class_attr, 'css_classes': '', 'field_name': ''}
+                output.append(last_row)
+            output[-1] = last_row[:-len(row_ender)] + str_hidden + row_ender
+        else:
+            output.append(str_hidden)
+    return mark_safe('\n'.join(output))","[{""var"": ""name"", ""rename"": ""field_name""}, {""var"": ""field"", ""rename"": ""form_field""}, {""var"": ""str_hidden"", ""rename"": ""hidden_fields_html""}, {""var"": ""css_classes"", ""rename"": ""field_css_classes""}, {""var"": ""bf"", ""rename"": ""bound_field""}, {""var"": ""output"", ""rename"": ""rendered_html_elements""}, {""var"": ""last_row"", ""rename"": ""final_output_row""}, {""var"": ""html_class_attr"", ""rename"": ""html_element_class_attribute""}, {""var"": ""label"", ""rename"": ""escaped_label_tag""}, {""var"": ""hidden_fields"", ""rename"": ""hidden_html_fields""}, {""var"": ""e"", ""rename"": ""error_message""}, {""var"": ""help_text"", ""rename"": ""help_text_snippet""}, {""var"": ""top_errors"", ""rename"": ""aggregate_non_field_errors""}, {""var"": ""bf_errors"", ""rename"": ""bound_field_errors""}]"
+./django/forms/forms.py,_clean_fields,process_and_validate_fields,389,406,"def _clean_fields(self):
+    for name, field in self.fields.items():
+        if field.disabled:
+            value = self.get_initial_for_field(field, name)
+        else:
+            value = self._field_data_value(field, self.add_prefix(name))
+        try:
+            if isinstance(field, FileField):
+                initial = self.get_initial_for_field(field, name)
+                value = field.clean(value, initial)
+            else:
+                value = field.clean(value)
+            self.cleaned_data[name] = value
+            if hasattr(self, 'clean_%s' % name):
+                value = getattr(self, 'clean_%s' % name)()
+                self.cleaned_data[name] = value
+        except ValidationError as e:
+            self.add_error(name, e)","def process_and_validate_fields(self):
+    for name, field in self.fields.items():
+        if field.disabled:
+            value = self.get_initial_for_field(field, name)
+        else:
+            value = self._field_data_value(field, self.add_prefix(name))
+        try:
+            if isinstance(field, FileField):
+                initial = self.get_initial_for_field(field, name)
+                value = field.clean(value, initial)
+            else:
+                value = field.clean(value)
+            self.cleaned_data[name] = value
+            if hasattr(self, 'clean_%s' % name):
+                value = getattr(self, 'clean_%s' % name)()
+                self.cleaned_data[name] = value
+        except ValidationError as e:
+            self.add_error(name, e)","[{""var"": ""value"", ""rename"": ""field_processed_value""}, {""var"": ""name"", ""rename"": ""field_name""}, {""var"": ""field"", ""rename"": ""form_field""}, {""var"": ""initial"", ""rename"": ""initial_field_value""}]"
+./django/forms/forms.py,changed_data,get_fields_with_changes,438,459,"@cached_property
+def changed_data(self):
+    data = []
+    for name, field in self.fields.items():
+        data_value = self._field_data_value(field, self.add_prefix(name))
+        if not field.show_hidden_initial:
+            initial_value = self[name].initial
+        else:
+            initial_prefixed_name = self.add_initial_prefix(name)
+            hidden_widget = field.hidden_widget()
+            try:
+                initial_value = field.to_python(self._widget_data_value(hidden_widget, initial_prefixed_name))
+            except ValidationError:
+                data.append(name)
+                continue
+        if field.has_changed(initial_value, data_value):
+            data.append(name)
+    return data","@cached_property
+def get_fields_with_changes(self):
+    data = []
+    for name, field in self.fields.items():
+        data_value = self._field_data_value(field, self.add_prefix(name))
+        if not field.show_hidden_initial:
+            initial_value = self[name].initial
+        else:
+            initial_prefixed_name = self.add_initial_prefix(name)
+            hidden_widget = field.hidden_widget()
+            try:
+                initial_value = field.to_python(self._widget_data_value(hidden_widget, initial_prefixed_name))
+            except ValidationError:
+                data.append(name)
+                continue
+        if field.has_changed(initial_value, data_value):
+            data.append(name)
+    return data","[{""var"": ""data"", ""rename"": ""changed_fields_list""}, {""var"": ""name"", ""rename"": ""field_name""}, {""var"": ""field"", ""rename"": ""form_field_definition""}, {""var"": ""initial_value"", ""rename"": ""initial_field_value""}, {""var"": ""hidden_widget"", ""rename"": ""field_hidden_widget_inst""}, {""var"": ""initial_prefixed_name"", ""rename"": ""initial_field_prefixed_name""}, {""var"": ""data_value"", ""rename"": ""current_field_value""}]"

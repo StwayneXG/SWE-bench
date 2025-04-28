@@ -1,0 +1,10 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./sphinx/pycode/ast.py,visit_Tuple,format_tuple_representation,215,219,"def visit_Tuple(self, node: ast.Tuple) -> str:
+    if node.elts:
+        return '(' + ', '.join((self.visit(e) for e in node.elts)) + ')'
+    else:
+        return '()'","def format_tuple_representation(self, node: ast.Tuple) -> str:
+    if node.elts:
+        return '(' + ', '.join((self.visit(e) for e in node.elts)) + ')'
+    else:
+        return '()'","[{""var"": ""e"", ""rename"": ""element""}]"

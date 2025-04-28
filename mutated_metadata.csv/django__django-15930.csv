@@ -1,0 +1,24 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/db/models/expressions.py,as_sql,generate_sql_with_template,1297,1308,"def as_sql(self, compiler, connection, template=None, **extra_context):
+    connection.ops.check_expression_support(self)
+    template_params = extra_context
+    sql_params = []
+    condition_sql, condition_params = compiler.compile(self.condition)
+    template_params['condition'] = condition_sql
+    sql_params.extend(condition_params)
+    result_sql, result_params = compiler.compile(self.result)
+    template_params['result'] = result_sql
+    sql_params.extend(result_params)
+    template = template or self.template
+    return (template % template_params, sql_params)","def generate_sql_with_template(self, compiler, connection, template=None, **extra_context):
+    connection.ops.check_expression_support(self)
+    template_params = extra_context
+    sql_params = []
+    condition_sql, condition_params = compiler.compile(self.condition)
+    template_params['condition'] = condition_sql
+    sql_params.extend(condition_params)
+    result_sql, result_params = compiler.compile(self.result)
+    template_params['result'] = result_sql
+    sql_params.extend(result_params)
+    template = template or self.template
+    return (template % template_params, sql_params)","[{""var"": ""template_params"", ""rename"": ""sql_placeholder_context""}, {""var"": ""condition_sql"", ""rename"": ""compiled_condition_sql""}, {""var"": ""sql_params"", ""rename"": ""compiled_sql_parameters""}, {""var"": ""result_params"", ""rename"": ""compiled_result_parameters""}, {""var"": ""condition_params"", ""rename"": ""compiled_condition_params""}, {""var"": ""result_sql"", ""rename"": ""compiled_result_expression""}]"

@@ -1,0 +1,708 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./sphinx/directives/other.py,parse_content,process_toctree_entries,79,147,"def parse_content(self, toctree: addnodes.toctree) -> List[Node]:
+    suffixes = self.config.source_suffix
+    all_docnames = self.env.found_docs.copy()
+    all_docnames.remove(self.env.docname)
+    ret: List[Node] = []
+    excluded = Matcher(self.config.exclude_patterns)
+    for entry in self.content:
+        if not entry:
+            continue
+        explicit = explicit_title_re.match(entry)
+        if toctree['glob'] and glob_re.match(entry) and (not explicit) and (not url_re.match(entry)):
+            patname = docname_join(self.env.docname, entry)
+            docnames = sorted(patfilter(all_docnames, patname))
+            for docname in docnames:
+                all_docnames.remove(docname)
+                toctree['entries'].append((None, docname))
+                toctree['includefiles'].append(docname)
+            if not docnames:
+                logger.warning(__(""toctree glob pattern %r didn't match any documents""), entry, location=toctree)
+        else:
+            if explicit:
+                ref = explicit.group(2)
+                title = explicit.group(1)
+                docname = ref
+            else:
+                ref = docname = entry
+                title = None
+            for suffix in suffixes:
+                if docname.endswith(suffix):
+                    docname = docname[:-len(suffix)]
+                    break
+            docname = docname_join(self.env.docname, docname)
+            if url_re.match(ref) or ref == 'self':
+                toctree['entries'].append((title, ref))
+            elif docname not in self.env.found_docs:
+                if excluded(self.env.doc2path(docname, False)):
+                    message = __('toctree contains reference to excluded document %r')
+                    subtype = 'excluded'
+                else:
+                    message = __('toctree contains reference to nonexisting document %r')
+                    subtype = 'not_readable'
+                logger.warning(message, docname, type='toc', subtype=subtype, location=toctree)
+                self.env.note_reread()
+            else:
+                if docname in all_docnames:
+                    all_docnames.remove(docname)
+                else:
+                    logger.warning(__('duplicated entry found in toctree: %s'), docname, location=toctree)
+                toctree['entries'].append((title, docname))
+                toctree['includefiles'].append(docname)
+    if 'reversed' in self.options:
+        toctree['entries'] = list(reversed(toctree['entries']))
+        toctree['includefiles'] = list(reversed(toctree['includefiles']))
+    return ret","def process_toctree_entries(self, toctree: addnodes.toctree) -> List[Node]:
+    suffixes = self.config.source_suffix
+    all_docnames = self.env.found_docs.copy()
+    all_docnames.remove(self.env.docname)
+    ret: List[Node] = []
+    excluded = Matcher(self.config.exclude_patterns)
+    for entry in self.content:
+        if not entry:
+            continue
+        explicit = explicit_title_re.match(entry)
+        if toctree['glob'] and glob_re.match(entry) and (not explicit) and (not url_re.match(entry)):
+            patname = docname_join(self.env.docname, entry)
+            docnames = sorted(patfilter(all_docnames, patname))
+            for docname in docnames:
+                all_docnames.remove(docname)
+                toctree['entries'].append((None, docname))
+                toctree['includefiles'].append(docname)
+            if not docnames:
+                logger.warning(__(""toctree glob pattern %r didn't match any documents""), entry, location=toctree)
+        else:
+            if explicit:
+                ref = explicit.group(2)
+                title = explicit.group(1)
+                docname = ref
+            else:
+                ref = docname = entry
+                title = None
+            for suffix in suffixes:
+                if docname.endswith(suffix):
+                    docname = docname[:-len(suffix)]
+                    break
+            docname = docname_join(self.env.docname, docname)
+            if url_re.match(ref) or ref == 'self':
+                toctree['entries'].append((title, ref))
+            elif docname not in self.env.found_docs:
+                if excluded(self.env.doc2path(docname, False)):
+                    message = __('toctree contains reference to excluded document %r')
+                    subtype = 'excluded'
+                else:
+                    message = __('toctree contains reference to nonexisting document %r')
+                    subtype = 'not_readable'
+                logger.warning(message, docname, type='toc', subtype=subtype, location=toctree)
+                self.env.note_reread()
+            else:
+                if docname in all_docnames:
+                    all_docnames.remove(docname)
+                else:
+                    logger.warning(__('duplicated entry found in toctree: %s'), docname, location=toctree)
+                toctree['entries'].append((title, docname))
+                toctree['includefiles'].append(docname)
+    if 'reversed' in self.options:
+        toctree['entries'] = list(reversed(toctree['entries']))
+        toctree['includefiles'] = list(reversed(toctree['includefiles']))
+    return ret","[{""var"": ""docname"", ""rename"": ""document_identifier""}, {""var"": ""patname"", ""rename"": ""pattern_based_docname""}, {""var"": ""suffix"", ""rename"": ""document_suffix""}, {""var"": ""all_docnames"", ""rename"": ""remaining_docnames""}, {""var"": ""ret"", ""rename"": ""parsed_nodes_list""}, {""var"": ""message"", ""rename"": ""toctree_warning_message""}, {""var"": ""entry"", ""rename"": ""content_entry""}, {""var"": ""excluded"", ""rename"": ""document_exclusion_matcher""}, {""var"": ""suffixes"", ""rename"": ""document_suffixes""}, {""var"": ""ref"", ""rename"": ""reference_entry""}, {""var"": ""title"", ""rename"": ""documentTitle""}, {""var"": ""docnames"", ""rename"": ""filtered_docnames""}, {""var"": ""subtype"", ""rename"": ""document_reference_status""}, {""var"": ""explicit"", ""rename"": ""explicit_match""}]"
+./sphinx/environment/adapters/toctree.py,resolve,generate_toctree_bullet_list,41,259,"def resolve(self, docname: str, builder: 'Builder', toctree: addnodes.toctree, prune: bool=True, maxdepth: int=0, titles_only: bool=False, collapse: bool=False, includehidden: bool=False) -> Optional[Element]:
+    """"""Resolve a *toctree* node into individual bullet lists with titles
+        as items, returning None (if no containing titles are found) or
+        a new node.
+
+        If *prune* is True, the tree is pruned to *maxdepth*, or if that is 0,
+        to the value of the *maxdepth* option on the *toctree* node.
+        If *titles_only* is True, only toplevel document titles will be in the
+        resulting tree.
+        If *collapse* is True, all branches not containing docname will
+        be collapsed.
+        """"""
+    if toctree.get('hidden', False) and (not includehidden):
+        return None
+    toctree_ancestors = self.get_toctree_ancestors(docname)
+    included = Matcher(self.env.config.include_patterns)
+    excluded = Matcher(self.env.config.exclude_patterns)
+
+    def _toctree_add_classes(node: Element, depth: int) -> None:
+        """"""Add 'toctree-l%d' and 'current' classes to the toctree.""""""
+        for subnode in node.children:
+            if isinstance(subnode, (addnodes.compact_paragraph, nodes.list_item)):
+                subnode['classes'].append('toctree-l%d' % (depth - 1))
+                _toctree_add_classes(subnode, depth)
+            elif isinstance(subnode, nodes.bullet_list):
+                _toctree_add_classes(subnode, depth + 1)
+            elif isinstance(subnode, nodes.reference):
+                if subnode['refuri'] == docname:
+                    if not subnode['anchorname']:
+                        branchnode: Element = subnode
+                        while branchnode:
+                            branchnode['classes'].append('current')
+                            branchnode = branchnode.parent
+                    if subnode.parent.parent.get('iscurrent'):
+                        return
+                    while subnode:
+                        subnode['iscurrent'] = True
+                        subnode = subnode.parent
+
+    def _entries_from_toctree(toctreenode: addnodes.toctree, parents: List[str], separate: bool=False, subtree: bool=False) -> List[Element]:
+        """"""Return TOC entries for a toctree node.""""""
+        refs = [(e[0], e[1]) for e in toctreenode['entries']]
+        entries: List[Element] = []
+        for title, ref in refs:
+            try:
+                refdoc = None
+                if url_re.match(ref):
+                    if title is None:
+                        title = ref
+                    reference = nodes.reference('', '', *[nodes.Text(title)], internal=False, refuri=ref, anchorname='')
+                    para = addnodes.compact_paragraph('', '', reference)
+                    item = nodes.list_item('', para)
+                    toc = nodes.bullet_list('', item)
+                elif ref == 'self':
+                    ref = toctreenode['parent']
+                    if not title:
+                        title = clean_astext(self.env.titles[ref])
+                    reference = nodes.reference('', '', *[nodes.Text(title)], internal=True, refuri=ref, anchorname='')
+                    para = addnodes.compact_paragraph('', '', reference)
+                    item = nodes.list_item('', para)
+                    toc = nodes.bullet_list('', item)
+                else:
+                    if ref in parents:
+                        logger.warning(__('circular toctree references detected, ignoring: %s <- %s'), ref, ' <- '.join(parents), location=ref, type='toc', subtype='circular')
+                        continue
+                    refdoc = ref
+                    toc = self.env.tocs[ref].deepcopy()
+                    maxdepth = self.env.metadata[ref].get('tocdepth', 0)
+                    if ref not in toctree_ancestors or (prune and maxdepth > 0):
+                        self._toctree_prune(toc, 2, maxdepth, collapse)
+                    process_only_nodes(toc, builder.tags)
+                    if title and toc.children and (len(toc.children) == 1):
+                        child = toc.children[0]
+                        for refnode in child.findall(nodes.reference):
+                            if refnode['refuri'] == ref and (not refnode['anchorname']):
+                                refnode.children = [nodes.Text(title)]
+                if not toc.children:
+                    logger.warning(__(""toctree contains reference to document %r that doesn't have a title: no link will be generated""), ref, location=toctreenode)
+            except KeyError:
+                if excluded(self.env.doc2path(ref, False)):
+                    message = __('toctree contains reference to excluded document %r')
+                elif not included(self.env.doc2path(ref, False)):
+                    message = __('toctree contains reference to non-included document %r')
+                else:
+                    message = __('toctree contains reference to nonexisting document %r')
+                logger.warning(message, ref, location=toctreenode)
+            else:
+                if titles_only:
+                    children = cast(Iterable[nodes.Element], toc)
+                    for toplevel in children:
+                        if len(toplevel) > 1:
+                            subtrees = list(toplevel.findall(addnodes.toctree))
+                            if subtrees:
+                                toplevel[1][:] = subtrees
+                            else:
+                                toplevel.pop(1)
+                for subtocnode in list(toc.findall(addnodes.toctree)):
+                    if not (subtocnode.get('hidden', False) and (not includehidden)):
+                        i = subtocnode.parent.index(subtocnode) + 1
+                        for entry in _entries_from_toctree(subtocnode, [refdoc] + parents, subtree=True):
+                            subtocnode.parent.insert(i, entry)
+                            i += 1
+                        subtocnode.parent.remove(subtocnode)
+                if separate:
+                    entries.append(toc)
+                else:
+                    children = cast(Iterable[nodes.Element], toc)
+                    entries.extend(children)
+        if not subtree and (not separate):
+            ret = nodes.bullet_list()
+            ret += entries
+            return [ret]
+        return entries
+    maxdepth = maxdepth or toctree.get('maxdepth', -1)
+    if not titles_only and toctree.get('titlesonly', False):
+        titles_only = True
+    if not includehidden and toctree.get('includehidden', False):
+        includehidden = True
+    tocentries = _entries_from_toctree(toctree, [], separate=False)
+    if not tocentries:
+        return None
+    newnode = addnodes.compact_paragraph('', '')
+    caption = toctree.attributes.get('caption')
+    if caption:
+        caption_node = nodes.title(caption, '', *[nodes.Text(caption)])
+        caption_node.line = toctree.line
+        caption_node.source = toctree.source
+        caption_node.rawsource = toctree['rawcaption']
+        if hasattr(toctree, 'uid'):
+            caption_node.uid = toctree.uid
+            del toctree.uid
+        newnode += caption_node
+    newnode.extend(tocentries)
+    newnode['toctree'] = True
+    _toctree_add_classes(newnode, 1)
+    self._toctree_prune(newnode, 1, maxdepth if prune else 0, collapse)
+    if isinstance(newnode[-1], nodes.Element) and len(newnode[-1]) == 0:
+        return None
+    for refnode in newnode.findall(nodes.reference):
+        if not url_re.match(refnode['refuri']):
+            refnode['refuri'] = builder.get_relative_uri(docname, refnode['refuri']) + refnode['anchorname']
+    return newnode","def generate_toctree_bullet_list(self, docname: str, builder: 'Builder', toctree: addnodes.toctree, prune: bool=True, maxdepth: int=0, titles_only: bool=False, collapse: bool=False, includehidden: bool=False) -> Optional[Element]:
+    """"""Resolve a *toctree* node into individual bullet lists with titles
+        as items, returning None (if no containing titles are found) or
+        a new node.
+
+        If *prune* is True, the tree is pruned to *maxdepth*, or if that is 0,
+        to the value of the *maxdepth* option on the *toctree* node.
+        If *titles_only* is True, only toplevel document titles will be in the
+        resulting tree.
+        If *collapse* is True, all branches not containing docname will
+        be collapsed.
+        """"""
+    if toctree.get('hidden', False) and (not includehidden):
+        return None
+    toctree_ancestors = self.get_toctree_ancestors(docname)
+    included = Matcher(self.env.config.include_patterns)
+    excluded = Matcher(self.env.config.exclude_patterns)
+
+    def _toctree_add_classes(node: Element, depth: int) -> None:
+        """"""Add 'toctree-l%d' and 'current' classes to the toctree.""""""
+        for subnode in node.children:
+            if isinstance(subnode, (addnodes.compact_paragraph, nodes.list_item)):
+                subnode['classes'].append('toctree-l%d' % (depth - 1))
+                _toctree_add_classes(subnode, depth)
+            elif isinstance(subnode, nodes.bullet_list):
+                _toctree_add_classes(subnode, depth + 1)
+            elif isinstance(subnode, nodes.reference):
+                if subnode['refuri'] == docname:
+                    if not subnode['anchorname']:
+                        branchnode: Element = subnode
+                        while branchnode:
+                            branchnode['classes'].append('current')
+                            branchnode = branchnode.parent
+                    if subnode.parent.parent.get('iscurrent'):
+                        return
+                    while subnode:
+                        subnode['iscurrent'] = True
+                        subnode = subnode.parent
+
+    def _entries_from_toctree(toctreenode: addnodes.toctree, parents: List[str], separate: bool=False, subtree: bool=False) -> List[Element]:
+        """"""Return TOC entries for a toctree node.""""""
+        refs = [(e[0], e[1]) for e in toctreenode['entries']]
+        entries: List[Element] = []
+        for title, ref in refs:
+            try:
+                refdoc = None
+                if url_re.match(ref):
+                    if title is None:
+                        title = ref
+                    reference = nodes.reference('', '', *[nodes.Text(title)], internal=False, refuri=ref, anchorname='')
+                    para = addnodes.compact_paragraph('', '', reference)
+                    item = nodes.list_item('', para)
+                    toc = nodes.bullet_list('', item)
+                elif ref == 'self':
+                    ref = toctreenode['parent']
+                    if not title:
+                        title = clean_astext(self.env.titles[ref])
+                    reference = nodes.reference('', '', *[nodes.Text(title)], internal=True, refuri=ref, anchorname='')
+                    para = addnodes.compact_paragraph('', '', reference)
+                    item = nodes.list_item('', para)
+                    toc = nodes.bullet_list('', item)
+                else:
+                    if ref in parents:
+                        logger.warning(__('circular toctree references detected, ignoring: %s <- %s'), ref, ' <- '.join(parents), location=ref, type='toc', subtype='circular')
+                        continue
+                    refdoc = ref
+                    toc = self.env.tocs[ref].deepcopy()
+                    maxdepth = self.env.metadata[ref].get('tocdepth', 0)
+                    if ref not in toctree_ancestors or (prune and maxdepth > 0):
+                        self._toctree_prune(toc, 2, maxdepth, collapse)
+                    process_only_nodes(toc, builder.tags)
+                    if title and toc.children and (len(toc.children) == 1):
+                        child = toc.children[0]
+                        for refnode in child.findall(nodes.reference):
+                            if refnode['refuri'] == ref and (not refnode['anchorname']):
+                                refnode.children = [nodes.Text(title)]
+                if not toc.children:
+                    logger.warning(__(""toctree contains reference to document %r that doesn't have a title: no link will be generated""), ref, location=toctreenode)
+            except KeyError:
+                if excluded(self.env.doc2path(ref, False)):
+                    message = __('toctree contains reference to excluded document %r')
+                elif not included(self.env.doc2path(ref, False)):
+                    message = __('toctree contains reference to non-included document %r')
+                else:
+                    message = __('toctree contains reference to nonexisting document %r')
+                logger.warning(message, ref, location=toctreenode)
+            else:
+                if titles_only:
+                    children = cast(Iterable[nodes.Element], toc)
+                    for toplevel in children:
+                        if len(toplevel) > 1:
+                            subtrees = list(toplevel.findall(addnodes.toctree))
+                            if subtrees:
+                                toplevel[1][:] = subtrees
+                            else:
+                                toplevel.pop(1)
+                for subtocnode in list(toc.findall(addnodes.toctree)):
+                    if not (subtocnode.get('hidden', False) and (not includehidden)):
+                        i = subtocnode.parent.index(subtocnode) + 1
+                        for entry in _entries_from_toctree(subtocnode, [refdoc] + parents, subtree=True):
+                            subtocnode.parent.insert(i, entry)
+                            i += 1
+                        subtocnode.parent.remove(subtocnode)
+                if separate:
+                    entries.append(toc)
+                else:
+                    children = cast(Iterable[nodes.Element], toc)
+                    entries.extend(children)
+        if not subtree and (not separate):
+            ret = nodes.bullet_list()
+            ret += entries
+            return [ret]
+        return entries
+    maxdepth = maxdepth or toctree.get('maxdepth', -1)
+    if not titles_only and toctree.get('titlesonly', False):
+        titles_only = True
+    if not includehidden and toctree.get('includehidden', False):
+        includehidden = True
+    tocentries = _entries_from_toctree(toctree, [], separate=False)
+    if not tocentries:
+        return None
+    newnode = addnodes.compact_paragraph('', '')
+    caption = toctree.attributes.get('caption')
+    if caption:
+        caption_node = nodes.title(caption, '', *[nodes.Text(caption)])
+        caption_node.line = toctree.line
+        caption_node.source = toctree.source
+        caption_node.rawsource = toctree['rawcaption']
+        if hasattr(toctree, 'uid'):
+            caption_node.uid = toctree.uid
+            del toctree.uid
+        newnode += caption_node
+    newnode.extend(tocentries)
+    newnode['toctree'] = True
+    _toctree_add_classes(newnode, 1)
+    self._toctree_prune(newnode, 1, maxdepth if prune else 0, collapse)
+    if isinstance(newnode[-1], nodes.Element) and len(newnode[-1]) == 0:
+        return None
+    for refnode in newnode.findall(nodes.reference):
+        if not url_re.match(refnode['refuri']):
+            refnode['refuri'] = builder.get_relative_uri(docname, refnode['refuri']) + refnode['anchorname']
+    return newnode","[{""var"": ""reference"", ""rename"": ""hyperlink_reference""}, {""var"": ""para"", ""rename"": ""paragraph_node""}, {""var"": ""message"", ""rename"": ""reference_warning_message""}, {""var"": ""i"", ""rename"": ""currentIndexInParent""}, {""var"": ""item"", ""rename"": ""toc_list_item""}, {""var"": ""excluded"", ""rename"": ""excluded_patterns_matcher""}, {""var"": ""refdoc"", ""rename"": ""referenced_document""}, {""var"": ""subnode"", ""rename"": ""toc_tree_child_node""}, {""var"": ""newnode"", ""rename"": ""resolved_toc_node""}, {""var"": ""ref"", ""rename"": ""referenceTarget""}, {""var"": ""child"", ""rename"": ""first_toc_section""}, {""var"": ""toctree_ancestors"", ""rename"": ""document_ancestor_paths""}, {""var"": ""entries"", ""rename"": ""resolved_toc_entries""}, {""var"": ""entry"", ""rename"": ""tocEntry""}, {""var"": ""refnode"", ""rename"": ""referenceNode""}, {""var"": ""title"", ""rename"": ""document_title""}, {""var"": ""branchnode"", ""rename"": ""current_branch_node""}, {""var"": ""children"", ""rename"": ""tocChildrenElements""}, {""var"": ""ret"", ""rename"": ""resolved_toc_bullet_list""}, {""var"": ""toplevel"", ""rename"": ""primary_level_title""}, {""var"": ""subtrees"", ""rename"": ""nestedToctreeNodes""}, {""var"": ""tocentries"", ""rename"": ""toc_entries_list""}, {""var"": ""caption_node"", ""rename"": ""table_of_contents_caption""}, {""var"": ""e"", ""rename"": ""toc_entry""}, {""var"": ""caption"", ""rename"": ""toctree_caption_text""}, {""var"": ""refs"", ""rename"": ""toctree_references""}, {""var"": ""included"", ""rename"": ""includeMatcher""}, {""var"": ""subtocnode"", ""rename"": ""sub_toctree_node""}, {""var"": ""toc"", ""rename"": ""table_of_contents""}]"
+./sphinx/environment/adapters/toctree.py,_entries_from_toctree,generate_toc_entries_from_node,110,216,"def _entries_from_toctree(toctreenode: addnodes.toctree, parents: List[str], separate: bool=False, subtree: bool=False) -> List[Element]:
+    """"""Return TOC entries for a toctree node.""""""
+    refs = [(e[0], e[1]) for e in toctreenode['entries']]
+    entries: List[Element] = []
+    for title, ref in refs:
+        try:
+            refdoc = None
+            if url_re.match(ref):
+                if title is None:
+                    title = ref
+                reference = nodes.reference('', '', *[nodes.Text(title)], internal=False, refuri=ref, anchorname='')
+                para = addnodes.compact_paragraph('', '', reference)
+                item = nodes.list_item('', para)
+                toc = nodes.bullet_list('', item)
+            elif ref == 'self':
+                ref = toctreenode['parent']
+                if not title:
+                    title = clean_astext(self.env.titles[ref])
+                reference = nodes.reference('', '', *[nodes.Text(title)], internal=True, refuri=ref, anchorname='')
+                para = addnodes.compact_paragraph('', '', reference)
+                item = nodes.list_item('', para)
+                toc = nodes.bullet_list('', item)
+            else:
+                if ref in parents:
+                    logger.warning(__('circular toctree references detected, ignoring: %s <- %s'), ref, ' <- '.join(parents), location=ref, type='toc', subtype='circular')
+                    continue
+                refdoc = ref
+                toc = self.env.tocs[ref].deepcopy()
+                maxdepth = self.env.metadata[ref].get('tocdepth', 0)
+                if ref not in toctree_ancestors or (prune and maxdepth > 0):
+                    self._toctree_prune(toc, 2, maxdepth, collapse)
+                process_only_nodes(toc, builder.tags)
+                if title and toc.children and (len(toc.children) == 1):
+                    child = toc.children[0]
+                    for refnode in child.findall(nodes.reference):
+                        if refnode['refuri'] == ref and (not refnode['anchorname']):
+                            refnode.children = [nodes.Text(title)]
+            if not toc.children:
+                logger.warning(__(""toctree contains reference to document %r that doesn't have a title: no link will be generated""), ref, location=toctreenode)
+        except KeyError:
+            if excluded(self.env.doc2path(ref, False)):
+                message = __('toctree contains reference to excluded document %r')
+            elif not included(self.env.doc2path(ref, False)):
+                message = __('toctree contains reference to non-included document %r')
+            else:
+                message = __('toctree contains reference to nonexisting document %r')
+            logger.warning(message, ref, location=toctreenode)
+        else:
+            if titles_only:
+                children = cast(Iterable[nodes.Element], toc)
+                for toplevel in children:
+                    if len(toplevel) > 1:
+                        subtrees = list(toplevel.findall(addnodes.toctree))
+                        if subtrees:
+                            toplevel[1][:] = subtrees
+                        else:
+                            toplevel.pop(1)
+            for subtocnode in list(toc.findall(addnodes.toctree)):
+                if not (subtocnode.get('hidden', False) and (not includehidden)):
+                    i = subtocnode.parent.index(subtocnode) + 1
+                    for entry in _entries_from_toctree(subtocnode, [refdoc] + parents, subtree=True):
+                        subtocnode.parent.insert(i, entry)
+                        i += 1
+                    subtocnode.parent.remove(subtocnode)
+            if separate:
+                entries.append(toc)
+            else:
+                children = cast(Iterable[nodes.Element], toc)
+                entries.extend(children)
+    if not subtree and (not separate):
+        ret = nodes.bullet_list()
+        ret += entries
+        return [ret]
+    return entries","def generate_toc_entries_from_node(toctreenode: addnodes.toctree, parents: List[str], separate: bool=False, subtree: bool=False) -> List[Element]:
+    """"""Return TOC entries for a toctree node.""""""
+    refs = [(e[0], e[1]) for e in toctreenode['entries']]
+    entries: List[Element] = []
+    for title, ref in refs:
+        try:
+            refdoc = None
+            if url_re.match(ref):
+                if title is None:
+                    title = ref
+                reference = nodes.reference('', '', *[nodes.Text(title)], internal=False, refuri=ref, anchorname='')
+                para = addnodes.compact_paragraph('', '', reference)
+                item = nodes.list_item('', para)
+                toc = nodes.bullet_list('', item)
+            elif ref == 'self':
+                ref = toctreenode['parent']
+                if not title:
+                    title = clean_astext(self.env.titles[ref])
+                reference = nodes.reference('', '', *[nodes.Text(title)], internal=True, refuri=ref, anchorname='')
+                para = addnodes.compact_paragraph('', '', reference)
+                item = nodes.list_item('', para)
+                toc = nodes.bullet_list('', item)
+            else:
+                if ref in parents:
+                    logger.warning(__('circular toctree references detected, ignoring: %s <- %s'), ref, ' <- '.join(parents), location=ref, type='toc', subtype='circular')
+                    continue
+                refdoc = ref
+                toc = self.env.tocs[ref].deepcopy()
+                maxdepth = self.env.metadata[ref].get('tocdepth', 0)
+                if ref not in toctree_ancestors or (prune and maxdepth > 0):
+                    self._toctree_prune(toc, 2, maxdepth, collapse)
+                process_only_nodes(toc, builder.tags)
+                if title and toc.children and (len(toc.children) == 1):
+                    child = toc.children[0]
+                    for refnode in child.findall(nodes.reference):
+                        if refnode['refuri'] == ref and (not refnode['anchorname']):
+                            refnode.children = [nodes.Text(title)]
+            if not toc.children:
+                logger.warning(__(""toctree contains reference to document %r that doesn't have a title: no link will be generated""), ref, location=toctreenode)
+        except KeyError:
+            if excluded(self.env.doc2path(ref, False)):
+                message = __('toctree contains reference to excluded document %r')
+            elif not included(self.env.doc2path(ref, False)):
+                message = __('toctree contains reference to non-included document %r')
+            else:
+                message = __('toctree contains reference to nonexisting document %r')
+            logger.warning(message, ref, location=toctreenode)
+        else:
+            if titles_only:
+                children = cast(Iterable[nodes.Element], toc)
+                for toplevel in children:
+                    if len(toplevel) > 1:
+                        subtrees = list(toplevel.findall(addnodes.toctree))
+                        if subtrees:
+                            toplevel[1][:] = subtrees
+                        else:
+                            toplevel.pop(1)
+            for subtocnode in list(toc.findall(addnodes.toctree)):
+                if not (subtocnode.get('hidden', False) and (not includehidden)):
+                    i = subtocnode.parent.index(subtocnode) + 1
+                    for entry in _entries_from_toctree(subtocnode, [refdoc] + parents, subtree=True):
+                        subtocnode.parent.insert(i, entry)
+                        i += 1
+                    subtocnode.parent.remove(subtocnode)
+            if separate:
+                entries.append(toc)
+            else:
+                children = cast(Iterable[nodes.Element], toc)
+                entries.extend(children)
+    if not subtree and (not separate):
+        ret = nodes.bullet_list()
+        ret += entries
+        return [ret]
+    return entries","[{""var"": ""reference"", ""rename"": ""hyperlink_reference_node""}, {""var"": ""para"", ""rename"": ""toc_paragraph_reference""}, {""var"": ""message"", ""rename"": ""toctree_warning_message""}, {""var"": ""i"", ""rename"": ""insertion_index""}, {""var"": ""item"", ""rename"": ""toc_list_item""}, {""var"": ""refdoc"", ""rename"": ""reference_document_path""}, {""var"": ""ref"", ""rename"": ""reference_target""}, {""var"": ""child"", ""rename"": ""toc_first_child""}, {""var"": ""maxdepth"", ""rename"": ""max_toc_depth""}, {""var"": ""entries"", ""rename"": ""toc_entries_list""}, {""var"": ""entry"", ""rename"": ""toc_entry""}, {""var"": ""refnode"", ""rename"": ""reference_node""}, {""var"": ""title"", ""rename"": ""title_reference""}, {""var"": ""children"", ""rename"": ""toc_children_elements""}, {""var"": ""ret"", ""rename"": ""toc_entries_list""}, {""var"": ""toplevel"", ""rename"": ""primary_toc_entry""}, {""var"": ""subtrees"", ""rename"": ""nested_toc_nodes""}, {""var"": ""e"", ""rename"": ""toc_entry""}, {""var"": ""refs"", ""rename"": ""toc_entry_references""}, {""var"": ""subtocnode"", ""rename"": ""subtree_toc_node""}, {""var"": ""toc"", ""rename"": ""toc_structure""}]"
+./sphinx/environment/collectors/toctree.py,assign_figure_numbers,assign_and_track_figure_numbers_in_toc,202,283,"def assign_figure_numbers(self, env: BuildEnvironment) -> List[str]:
+    """"""Assign a figure number to each figure under a numbered toctree.""""""
+    rewrite_needed = []
+    assigned: Set[str] = set()
+    old_fignumbers = env.toc_fignumbers
+    env.toc_fignumbers = {}
+    fignum_counter: Dict[str, Dict[Tuple[int, ...], int]] = {}
+
+    def get_figtype(node: Node) -> Optional[str]:
+        for domain in env.domains.values():
+            figtype = domain.get_enumerable_node_type(node)
+            if domain.name == 'std' and (not domain.get_numfig_title(node)):
+                continue
+            if figtype:
+                return figtype
+        return None
+
+    def get_section_number(docname: str, section: nodes.section) -> Tuple[int, ...]:
+        anchorname = '#' + section['ids'][0]
+        secnumbers = env.toc_secnumbers.get(docname, {})
+        if anchorname in secnumbers:
+            secnum = secnumbers.get(anchorname)
+        else:
+            secnum = secnumbers.get('')
+        return secnum or ()
+
+    def get_next_fignumber(figtype: str, secnum: Tuple[int, ...]) -> Tuple[int, ...]:
+        counter = fignum_counter.setdefault(figtype, {})
+        secnum = secnum[:env.config.numfig_secnum_depth]
+        counter[secnum] = counter.get(secnum, 0) + 1
+        return secnum + (counter[secnum],)
+
+    def register_fignumber(docname: str, secnum: Tuple[int, ...], figtype: str, fignode: Element) -> None:
+        env.toc_fignumbers.setdefault(docname, {})
+        fignumbers = env.toc_fignumbers[docname].setdefault(figtype, {})
+        figure_id = fignode['ids'][0]
+        fignumbers[figure_id] = get_next_fignumber(figtype, secnum)
+
+    def _walk_doctree(docname: str, doctree: Element, secnum: Tuple[int, ...]) -> None:
+        for subnode in doctree.children:
+            if isinstance(subnode, nodes.section):
+                next_secnum = get_section_number(docname, subnode)
+                if next_secnum:
+                    _walk_doctree(docname, subnode, next_secnum)
+                else:
+                    _walk_doctree(docname, subnode, secnum)
+            elif isinstance(subnode, addnodes.toctree):
+                for _title, subdocname in subnode['entries']:
+                    if url_re.match(subdocname) or subdocname == 'self':
+                        continue
+                    _walk_doc(subdocname, secnum)
+            elif isinstance(subnode, nodes.Element):
+                figtype = get_figtype(subnode)
+                if figtype and subnode['ids']:
+                    register_fignumber(docname, secnum, figtype, subnode)
+                _walk_doctree(docname, subnode, secnum)
+
+    def _walk_doc(docname: str, secnum: Tuple[int, ...]) -> None:
+        if docname not in assigned:
+            assigned.add(docname)
+            doctree = env.get_doctree(docname)
+            _walk_doctree(docname, doctree, secnum)
+    if env.config.numfig:
+        _walk_doc(env.config.root_doc, ())
+        for docname, fignums in env.toc_fignumbers.items():
+            if fignums != old_fignumbers.get(docname):
+                rewrite_needed.append(docname)
+    return rewrite_needed","def assign_and_track_figure_numbers_in_toc(self, env: BuildEnvironment) -> List[str]:
+    """"""Assign a figure number to each figure under a numbered toctree.""""""
+    rewrite_needed = []
+    assigned: Set[str] = set()
+    old_fignumbers = env.toc_fignumbers
+    env.toc_fignumbers = {}
+    fignum_counter: Dict[str, Dict[Tuple[int, ...], int]] = {}
+
+    def get_figtype(node: Node) -> Optional[str]:
+        for domain in env.domains.values():
+            figtype = domain.get_enumerable_node_type(node)
+            if domain.name == 'std' and (not domain.get_numfig_title(node)):
+                continue
+            if figtype:
+                return figtype
+        return None
+
+    def get_section_number(docname: str, section: nodes.section) -> Tuple[int, ...]:
+        anchorname = '#' + section['ids'][0]
+        secnumbers = env.toc_secnumbers.get(docname, {})
+        if anchorname in secnumbers:
+            secnum = secnumbers.get(anchorname)
+        else:
+            secnum = secnumbers.get('')
+        return secnum or ()
+
+    def get_next_fignumber(figtype: str, secnum: Tuple[int, ...]) -> Tuple[int, ...]:
+        counter = fignum_counter.setdefault(figtype, {})
+        secnum = secnum[:env.config.numfig_secnum_depth]
+        counter[secnum] = counter.get(secnum, 0) + 1
+        return secnum + (counter[secnum],)
+
+    def register_fignumber(docname: str, secnum: Tuple[int, ...], figtype: str, fignode: Element) -> None:
+        env.toc_fignumbers.setdefault(docname, {})
+        fignumbers = env.toc_fignumbers[docname].setdefault(figtype, {})
+        figure_id = fignode['ids'][0]
+        fignumbers[figure_id] = get_next_fignumber(figtype, secnum)
+
+    def _walk_doctree(docname: str, doctree: Element, secnum: Tuple[int, ...]) -> None:
+        for subnode in doctree.children:
+            if isinstance(subnode, nodes.section):
+                next_secnum = get_section_number(docname, subnode)
+                if next_secnum:
+                    _walk_doctree(docname, subnode, next_secnum)
+                else:
+                    _walk_doctree(docname, subnode, secnum)
+            elif isinstance(subnode, addnodes.toctree):
+                for _title, subdocname in subnode['entries']:
+                    if url_re.match(subdocname) or subdocname == 'self':
+                        continue
+                    _walk_doc(subdocname, secnum)
+            elif isinstance(subnode, nodes.Element):
+                figtype = get_figtype(subnode)
+                if figtype and subnode['ids']:
+                    register_fignumber(docname, secnum, figtype, subnode)
+                _walk_doctree(docname, subnode, secnum)
+
+    def _walk_doc(docname: str, secnum: Tuple[int, ...]) -> None:
+        if docname not in assigned:
+            assigned.add(docname)
+            doctree = env.get_doctree(docname)
+            _walk_doctree(docname, doctree, secnum)
+    if env.config.numfig:
+        _walk_doc(env.config.root_doc, ())
+        for docname, fignums in env.toc_fignumbers.items():
+            if fignums != old_fignumbers.get(docname):
+                rewrite_needed.append(docname)
+    return rewrite_needed","[{""var"": ""figure_id"", ""rename"": ""figure_identifier""}, {""var"": ""_title"", ""rename"": ""toctree_entry_title""}, {""var"": ""counter"", ""rename"": ""figure_number_tracker""}, {""var"": ""fignums"", ""rename"": ""figure_number_records""}, {""var"": ""secnum"", ""rename"": ""section_number""}, {""var"": ""subdocname"", ""rename"": ""subdocument_name""}, {""var"": ""assigned"", ""rename"": ""figure_assignment_tracker""}, {""var"": ""secnumbers"", ""rename"": ""section_numbers_map""}, {""var"": ""fignumbers"", ""rename"": ""figureNumberAssignments""}, {""var"": ""domain"", ""rename"": ""The context of the variable usage suggests that it represents the various domains in the environment, specifically within the `get_figtype` function where it iterates over `env.domains`. To provide more clarity, the variable name can be modified to better reflect""}, {""var"": ""figtype"", ""rename"": ""figure_type""}, {""var"": ""rewrite_needed"", ""rename"": ""documents_requiring_rewrite""}, {""var"": ""old_fignumbers"", ""rename"": ""previous_fig_numbers""}, {""var"": ""subnode"", ""rename"": ""child_node""}, {""var"": ""anchorname"", ""rename"": ""section_anchor_id""}, {""var"": ""fignum_counter"", ""rename"": ""figure_number_by_type_and_section""}, {""var"": ""next_secnum"", ""rename"": ""current_section_number""}]"
+./sphinx/environment/collectors/toctree.py,_walk_doctree,traverse_and_process_doctree,249,269,"def _walk_doctree(docname: str, doctree: Element, secnum: Tuple[int, ...]) -> None:
+    for subnode in doctree.children:
+        if isinstance(subnode, nodes.section):
+            next_secnum = get_section_number(docname, subnode)
+            if next_secnum:
+                _walk_doctree(docname, subnode, next_secnum)
+            else:
+                _walk_doctree(docname, subnode, secnum)
+        elif isinstance(subnode, addnodes.toctree):
+            for _title, subdocname in subnode['entries']:
+                if url_re.match(subdocname) or subdocname == 'self':
+                    continue
+                _walk_doc(subdocname, secnum)
+        elif isinstance(subnode, nodes.Element):
+            figtype = get_figtype(subnode)
+            if figtype and subnode['ids']:
+                register_fignumber(docname, secnum, figtype, subnode)
+            _walk_doctree(docname, subnode, secnum)","def traverse_and_process_doctree(docname: str, doctree: Element, secnum: Tuple[int, ...]) -> None:
+    for subnode in doctree.children:
+        if isinstance(subnode, nodes.section):
+            next_secnum = get_section_number(docname, subnode)
+            if next_secnum:
+                _walk_doctree(docname, subnode, next_secnum)
+            else:
+                _walk_doctree(docname, subnode, secnum)
+        elif isinstance(subnode, addnodes.toctree):
+            for _title, subdocname in subnode['entries']:
+                if url_re.match(subdocname) or subdocname == 'self':
+                    continue
+                _walk_doc(subdocname, secnum)
+        elif isinstance(subnode, nodes.Element):
+            figtype = get_figtype(subnode)
+            if figtype and subnode['ids']:
+                register_fignumber(docname, secnum, figtype, subnode)
+            _walk_doctree(docname, subnode, secnum)","[{""var"": ""_title"", ""rename"": ""section_title""}, {""var"": ""subdocname"", ""rename"": ""subdocument_name""}, {""var"": ""figtype"", ""rename"": ""figure_type""}, {""var"": ""subnode"", ""rename"": ""current_node""}, {""var"": ""next_secnum"", ""rename"": ""upcoming_section_number""}]"

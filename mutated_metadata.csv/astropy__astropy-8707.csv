@@ -1,0 +1,280 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./astropy/io/fits/card.py,fromstring,construct_card_from_string,548,559,"@classmethod
+def fromstring(cls, image):
+    """"""
+        Construct a `Card` object from a (raw) string. It will pad the string
+        if it is not the length of a card image (80 columns).  If the card
+        image is longer than 80 columns, assume it contains ``CONTINUE``
+        card(s).
+        """"""
+    card = cls()
+    card._image = _pad(image)
+    card._verified = False
+    return card","@classmethod
+def construct_card_from_string(cls, image):
+    """"""
+        Construct a `Card` object from a (raw) string. It will pad the string
+        if it is not the length of a card image (80 columns).  If the card
+        image is longer than 80 columns, assume it contains ``CONTINUE``
+        card(s).
+        """"""
+    card = cls()
+    card._image = _pad(image)
+    card._verified = False
+    return card","[{""var"": ""card"", ""rename"": ""formatted_card""}]"
+./astropy/io/fits/card.py,normalize_keyword,convert_keyword_to_upper_preserving_field_specifier,562,593,"@classmethod
+def normalize_keyword(cls, keyword):
+    """"""
+        `classmethod` to convert a keyword value that may contain a
+        field-specifier to uppercase.  The effect is to raise the key to
+        uppercase and leave the field specifier in its original case.
+
+        Parameters
+        ----------
+        keyword : or str
+            A keyword value or a ``keyword.field-specifier`` value
+        """"""
+    if len(keyword) <= KEYWORD_LENGTH and cls._keywd_FSC_RE.match(keyword):
+        return keyword
+    match = cls._rvkc_keyword_name_RE.match(keyword)
+    if match:
+        return '.'.join((match.group('keyword').strip().upper(), match.group('field_specifier')))
+    elif len(keyword) > 9 and keyword[:9].upper() == 'HIERARCH ':
+        return keyword[9:].strip().upper()
+    else:
+        return keyword.strip().upper()","@classmethod
+def convert_keyword_to_upper_preserving_field_specifier(cls, keyword):
+    """"""
+        `classmethod` to convert a keyword value that may contain a
+        field-specifier to uppercase.  The effect is to raise the key to
+        uppercase and leave the field specifier in its original case.
+
+        Parameters
+        ----------
+        keyword : or str
+            A keyword value or a ``keyword.field-specifier`` value
+        """"""
+    if len(keyword) <= KEYWORD_LENGTH and cls._keywd_FSC_RE.match(keyword):
+        return keyword
+    match = cls._rvkc_keyword_name_RE.match(keyword)
+    if match:
+        return '.'.join((match.group('keyword').strip().upper(), match.group('field_specifier')))
+    elif len(keyword) > 9 and keyword[:9].upper() == 'HIERARCH ':
+        return keyword[9:].strip().upper()
+    else:
+        return keyword.strip().upper()","[{""var"": ""match"", ""rename"": ""matched_keyword_parts""}]"
+./astropy/io/fits/header.py,fromstring,create_header_from_bytestring,330,397,"@classmethod
+def fromstring(cls, data, sep=''):
+    """"""
+        Creates an HDU header from a byte string containing the entire header
+        data.
+
+        Parameters
+        ----------
+        data : str
+           String containing the entire header.
+
+        sep : str, optional
+            The string separating cards from each other, such as a newline.  By
+            default there is no card separator (as is the case in a raw FITS
+            file).
+
+        Returns
+        -------
+        header
+            A new `Header` instance.
+        """"""
+    cards = []
+    require_full_cardlength = set(sep).issubset(VALID_HEADER_CHARS)
+    idx = 0
+    image = []
+    while idx < len(data):
+        if require_full_cardlength:
+            end_idx = idx + Card.length
+        else:
+            try:
+                end_idx = data.index(sep, idx)
+            except ValueError:
+                end_idx = len(data)
+        next_image = data[idx:end_idx]
+        idx = end_idx + len(sep)
+        if image:
+            if next_image[:8] == 'CONTINUE':
+                image.append(next_image)
+                continue
+            cards.append(Card.fromstring(''.join(image)))
+        if require_full_cardlength:
+            if next_image == END_CARD:
+                image = []
+                break
+        elif next_image.split(sep)[0].rstrip() == 'END':
+            image = []
+            break
+        image = [next_image]
+    if image:
+        cards.append(Card.fromstring(''.join(image)))
+    return cls._fromcards(cards)","@classmethod
+def create_header_from_bytestring(cls, data, sep=''):
+    """"""
+        Creates an HDU header from a byte string containing the entire header
+        data.
+
+        Parameters
+        ----------
+        data : str
+           String containing the entire header.
+
+        sep : str, optional
+            The string separating cards from each other, such as a newline.  By
+            default there is no card separator (as is the case in a raw FITS
+            file).
+
+        Returns
+        -------
+        header
+            A new `Header` instance.
+        """"""
+    cards = []
+    require_full_cardlength = set(sep).issubset(VALID_HEADER_CHARS)
+    idx = 0
+    image = []
+    while idx < len(data):
+        if require_full_cardlength:
+            end_idx = idx + Card.length
+        else:
+            try:
+                end_idx = data.index(sep, idx)
+            except ValueError:
+                end_idx = len(data)
+        next_image = data[idx:end_idx]
+        idx = end_idx + len(sep)
+        if image:
+            if next_image[:8] == 'CONTINUE':
+                image.append(next_image)
+                continue
+            cards.append(Card.fromstring(''.join(image)))
+        if require_full_cardlength:
+            if next_image == END_CARD:
+                image = []
+                break
+        elif next_image.split(sep)[0].rstrip() == 'END':
+            image = []
+            break
+        image = [next_image]
+    if image:
+        cards.append(Card.fromstring(''.join(image)))
+    return cls._fromcards(cards)","[{""var"": ""cards"", ""rename"": ""header_card_list""}, {""var"": ""next_image"", ""rename"": ""current_header_segment""}, {""var"": ""image"", ""rename"": ""header_fragment_buffer""}, {""var"": ""require_full_cardlength"", ""rename"": ""is_separator_in_valid_chars""}, {""var"": ""idx"", ""rename"": ""current_position_index""}, {""var"": ""end_idx"", ""rename"": ""card_end_position""}]"
+./astropy/io/fits/header.py,fromfile,create_header_from_file,400,457,"@classmethod
+def fromfile(cls, fileobj, sep='', endcard=True, padding=True):
+    """"""
+        Similar to :meth:`Header.fromstring`, but reads the header string from
+        a given file-like object or filename.
+
+        Parameters
+        ----------
+        fileobj : str, file-like
+            A filename or an open file-like object from which a FITS header is
+            to be read.  For open file handles the file pointer must be at the
+            beginning of the header.
+
+        sep : str, optional
+            The string separating cards from each other, such as a newline.  By
+            default there is no card separator (as is the case in a raw FITS
+            file).
+
+        endcard : bool, optional
+            If True (the default) the header must end with an END card in order
+            to be considered valid.  If an END card is not found an
+            `OSError` is raised.
+
+        padding : bool, optional
+            If True (the default) the header will be required to be padded out
+            to a multiple of 2880, the FITS header block size.  Otherwise any
+            padding, or lack thereof, is ignored.
+
+        Returns
+        -------
+        header
+            A new `Header` instance.
+        """"""
+    close_file = False
+    if isinstance(fileobj, str):
+        fileobj = open(fileobj, 'r')
+        close_file = True
+    try:
+        is_binary = fileobj_is_binary(fileobj)
+
+        def block_iter(nbytes):
+            while True:
+                data = fileobj.read(nbytes)
+                if data:
+                    yield data
+                else:
+                    break
+        return cls._from_blocks(block_iter, is_binary, sep, endcard, padding)[1]
+    finally:
+        if close_file:
+            fileobj.close()","@classmethod
+def create_header_from_file(cls, fileobj, sep='', endcard=True, padding=True):
+    """"""
+        Similar to :meth:`Header.fromstring`, but reads the header string from
+        a given file-like object or filename.
+
+        Parameters
+        ----------
+        fileobj : str, file-like
+            A filename or an open file-like object from which a FITS header is
+            to be read.  For open file handles the file pointer must be at the
+            beginning of the header.
+
+        sep : str, optional
+            The string separating cards from each other, such as a newline.  By
+            default there is no card separator (as is the case in a raw FITS
+            file).
+
+        endcard : bool, optional
+            If True (the default) the header must end with an END card in order
+            to be considered valid.  If an END card is not found an
+            `OSError` is raised.
+
+        padding : bool, optional
+            If True (the default) the header will be required to be padded out
+            to a multiple of 2880, the FITS header block size.  Otherwise any
+            padding, or lack thereof, is ignored.
+
+        Returns
+        -------
+        header
+            A new `Header` instance.
+        """"""
+    close_file = False
+    if isinstance(fileobj, str):
+        fileobj = open(fileobj, 'r')
+        close_file = True
+    try:
+        is_binary = fileobj_is_binary(fileobj)
+
+        def block_iter(nbytes):
+            while True:
+                data = fileobj.read(nbytes)
+                if data:
+                    yield data
+                else:
+                    break
+        return cls._from_blocks(block_iter, is_binary, sep, endcard, padding)[1]
+    finally:
+        if close_file:
+            fileobj.close()","[{""var"": ""close_file"", ""rename"": ""should_close_fileobj""}, {""var"": ""is_binary"", ""rename"": ""is_fileobj_binary""}, {""var"": ""data"", ""rename"": ""header_data_chunk""}]"
+./astropy/io/fits/header.py,block_iter,read_data_in_chunks,444,451,"def block_iter(nbytes):
+    while True:
+        data = fileobj.read(nbytes)
+        if data:
+            yield data
+        else:
+            break","def read_data_in_chunks(nbytes):
+    while True:
+        data = fileobj.read(nbytes)
+        if data:
+            yield data
+        else:
+            break","[{""var"": ""data"", ""rename"": ""chunk_data""}]"

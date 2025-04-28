@@ -1,0 +1,6 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/forms/boundfield.py,id_for_label,generate_unique_id_from_label_data,279,280,"@property
+def id_for_label(self):
+    return 'id_%s_%s' % (self.data['name'], self.data['index'])","@property
+def generate_unique_id_from_label_data(self):
+    return 'id_%s_%s' % (self.data['name'], self.data['index'])",[]

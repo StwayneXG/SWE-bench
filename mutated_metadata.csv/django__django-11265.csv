@@ -1,0 +1,191 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/db/models/sql/query.py,split_exclude,construct_exclude_subquery,1645,1713,"def split_exclude(self, filter_expr, can_reuse, names_with_path):
+    """"""
+        When doing an exclude against any kind of N-to-many relation, we need
+        to use a subquery. This method constructs the nested query, given the
+        original exclude filter (filter_expr) and the portion up to the first
+        N-to-many relation field.
+
+        For example, if the origin filter is ~Q(child__name='foo'), filter_expr
+        is ('child__name', 'foo') and can_reuse is a set of joins usable for
+        filters in the original query.
+
+        We will turn this into equivalent of:
+            WHERE NOT (pk IN (SELECT parent_id FROM thetable
+                              WHERE name = 'foo' AND parent_id IS NOT NULL))
+
+        It might be worth it to consider using WHERE NOT EXISTS as that has
+        saner null handling, and is easier for the backend's optimizer to
+        handle.
+        """"""
+    filter_lhs, filter_rhs = filter_expr
+    if isinstance(filter_rhs, F):
+        filter_expr = (filter_lhs, OuterRef(filter_rhs.name))
+    query = Query(self.model)
+    query.add_filter(filter_expr)
+    query.clear_ordering(True)
+    trimmed_prefix, contains_louter = query.trim_start(names_with_path)
+    col = query.select[0]
+    select_field = col.target
+    alias = col.alias
+    if self.is_nullable(select_field):
+        lookup_class = select_field.get_lookup('isnull')
+        lookup = lookup_class(select_field.get_col(alias), False)
+        query.where.add(lookup, AND)
+    if alias in can_reuse:
+        pk = select_field.model._meta.pk
+        query.bump_prefix(self)
+        lookup_class = select_field.get_lookup('exact')
+        lookup = lookup_class(pk.get_col(query.select[0].alias), pk.get_col(alias))
+        query.where.add(lookup, AND)
+        query.external_aliases.add(alias)
+    condition, needed_inner = self.build_filter(('%s__in' % trimmed_prefix, query), current_negated=True, branch_negated=True, can_reuse=can_reuse)
+    if contains_louter:
+        or_null_condition, _ = self.build_filter(('%s__isnull' % trimmed_prefix, True), current_negated=True, branch_negated=True, can_reuse=can_reuse)
+        condition.add(or_null_condition, OR)
+    return (condition, needed_inner)","def construct_exclude_subquery(self, filter_expr, can_reuse, names_with_path):
+    """"""
+        When doing an exclude against any kind of N-to-many relation, we need
+        to use a subquery. This method constructs the nested query, given the
+        original exclude filter (filter_expr) and the portion up to the first
+        N-to-many relation field.
+
+        For example, if the origin filter is ~Q(child__name='foo'), filter_expr
+        is ('child__name', 'foo') and can_reuse is a set of joins usable for
+        filters in the original query.
+
+        We will turn this into equivalent of:
+            WHERE NOT (pk IN (SELECT parent_id FROM thetable
+                              WHERE name = 'foo' AND parent_id IS NOT NULL))
+
+        It might be worth it to consider using WHERE NOT EXISTS as that has
+        saner null handling, and is easier for the backend's optimizer to
+        handle.
+        """"""
+    filter_lhs, filter_rhs = filter_expr
+    if isinstance(filter_rhs, F):
+        filter_expr = (filter_lhs, OuterRef(filter_rhs.name))
+    query = Query(self.model)
+    query.add_filter(filter_expr)
+    query.clear_ordering(True)
+    trimmed_prefix, contains_louter = query.trim_start(names_with_path)
+    col = query.select[0]
+    select_field = col.target
+    alias = col.alias
+    if self.is_nullable(select_field):
+        lookup_class = select_field.get_lookup('isnull')
+        lookup = lookup_class(select_field.get_col(alias), False)
+        query.where.add(lookup, AND)
+    if alias in can_reuse:
+        pk = select_field.model._meta.pk
+        query.bump_prefix(self)
+        lookup_class = select_field.get_lookup('exact')
+        lookup = lookup_class(pk.get_col(query.select[0].alias), pk.get_col(alias))
+        query.where.add(lookup, AND)
+        query.external_aliases.add(alias)
+    condition, needed_inner = self.build_filter(('%s__in' % trimmed_prefix, query), current_negated=True, branch_negated=True, can_reuse=can_reuse)
+    if contains_louter:
+        or_null_condition, _ = self.build_filter(('%s__isnull' % trimmed_prefix, True), current_negated=True, branch_negated=True, can_reuse=can_reuse)
+        condition.add(or_null_condition, OR)
+    return (condition, needed_inner)","[{""var"": ""select_field"", ""rename"": ""selected_column_field""}, {""var"": ""condition"", ""rename"": ""exclusion_condition""}, {""var"": ""query"", ""rename"": ""exclude_subquery""}, {""var"": ""contains_louter"", ""rename"": ""contains_left_outer_joins""}, {""var"": ""filter_lhs"", ""rename"": ""nested_relation_filter""}, {""var"": ""or_null_condition"", ""rename"": ""null_handling_subquery_condition""}, {""var"": ""col"", ""rename"": ""selected_column""}, {""var"": ""trimmed_prefix"", ""rename"": ""initial_query_prefix""}, {""var"": ""lookup"", ""rename"": ""subquery_filter_condition""}, {""var"": ""_"", ""rename"": ""subquery_condition""}, {""var"": ""filter_rhs"", ""rename"": ""filter_right_hand_side""}, {""var"": ""alias"", ""rename"": ""selected_column_alias""}, {""var"": ""lookup_class"", ""rename"": ""field_lookup_strategy""}, {""var"": ""needed_inner"", ""rename"": ""required_subquery_references""}, {""var"": ""pk"", ""rename"": ""primary_key_field""}]"
+./django/db/models/sql/query.py,trim_start,remove_initial_m2m_joins_and_set_lookup,2098,2166,"def trim_start(self, names_with_path):
+    """"""
+        Trim joins from the start of the join path. The candidates for trim
+        are the PathInfos in names_with_path structure that are m2m joins.
+
+        Also set the select column so the start matches the join.
+
+        This method is meant to be used for generating the subquery joins &
+        cols in split_exclude().
+
+        Return a lookup usable for doing outerq.filter(lookup=self) and a
+        boolean indicating if the joins in the prefix contain a LEFT OUTER join.
+        _""""""
+    all_paths = []
+    for _, paths in names_with_path:
+        all_paths.extend(paths)
+    contains_louter = False
+    lookup_tables = [t for t in self.alias_map if t in self._lookup_joins or t == self.base_table]
+    for trimmed_paths, path in enumerate(all_paths):
+        if path.m2m:
+            break
+        if self.alias_map[lookup_tables[trimmed_paths + 1]].join_type == LOUTER:
+            contains_louter = True
+        alias = lookup_tables[trimmed_paths]
+        self.unref_alias(alias)
+    join_field = path.join_field.field
+    paths_in_prefix = trimmed_paths
+    trimmed_prefix = []
+    for name, path in names_with_path:
+        if paths_in_prefix - len(path) < 0:
+            break
+        trimmed_prefix.append(name)
+        paths_in_prefix -= len(path)
+    trimmed_prefix.append(join_field.foreign_related_fields[0].name)
+    trimmed_prefix = LOOKUP_SEP.join(trimmed_prefix)
+    if self.alias_map[lookup_tables[trimmed_paths + 1]].join_type != LOUTER:
+        select_fields = [r[0] for r in join_field.related_fields]
+        select_alias = lookup_tables[trimmed_paths + 1]
+        self.unref_alias(lookup_tables[trimmed_paths])
+        extra_restriction = join_field.get_extra_restriction(self.where_class, None, lookup_tables[trimmed_paths + 1])
+        if extra_restriction:
+            self.where.add(extra_restriction, AND)
+    else:
+        select_fields = [r[1] for r in join_field.related_fields]
+        select_alias = lookup_tables[trimmed_paths]
+    for table in self.alias_map:
+        if self.alias_refcount[table] > 0:
+            self.alias_map[table] = BaseTable(self.alias_map[table].table_name, table)
+            break
+    self.set_select([f.get_col(select_alias) for f in select_fields])
+    return (trimmed_prefix, contains_louter)","def remove_initial_m2m_joins_and_set_lookup(self, names_with_path):
+    """"""
+        Trim joins from the start of the join path. The candidates for trim
+        are the PathInfos in names_with_path structure that are m2m joins.
+
+        Also set the select column so the start matches the join.
+
+        This method is meant to be used for generating the subquery joins &
+        cols in split_exclude().
+
+        Return a lookup usable for doing outerq.filter(lookup=self) and a
+        boolean indicating if the joins in the prefix contain a LEFT OUTER join.
+        _""""""
+    all_paths = []
+    for _, paths in names_with_path:
+        all_paths.extend(paths)
+    contains_louter = False
+    lookup_tables = [t for t in self.alias_map if t in self._lookup_joins or t == self.base_table]
+    for trimmed_paths, path in enumerate(all_paths):
+        if path.m2m:
+            break
+        if self.alias_map[lookup_tables[trimmed_paths + 1]].join_type == LOUTER:
+            contains_louter = True
+        alias = lookup_tables[trimmed_paths]
+        self.unref_alias(alias)
+    join_field = path.join_field.field
+    paths_in_prefix = trimmed_paths
+    trimmed_prefix = []
+    for name, path in names_with_path:
+        if paths_in_prefix - len(path) < 0:
+            break
+        trimmed_prefix.append(name)
+        paths_in_prefix -= len(path)
+    trimmed_prefix.append(join_field.foreign_related_fields[0].name)
+    trimmed_prefix = LOOKUP_SEP.join(trimmed_prefix)
+    if self.alias_map[lookup_tables[trimmed_paths + 1]].join_type != LOUTER:
+        select_fields = [r[0] for r in join_field.related_fields]
+        select_alias = lookup_tables[trimmed_paths + 1]
+        self.unref_alias(lookup_tables[trimmed_paths])
+        extra_restriction = join_field.get_extra_restriction(self.where_class, None, lookup_tables[trimmed_paths + 1])
+        if extra_restriction:
+            self.where.add(extra_restriction, AND)
+    else:
+        select_fields = [r[1] for r in join_field.related_fields]
+        select_alias = lookup_tables[trimmed_paths]
+    for table in self.alias_map:
+        if self.alias_refcount[table] > 0:
+            self.alias_map[table] = BaseTable(self.alias_map[table].table_name, table)
+            break
+    self.set_select([f.get_col(select_alias) for f in select_fields])
+    return (trimmed_prefix, contains_louter)","[{""var"": ""contains_louter"", ""rename"": ""has_left_outer_joins""}, {""var"": ""select_fields"", ""rename"": ""selected_related_fields""}, {""var"": ""lookup_tables"", ""rename"": ""eligible_join_tables""}, {""var"": ""t"", ""rename"": ""current_table""}, {""var"": ""name"", ""rename"": ""path_names_with_join_info""}, {""var"": ""join_field"", ""rename"": ""join_relationship_field""}, {""var"": ""trimmed_paths"", ""rename"": ""m2m_trimmed_path_count""}, {""var"": ""select_alias"", ""rename"": ""selected_table_alias""}, {""var"": ""path"", ""rename"": ""path_info""}, {""var"": ""trimmed_prefix"", ""rename"": ""shortened_join_path""}, {""var"": ""paths"", ""rename"": ""paths_to_trim""}, {""var"": ""paths_in_prefix"", ""rename"": ""trimmed_path_count""}, {""var"": ""r"", ""rename"": ""path_related_field""}, {""var"": ""f"", ""rename"": ""initial_join_path""}, {""var"": ""_"", ""rename"": ""names_with_m2m_paths""}, {""var"": ""all_paths"", ""rename"": ""join_paths_collection""}, {""var"": ""alias"", ""rename"": ""current_alias""}, {""var"": ""extra_restriction"", ""rename"": ""additional_path_restriction""}, {""var"": ""table"", ""rename"": ""join_table_alias""}]"

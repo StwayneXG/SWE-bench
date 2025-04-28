@@ -1,0 +1,159 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/contrib/staticfiles/storage.py,post_process,apply_cache_busting_and_reference_adjustments,203,249,"def post_process(self, paths, dry_run=False, **options):
+    """"""
+        Post process the given dictionary of files (called from collectstatic).
+
+        Processing is actually two separate operations:
+
+        1. renaming files to include a hash of their content for cache-busting,
+           and copying those files to the target storage.
+        2. adjusting files which contain references to other files so they
+           refer to the cache-busting filenames.
+
+        If either of these are performed on a file, then that file is considered
+        post-processed.
+        """"""
+    if dry_run:
+        return
+    hashed_files = {}
+    adjustable_paths = [path for path in paths if matches_patterns(path, self._patterns)]
+    for name, hashed_name, processed, _ in self._post_process(paths, adjustable_paths, hashed_files):
+        yield (name, hashed_name, processed)
+    paths = {path: paths[path] for path in adjustable_paths}
+    for i in range(self.max_post_process_passes):
+        substitutions = False
+        for name, hashed_name, processed, subst in self._post_process(paths, adjustable_paths, hashed_files):
+            yield (name, hashed_name, processed)
+            substitutions = substitutions or subst
+        if not substitutions:
+            break
+    if substitutions:
+        yield ('All', None, RuntimeError('Max post-process passes exceeded.'))
+    self.hashed_files.update(hashed_files)","def apply_cache_busting_and_reference_adjustments(self, paths, dry_run=False, **options):
+    """"""
+        Post process the given dictionary of files (called from collectstatic).
+
+        Processing is actually two separate operations:
+
+        1. renaming files to include a hash of their content for cache-busting,
+           and copying those files to the target storage.
+        2. adjusting files which contain references to other files so they
+           refer to the cache-busting filenames.
+
+        If either of these are performed on a file, then that file is considered
+        post-processed.
+        """"""
+    if dry_run:
+        return
+    hashed_files = {}
+    adjustable_paths = [path for path in paths if matches_patterns(path, self._patterns)]
+    for name, hashed_name, processed, _ in self._post_process(paths, adjustable_paths, hashed_files):
+        yield (name, hashed_name, processed)
+    paths = {path: paths[path] for path in adjustable_paths}
+    for i in range(self.max_post_process_passes):
+        substitutions = False
+        for name, hashed_name, processed, subst in self._post_process(paths, adjustable_paths, hashed_files):
+            yield (name, hashed_name, processed)
+            substitutions = substitutions or subst
+        if not substitutions:
+            break
+    if substitutions:
+        yield ('All', None, RuntimeError('Max post-process passes exceeded.'))
+    self.hashed_files.update(hashed_files)","[{""var"": ""name"", ""rename"": ""original_file_name""}, {""var"": ""hashed_files"", ""rename"": ""cache_busted_files""}, {""var"": ""processed"", ""rename"": ""is_file_post_processed""}, {""var"": ""path"", ""rename"": ""file_path""}, {""var"": ""i"", ""rename"": ""post_process_pass""}, {""var"": ""_"", ""rename"": ""file_processing_info""}, {""var"": ""subst"", ""rename"": ""were_substitutions_made""}, {""var"": ""adjustable_paths"", ""rename"": ""cache_sensitive_paths""}, {""var"": ""substitutions"", ""rename"": ""referencesUpdated""}, {""var"": ""hashed_name"", ""rename"": ""cache_busted_filename""}]"
+./django/contrib/staticfiles/storage.py,_post_process,process_and_hash_file_paths,251,321,"def _post_process(self, paths, adjustable_paths, hashed_files):
+
+    def path_level(name):
+        return len(name.split(os.sep))
+    for name in sorted(paths, key=path_level, reverse=True):
+        substitutions = True
+        storage, path = paths[name]
+        with storage.open(path) as original_file:
+            cleaned_name = self.clean_name(name)
+            hash_key = self.hash_key(cleaned_name)
+            if hash_key not in hashed_files:
+                hashed_name = self.hashed_name(name, original_file)
+            else:
+                hashed_name = hashed_files[hash_key]
+            if hasattr(original_file, 'seek'):
+                original_file.seek(0)
+            hashed_file_exists = self.exists(hashed_name)
+            processed = False
+            if name in adjustable_paths:
+                old_hashed_name = hashed_name
+                content = original_file.read().decode('utf-8')
+                for extension, patterns in self._patterns.items():
+                    if matches_patterns(path, (extension,)):
+                        for pattern, template in patterns:
+                            converter = self.url_converter(name, hashed_files, template)
+                            try:
+                                content = pattern.sub(converter, content)
+                            except ValueError as exc:
+                                yield (name, None, exc, False)
+                if hashed_file_exists:
+                    self.delete(hashed_name)
+                content_file = ContentFile(content.encode())
+                if self.keep_intermediate_files:
+                    self._save(hashed_name, content_file)
+                hashed_name = self.hashed_name(name, content_file)
+                if self.exists(hashed_name):
+                    self.delete(hashed_name)
+                saved_name = self._save(hashed_name, content_file)
+                hashed_name = self.clean_name(saved_name)
+                if old_hashed_name == hashed_name:
+                    substitutions = False
+                processed = True
+            if not processed:
+                if not hashed_file_exists:
+                    processed = True
+                    saved_name = self._save(hashed_name, original_file)
+                    hashed_name = self.clean_name(saved_name)
+            hashed_files[hash_key] = hashed_name
+            yield (name, hashed_name, processed, substitutions)","def process_and_hash_file_paths(self, paths, adjustable_paths, hashed_files):
+
+    def path_level(name):
+        return len(name.split(os.sep))
+    for name in sorted(paths, key=path_level, reverse=True):
+        substitutions = True
+        storage, path = paths[name]
+        with storage.open(path) as original_file:
+            cleaned_name = self.clean_name(name)
+            hash_key = self.hash_key(cleaned_name)
+            if hash_key not in hashed_files:
+                hashed_name = self.hashed_name(name, original_file)
+            else:
+                hashed_name = hashed_files[hash_key]
+            if hasattr(original_file, 'seek'):
+                original_file.seek(0)
+            hashed_file_exists = self.exists(hashed_name)
+            processed = False
+            if name in adjustable_paths:
+                old_hashed_name = hashed_name
+                content = original_file.read().decode('utf-8')
+                for extension, patterns in self._patterns.items():
+                    if matches_patterns(path, (extension,)):
+                        for pattern, template in patterns:
+                            converter = self.url_converter(name, hashed_files, template)
+                            try:
+                                content = pattern.sub(converter, content)
+                            except ValueError as exc:
+                                yield (name, None, exc, False)
+                if hashed_file_exists:
+                    self.delete(hashed_name)
+                content_file = ContentFile(content.encode())
+                if self.keep_intermediate_files:
+                    self._save(hashed_name, content_file)
+                hashed_name = self.hashed_name(name, content_file)
+                if self.exists(hashed_name):
+                    self.delete(hashed_name)
+                saved_name = self._save(hashed_name, content_file)
+                hashed_name = self.clean_name(saved_name)
+                if old_hashed_name == hashed_name:
+                    substitutions = False
+                processed = True
+            if not processed:
+                if not hashed_file_exists:
+                    processed = True
+                    saved_name = self._save(hashed_name, original_file)
+                    hashed_name = self.clean_name(saved_name)
+            hashed_files[hash_key] = hashed_name
+            yield (name, hashed_name, processed, substitutions)","[{""var"": ""old_hashed_name"", ""rename"": ""previous_hashed_filename""}, {""var"": ""content"", ""rename"": ""processed_content""}, {""var"": ""processed"", ""rename"": ""is_file_processed""}, {""var"": ""saved_name"", ""rename"": ""final_saved_path""}, {""var"": ""path"", ""rename"": ""file_path""}, {""var"": ""hashed_file_exists"", ""rename"": ""hashed_file_already_exists""}, {""var"": ""patterns"", ""rename"": ""file_matching_patterns""}, {""var"": ""pattern"", ""rename"": ""pattern_to_substitute""}, {""var"": ""storage"", ""rename"": ""storage_backend""}, {""var"": ""content_file"", ""rename"": ""intermediate_content_file""}, {""var"": ""original_file"", ""rename"": ""input_file_stream""}, {""var"": ""cleaned_name"", ""rename"": ""sanitized_file_name""}, {""var"": ""hash_key"", ""rename"": ""cleaned_name_hash""}, {""var"": ""substitutions"", ""rename"": ""requires_substitution""}, {""var"": ""converter"", ""rename"": ""url_substitution_converter""}, {""var"": ""template"", ""rename"": ""pattern_template""}, {""var"": ""extension"", ""rename"": ""file_extension""}, {""var"": ""hashed_name"", ""rename"": ""transformed_file_name""}]"

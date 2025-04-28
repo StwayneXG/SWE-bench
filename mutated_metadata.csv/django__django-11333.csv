@@ -1,0 +1,17 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/urls/base.py,clear_url_caches,reset_url_resolution_caches,93,96,"def clear_url_caches():
+    get_callable.cache_clear()
+    get_resolver.cache_clear()
+    get_ns_resolver.cache_clear()","def reset_url_resolution_caches():
+    get_callable.cache_clear()
+    get_resolver.cache_clear()
+    get_ns_resolver.cache_clear()",[]
+./django/urls/resolvers.py,get_resolver,resolve_url_configuration,67,70,"@functools.lru_cache(maxsize=None)
+def get_resolver(urlconf=None):
+    if urlconf is None:
+        urlconf = settings.ROOT_URLCONF
+    return URLResolver(RegexPattern('^/'), urlconf)","@functools.lru_cache(maxsize=None)
+def resolve_url_configuration(urlconf=None):
+    if urlconf is None:
+        urlconf = settings.ROOT_URLCONF
+    return URLResolver(RegexPattern('^/'), urlconf)",[]

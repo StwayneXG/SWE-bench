@@ -1,0 +1,117 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./sphinx/ext/autodoc/__init__.py,get_object_members,retrieve_filtered_object_members,1046,1074,"def get_object_members(self, want_all: bool) -> Tuple[bool, ObjectMembers]:
+    if want_all:
+        members = get_module_members(self.object)
+        if not self.__all__:
+            return (True, members)
+        else:
+            ret = []
+            for name, value in members:
+                if name in self.__all__:
+                    ret.append(ObjectMember(name, value))
+                else:
+                    ret.append(ObjectMember(name, value, skipped=True))
+            return (False, ret)
+    else:
+        memberlist = self.options.members or []
+        ret = []
+        for name in memberlist:
+            try:
+                value = safe_getattr(self.object, name)
+                ret.append(ObjectMember(name, value))
+            except AttributeError:
+                logger.warning(__('missing attribute mentioned in :members: option: module %s, attribute %s') % (safe_getattr(self.object, '__name__', '???'), name), type='autodoc')
+        return (False, ret)","def retrieve_filtered_object_members(self, want_all: bool) -> Tuple[bool, ObjectMembers]:
+    if want_all:
+        members = get_module_members(self.object)
+        if not self.__all__:
+            return (True, members)
+        else:
+            ret = []
+            for name, value in members:
+                if name in self.__all__:
+                    ret.append(ObjectMember(name, value))
+                else:
+                    ret.append(ObjectMember(name, value, skipped=True))
+            return (False, ret)
+    else:
+        memberlist = self.options.members or []
+        ret = []
+        for name in memberlist:
+            try:
+                value = safe_getattr(self.object, name)
+                ret.append(ObjectMember(name, value))
+            except AttributeError:
+                logger.warning(__('missing attribute mentioned in :members: option: module %s, attribute %s') % (safe_getattr(self.object, '__name__', '???'), name), type='autodoc')
+        return (False, ret)","[{""var"": ""name"", ""rename"": ""member_name""}, {""var"": ""memberlist"", ""rename"": ""specified_member_names""}, {""var"": ""ret"", ""rename"": ""filtered_members_list""}, {""var"": ""members"", ""rename"": ""filtered_object_members""}, {""var"": ""value"", ""rename"": ""attribute_value""}]"
+./sphinx/ext/autodoc/__init__.py,sort_members,sort_documenters_by_defined_order,1076,1093,"def sort_members(self, documenters: List[Tuple['Documenter', bool]], order: str) -> List[Tuple['Documenter', bool]]:
+    if order == 'bysource' and self.__all__:
+        documenters.sort(key=lambda e: e[0].name)
+
+        def keyfunc(entry: Tuple[Documenter, bool]) -> int:
+            name = entry[0].name.split('::')[1]
+            if name in self.__all__:
+                return self.__all__.index(name)
+            else:
+                return len(self.__all__)
+        documenters.sort(key=keyfunc)
+        return documenters
+    else:
+        return super().sort_members(documenters, order)","def sort_documenters_by_defined_order(self, documenters: List[Tuple['Documenter', bool]], order: str) -> List[Tuple['Documenter', bool]]:
+    if order == 'bysource' and self.__all__:
+        documenters.sort(key=lambda e: e[0].name)
+
+        def keyfunc(entry: Tuple[Documenter, bool]) -> int:
+            name = entry[0].name.split('::')[1]
+            if name in self.__all__:
+                return self.__all__.index(name)
+            else:
+                return len(self.__all__)
+        documenters.sort(key=keyfunc)
+        return documenters
+    else:
+        return super().sort_members(documenters, order)","[{""var"": ""name"", ""rename"": ""unique_member_identifier""}]"
+./sphinx/ext/autodoc/__init__.py,keyfunc,documenter_priority_index,1083,1088,"def keyfunc(entry: Tuple[Documenter, bool]) -> int:
+    name = entry[0].name.split('::')[1]
+    if name in self.__all__:
+        return self.__all__.index(name)
+    else:
+        return len(self.__all__)","def documenter_priority_index(entry: Tuple[Documenter, bool]) -> int:
+    name = entry[0].name.split('::')[1]
+    if name in self.__all__:
+        return self.__all__.index(name)
+    else:
+        return len(self.__all__)","[{""var"": ""name"", ""rename"": ""nested_name_segment""}]"
+./sphinx/ext/autodoc/importer.py,get_module_members,collect_module_attributes,140,160,"def get_module_members(module: Any) -> List[Tuple[str, Any]]:
+    """"""Get members of target module.""""""
+    from sphinx.ext.autodoc import INSTANCEATTR
+    members = {}
+    for name in dir(module):
+        try:
+            value = safe_getattr(module, name, None)
+            members[name] = (name, value)
+        except AttributeError:
+            continue
+    try:
+        for name in getannotations(module):
+            if name not in members:
+                members[name] = (name, INSTANCEATTR)
+    except AttributeError:
+        pass
+    return sorted(list(members.values()))","def collect_module_attributes(module: Any) -> List[Tuple[str, Any]]:
+    """"""Get members of target module.""""""
+    from sphinx.ext.autodoc import INSTANCEATTR
+    members = {}
+    for name in dir(module):
+        try:
+            value = safe_getattr(module, name, None)
+            members[name] = (name, value)
+        except AttributeError:
+            continue
+    try:
+        for name in getannotations(module):
+            if name not in members:
+                members[name] = (name, INSTANCEATTR)
+    except AttributeError:
+        pass
+    return sorted(list(members.values()))","[{""var"": ""value"", ""rename"": ""attribute_value""}, {""var"": ""members"", ""rename"": ""module_member_mappings""}, {""var"": ""name"", ""rename"": ""member_name""}]"

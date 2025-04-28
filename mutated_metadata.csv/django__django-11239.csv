@@ -1,0 +1,51 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/db/backends/postgresql/client.py,runshell_db,launch_database_shell,12,39,"@classmethod
+def runshell_db(cls, conn_params):
+    args = [cls.executable_name]
+    host = conn_params.get('host', '')
+    port = conn_params.get('port', '')
+    dbname = conn_params.get('database', '')
+    user = conn_params.get('user', '')
+    passwd = conn_params.get('password', '')
+    if user:
+        args += ['-U', user]
+    if host:
+        args += ['-h', host]
+    if port:
+        args += ['-p', str(port)]
+    args += [dbname]
+    sigint_handler = signal.getsignal(signal.SIGINT)
+    subprocess_env = os.environ.copy()
+    if passwd:
+        subprocess_env['PGPASSWORD'] = str(passwd)
+    try:
+        signal.signal(signal.SIGINT, signal.SIG_IGN)
+        subprocess.run(args, check=True, env=subprocess_env)
+    finally:
+        signal.signal(signal.SIGINT, sigint_handler)","@classmethod
+def launch_database_shell(cls, conn_params):
+    args = [cls.executable_name]
+    host = conn_params.get('host', '')
+    port = conn_params.get('port', '')
+    dbname = conn_params.get('database', '')
+    user = conn_params.get('user', '')
+    passwd = conn_params.get('password', '')
+    if user:
+        args += ['-U', user]
+    if host:
+        args += ['-h', host]
+    if port:
+        args += ['-p', str(port)]
+    args += [dbname]
+    sigint_handler = signal.getsignal(signal.SIGINT)
+    subprocess_env = os.environ.copy()
+    if passwd:
+        subprocess_env['PGPASSWORD'] = str(passwd)
+    try:
+        signal.signal(signal.SIGINT, signal.SIG_IGN)
+        subprocess.run(args, check=True, env=subprocess_env)
+    finally:
+        signal.signal(signal.SIGINT, sigint_handler)","[{""var"": ""subprocess_env"", ""rename"": ""shell_execution_env""}, {""var"": ""host"", ""rename"": ""host_address""}, {""var"": ""port"", ""rename"": ""connection_port""}, {""var"": ""dbname"", ""rename"": ""database_name""}, {""var"": ""sigint_handler"", ""rename"": ""original_sigint_handler""}, {""var"": ""user"", ""rename"": ""db_username""}, {""var"": ""args"", ""rename"": ""command_arguments""}, {""var"": ""passwd"", ""rename"": ""database_password""}]"
+./django/db/backends/postgresql/client.py,runshell,execute_database_shell_command,41,42,"def runshell(self):
+    DatabaseClient.runshell_db(self.connection.get_connection_params())","def execute_database_shell_command(self):
+    DatabaseClient.runshell_db(self.connection.get_connection_params())",[]

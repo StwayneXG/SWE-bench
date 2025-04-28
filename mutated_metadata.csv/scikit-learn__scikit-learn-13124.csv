@@ -1,0 +1,50 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./sklearn/model_selection/_split.py,_make_test_folds,generate_stratified_test_folds,622,672,"def _make_test_folds(self, X, y=None):
+    rng = self.random_state
+    y = np.asarray(y)
+    type_of_target_y = type_of_target(y)
+    allowed_target_types = ('binary', 'multiclass')
+    if type_of_target_y not in allowed_target_types:
+        raise ValueError('Supported target types are: {}. Got {!r} instead.'.format(allowed_target_types, type_of_target_y))
+    y = column_or_1d(y)
+    n_samples = y.shape[0]
+    unique_y, y_inversed = np.unique(y, return_inverse=True)
+    y_counts = np.bincount(y_inversed)
+    min_groups = np.min(y_counts)
+    if np.all(self.n_splits > y_counts):
+        raise ValueError('n_splits=%d cannot be greater than the number of members in each class.' % self.n_splits)
+    if self.n_splits > min_groups:
+        warnings.warn('The least populated class in y has only %d members, which is too few. The minimum number of members in any class cannot be less than n_splits=%d.' % (min_groups, self.n_splits), Warning)
+    per_cls_cvs = [KFold(self.n_splits, shuffle=self.shuffle, random_state=rng).split(np.zeros(max(count, self.n_splits))) for count in y_counts]
+    test_folds = np.zeros(n_samples, dtype=np.int)
+    for test_fold_indices, per_cls_splits in enumerate(zip(*per_cls_cvs)):
+        for cls, (_, test_split) in zip(unique_y, per_cls_splits):
+            cls_test_folds = test_folds[y == cls]
+            test_split = test_split[test_split < len(cls_test_folds)]
+            cls_test_folds[test_split] = test_fold_indices
+            test_folds[y == cls] = cls_test_folds
+    return test_folds","def generate_stratified_test_folds(self, X, y=None):
+    rng = self.random_state
+    y = np.asarray(y)
+    type_of_target_y = type_of_target(y)
+    allowed_target_types = ('binary', 'multiclass')
+    if type_of_target_y not in allowed_target_types:
+        raise ValueError('Supported target types are: {}. Got {!r} instead.'.format(allowed_target_types, type_of_target_y))
+    y = column_or_1d(y)
+    n_samples = y.shape[0]
+    unique_y, y_inversed = np.unique(y, return_inverse=True)
+    y_counts = np.bincount(y_inversed)
+    min_groups = np.min(y_counts)
+    if np.all(self.n_splits > y_counts):
+        raise ValueError('n_splits=%d cannot be greater than the number of members in each class.' % self.n_splits)
+    if self.n_splits > min_groups:
+        warnings.warn('The least populated class in y has only %d members, which is too few. The minimum number of members in any class cannot be less than n_splits=%d.' % (min_groups, self.n_splits), Warning)
+    per_cls_cvs = [KFold(self.n_splits, shuffle=self.shuffle, random_state=rng).split(np.zeros(max(count, self.n_splits))) for count in y_counts]
+    test_folds = np.zeros(n_samples, dtype=np.int)
+    for test_fold_indices, per_cls_splits in enumerate(zip(*per_cls_cvs)):
+        for cls, (_, test_split) in zip(unique_y, per_cls_splits):
+            cls_test_folds = test_folds[y == cls]
+            test_split = test_split[test_split < len(cls_test_folds)]
+            cls_test_folds[test_split] = test_fold_indices
+            test_folds[y == cls] = cls_test_folds
+    return test_folds","[{""var"": ""count"", ""rename"": ""class_member_count""}, {""var"": ""unique_y"", ""rename"": ""distinct_classes_y""}, {""var"": ""y_inversed"", ""rename"": ""inverse_encoded_labels""}, {""var"": ""cls_test_folds"", ""rename"": ""class_specific_test_folds""}, {""var"": ""n_samples"", ""rename"": ""number_of_samples""}, {""var"": ""type_of_target_y"", ""rename"": ""y_target_type""}, {""var"": ""per_cls_splits"", ""rename"": ""class_specific_splits""}, {""var"": ""test_fold_indices"", ""rename"": ""class_fold_index""}, {""var"": ""min_groups"", ""rename"": ""min_class_members""}, {""var"": ""rng"", ""rename"": ""random_state_generator""}, {""var"": ""per_cls_cvs"", ""rename"": ""per_class_cross_validations""}, {""var"": ""_"", ""rename"": ""create_test_folds""}, {""var"": ""test_folds"", ""rename"": ""class_balanced_test_fold_indices""}, {""var"": ""allowed_target_types"", ""rename"": ""valid_target_categories""}, {""var"": ""cls"", ""rename"": ""class_label""}, {""var"": ""y_counts"", ""rename"": ""class_member_counts""}, {""var"": ""test_split"", ""rename"": ""class_test_indices""}]"

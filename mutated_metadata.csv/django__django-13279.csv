@@ -1,0 +1,33 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/contrib/sessions/backends/base.py,encode,serialize_and_encode_session,109,114,"def encode(self, session_dict):
+    """"""Return the given session dictionary serialized and encoded as a string.""""""
+    return signing.dumps(session_dict, salt=self.key_salt, serializer=self.serializer, compress=True)","def serialize_and_encode_session(self, session_dict):
+    """"""Return the given session dictionary serialized and encoded as a string.""""""
+    return signing.dumps(session_dict, salt=self.key_salt, serializer=self.serializer, compress=True)",[]
+./django/contrib/sessions/backends/base.py,_legacy_decode,decode_and_verify_session_data,124,141,"def _legacy_decode(self, session_data):
+    encoded_data = base64.b64decode(session_data.encode('ascii'))
+    try:
+        hash, serialized = encoded_data.split(b':', 1)
+        expected_hash = self._hash(serialized)
+        if not constant_time_compare(hash.decode(), expected_hash):
+            raise SuspiciousSession('Session data corrupted')
+        else:
+            return self.serializer().loads(serialized)
+    except Exception as e:
+        if isinstance(e, SuspiciousOperation):
+            logger = logging.getLogger('django.security.%s' % e.__class__.__name__)
+            logger.warning(str(e))
+        return {}","def decode_and_verify_session_data(self, session_data):
+    encoded_data = base64.b64decode(session_data.encode('ascii'))
+    try:
+        hash, serialized = encoded_data.split(b':', 1)
+        expected_hash = self._hash(serialized)
+        if not constant_time_compare(hash.decode(), expected_hash):
+            raise SuspiciousSession('Session data corrupted')
+        else:
+            return self.serializer().loads(serialized)
+    except Exception as e:
+        if isinstance(e, SuspiciousOperation):
+            logger = logging.getLogger('django.security.%s' % e.__class__.__name__)
+            logger.warning(str(e))
+        return {}","[{""var"": ""hash"", ""rename"": ""session_hash""}, {""var"": ""logger"", ""rename"": ""security_logger""}, {""var"": ""encoded_data"", ""rename"": ""decoded_session_payload""}, {""var"": ""expected_hash"", ""rename"": ""calculated_session_hash""}, {""var"": ""serialized"", ""rename"": ""encoded_session_payload""}]"

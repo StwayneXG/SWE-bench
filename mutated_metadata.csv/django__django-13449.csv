@@ -1,0 +1,7 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/db/models/expressions.py,__str__,format_window_function_expression,1335,1341,"def __str__(self):
+    return '{} OVER ({}{}{})'.format(str(self.source_expression), 'PARTITION BY ' + str(self.partition_by) if self.partition_by else '', 'ORDER BY ' + str(self.order_by) if self.order_by else '', str(self.frame or ''))","def format_window_function_expression(self):
+    return '{} OVER ({}{}{})'.format(str(self.source_expression), 'PARTITION BY ' + str(self.partition_by) if self.partition_by else '', 'ORDER BY ' + str(self.order_by) if self.order_by else '', str(self.frame or ''))",[]
+./django/db/models/expressions.py,__repr__,generate_classname_instance_representation,1343,1344,"def __repr__(self):
+    return '<%s: %s>' % (self.__class__.__name__, self)","def generate_classname_instance_representation(self):
+    return '<%s: %s>' % (self.__class__.__name__, self)",[]

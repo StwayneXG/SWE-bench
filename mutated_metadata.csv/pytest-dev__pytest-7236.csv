@@ -1,0 +1,153 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./src/_pytest/unittest.py,_make_xunit_fixture,create_pytest_fixture_with_setup_teardown,84,107,"def _make_xunit_fixture(obj, setup_name, teardown_name, scope, pass_self):
+    setup = getattr(obj, setup_name, None)
+    teardown = getattr(obj, teardown_name, None)
+    if setup is None and teardown is None:
+        return None
+
+    @pytest.fixture(scope=scope, autouse=True)
+    def fixture(self, request):
+        if getattr(self, '__unittest_skip__', None):
+            reason = self.__unittest_skip_why__
+            pytest.skip(reason)
+        if setup is not None:
+            if pass_self:
+                setup(self, request.function)
+            else:
+                setup()
+        yield
+        if teardown is not None:
+            if pass_self:
+                teardown(self, request.function)
+            else:
+                teardown()
+    return fixture","def create_pytest_fixture_with_setup_teardown(obj, setup_name, teardown_name, scope, pass_self):
+    setup = getattr(obj, setup_name, None)
+    teardown = getattr(obj, teardown_name, None)
+    if setup is None and teardown is None:
+        return None
+
+    @pytest.fixture(scope=scope, autouse=True)
+    def fixture(self, request):
+        if getattr(self, '__unittest_skip__', None):
+            reason = self.__unittest_skip_why__
+            pytest.skip(reason)
+        if setup is not None:
+            if pass_self:
+                setup(self, request.function)
+            else:
+                setup()
+        yield
+        if teardown is not None:
+            if pass_self:
+                teardown(self, request.function)
+            else:
+                teardown()
+    return fixture","[{""var"": ""teardown"", ""rename"": ""tearDownProcedure""}, {""var"": ""setup"", ""rename"": ""initialization_method""}, {""var"": ""reason"", ""rename"": ""skip_reason_description""}]"
+./src/_pytest/unittest.py,collect,gather_unittest_testcases_and_fixtures,37,66,"def collect(self):
+    from unittest import TestLoader
+    cls = self.obj
+    if not getattr(cls, '__test__', True):
+        return
+    skipped = getattr(cls, '__unittest_skip__', False)
+    if not skipped:
+        self._inject_setup_teardown_fixtures(cls)
+        self._inject_setup_class_fixture()
+    self.session._fixturemanager.parsefactories(self, unittest=True)
+    loader = TestLoader()
+    foundsomething = False
+    for name in loader.getTestCaseNames(self.obj):
+        x = getattr(self.obj, name)
+        if not getattr(x, '__test__', True):
+            continue
+        funcobj = getimfunc(x)
+        yield TestCaseFunction.from_parent(self, name=name, callobj=funcobj)
+        foundsomething = True
+    if not foundsomething:
+        runtest = getattr(self.obj, 'runTest', None)
+        if runtest is not None:
+            ut = sys.modules.get('twisted.trial.unittest', None)
+            if ut is None or runtest != ut.TestCase.runTest:
+                yield TestCaseFunction.from_parent(self, name='runTest')","def gather_unittest_testcases_and_fixtures(self):
+    from unittest import TestLoader
+    cls = self.obj
+    if not getattr(cls, '__test__', True):
+        return
+    skipped = getattr(cls, '__unittest_skip__', False)
+    if not skipped:
+        self._inject_setup_teardown_fixtures(cls)
+        self._inject_setup_class_fixture()
+    self.session._fixturemanager.parsefactories(self, unittest=True)
+    loader = TestLoader()
+    foundsomething = False
+    for name in loader.getTestCaseNames(self.obj):
+        x = getattr(self.obj, name)
+        if not getattr(x, '__test__', True):
+            continue
+        funcobj = getimfunc(x)
+        yield TestCaseFunction.from_parent(self, name=name, callobj=funcobj)
+        foundsomething = True
+    if not foundsomething:
+        runtest = getattr(self.obj, 'runTest', None)
+        if runtest is not None:
+            ut = sys.modules.get('twisted.trial.unittest', None)
+            if ut is None or runtest != ut.TestCase.runTest:
+                yield TestCaseFunction.from_parent(self, name='runTest')","[{""var"": ""name"", ""rename"": ""test_method_name""}, {""var"": ""funcobj"", ""rename"": ""test_case_callable""}, {""var"": ""x"", ""rename"": ""test_method""}, {""var"": ""foundsomething"", ""rename"": ""test_cases_found""}, {""var"": ""runtest"", ""rename"": ""execute_default_test""}, {""var"": ""ut"", ""rename"": ""twisted_trial_unittest_module""}, {""var"": ""loader"", ""rename"": ""test_case_loader""}, {""var"": ""skipped"", ""rename"": ""unittest_skip_flag""}, {""var"": ""cls"", ""rename"": ""test_class_object""}]"
+./src/_pytest/unittest.py,fixture,auto_test_setup_teardown,91,105,"@pytest.fixture(scope=scope, autouse=True)
+def fixture(self, request):
+    if getattr(self, '__unittest_skip__', None):
+        reason = self.__unittest_skip_why__
+        pytest.skip(reason)
+    if setup is not None:
+        if pass_self:
+            setup(self, request.function)
+        else:
+            setup()
+    yield
+    if teardown is not None:
+        if pass_self:
+            teardown(self, request.function)
+        else:
+            teardown()","@pytest.fixture(scope=scope, autouse=True)
+def auto_test_setup_teardown(self, request):
+    if getattr(self, '__unittest_skip__', None):
+        reason = self.__unittest_skip_why__
+        pytest.skip(reason)
+    if setup is not None:
+        if pass_self:
+            setup(self, request.function)
+        else:
+            setup()
+    yield
+    if teardown is not None:
+        if pass_self:
+            teardown(self, request.function)
+        else:
+            teardown()","[{""var"": ""reason"", ""rename"": ""skip_reason_message""}]"
+./src/_pytest/unittest.py,runtest,execute_pytest_with_debugger_handling,208,233,"def runtest(self):
+    from _pytest.debugging import maybe_wrap_pytest_function_for_tracing
+    maybe_wrap_pytest_function_for_tracing(self)
+    if is_async_function(self.obj):
+        self._testcase(self)
+    else:
+        if self.config.getoption('usepdb'):
+            self._explicit_tearDown = self._testcase.tearDown
+            setattr(self._testcase, 'tearDown', lambda *args: None)
+        setattr(self._testcase, self.name, self.obj)
+        try:
+            self._testcase(result=self)
+        finally:
+            delattr(self._testcase, self.name)","def execute_pytest_with_debugger_handling(self):
+    from _pytest.debugging import maybe_wrap_pytest_function_for_tracing
+    maybe_wrap_pytest_function_for_tracing(self)
+    if is_async_function(self.obj):
+        self._testcase(self)
+    else:
+        if self.config.getoption('usepdb'):
+            self._explicit_tearDown = self._testcase.tearDown
+            setattr(self._testcase, 'tearDown', lambda *args: None)
+        setattr(self._testcase, self.name, self.obj)
+        try:
+            self._testcase(result=self)
+        finally:
+            delattr(self._testcase, self.name)",[]

@@ -1,0 +1,66 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/db/backends/postgresql/client.py,runshell_db,execute_database_shell_command,20,68,"@classmethod
+def runshell_db(cls, conn_params):
+    args = [cls.executable_name]
+    host = conn_params.get('host', '')
+    port = conn_params.get('port', '')
+    dbname = conn_params.get('database', '')
+    user = conn_params.get('user', '')
+    passwd = conn_params.get('password', '')
+    if user:
+        args += ['-U', user]
+    if host:
+        args += ['-h', host]
+    if port:
+        args += ['-p', str(port)]
+    args += [dbname]
+    temp_pgpass = None
+    sigint_handler = signal.getsignal(signal.SIGINT)
+    try:
+        if passwd:
+            temp_pgpass = NamedTemporaryFile(mode='w+')
+            try:
+                print(_escape_pgpass(host) or '*', str(port) or '*', _escape_pgpass(dbname) or '*', _escape_pgpass(user) or '*', _escape_pgpass(passwd), file=temp_pgpass, sep=':', flush=True)
+                os.environ['PGPASSFILE'] = temp_pgpass.name
+            except UnicodeEncodeError:
+                pass
+        signal.signal(signal.SIGINT, signal.SIG_IGN)
+        subprocess.check_call(args)
+    finally:
+        signal.signal(signal.SIGINT, sigint_handler)
+        if temp_pgpass:
+            temp_pgpass.close()
+            if 'PGPASSFILE' in os.environ:
+                del os.environ['PGPASSFILE']","@classmethod
+def execute_database_shell_command(cls, conn_params):
+    args = [cls.executable_name]
+    host = conn_params.get('host', '')
+    port = conn_params.get('port', '')
+    dbname = conn_params.get('database', '')
+    user = conn_params.get('user', '')
+    passwd = conn_params.get('password', '')
+    if user:
+        args += ['-U', user]
+    if host:
+        args += ['-h', host]
+    if port:
+        args += ['-p', str(port)]
+    args += [dbname]
+    temp_pgpass = None
+    sigint_handler = signal.getsignal(signal.SIGINT)
+    try:
+        if passwd:
+            temp_pgpass = NamedTemporaryFile(mode='w+')
+            try:
+                print(_escape_pgpass(host) or '*', str(port) or '*', _escape_pgpass(dbname) or '*', _escape_pgpass(user) or '*', _escape_pgpass(passwd), file=temp_pgpass, sep=':', flush=True)
+                os.environ['PGPASSFILE'] = temp_pgpass.name
+            except UnicodeEncodeError:
+                pass
+        signal.signal(signal.SIGINT, signal.SIG_IGN)
+        subprocess.check_call(args)
+    finally:
+        signal.signal(signal.SIGINT, sigint_handler)
+        if temp_pgpass:
+            temp_pgpass.close()
+            if 'PGPASSFILE' in os.environ:
+                del os.environ['PGPASSFILE']","[{""var"": ""host"", ""rename"": ""database_host""}, {""var"": ""port"", ""rename"": ""database_port""}, {""var"": ""dbname"", ""rename"": ""database_name""}, {""var"": ""sigint_handler"", ""rename"": ""previous_sigint_handler""}, {""var"": ""user"", ""rename"": ""db_username""}, {""var"": ""args"", ""rename"": ""db_connection_args""}, {""var"": ""passwd"", ""rename"": ""database_password""}, {""var"": ""temp_pgpass"", ""rename"": ""temporary_pgpass_file""}]"

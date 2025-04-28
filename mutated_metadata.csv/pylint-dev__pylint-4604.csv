@@ -1,0 +1,22 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./pylint/checkers/variables.py,_store_type_annotation_node,collect_type_annotation_identifiers,1823,1843,"def _store_type_annotation_node(self, type_annotation):
+    """"""Given a type annotation, store all the name nodes it refers to""""""
+    if isinstance(type_annotation, astroid.Name):
+        self._type_annotation_names.append(type_annotation.name)
+        return
+    if not isinstance(type_annotation, astroid.Subscript):
+        return
+    if isinstance(type_annotation.value, astroid.Attribute) and isinstance(type_annotation.value.expr, astroid.Name) and (type_annotation.value.expr.name == TYPING_MODULE):
+        self._type_annotation_names.append(TYPING_MODULE)
+        return
+    self._type_annotation_names.extend((annotation.name for annotation in type_annotation.nodes_of_class(astroid.Name)))","def collect_type_annotation_identifiers(self, type_annotation):
+    """"""Given a type annotation, store all the name nodes it refers to""""""
+    if isinstance(type_annotation, astroid.Name):
+        self._type_annotation_names.append(type_annotation.name)
+        return
+    if not isinstance(type_annotation, astroid.Subscript):
+        return
+    if isinstance(type_annotation.value, astroid.Attribute) and isinstance(type_annotation.value.expr, astroid.Name) and (type_annotation.value.expr.name == TYPING_MODULE):
+        self._type_annotation_names.append(TYPING_MODULE)
+        return
+    self._type_annotation_names.extend((annotation.name for annotation in type_annotation.nodes_of_class(astroid.Name)))","[{""var"": ""annotation"", ""rename"": ""type_annotation_reference""}]"

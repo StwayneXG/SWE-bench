@@ -1,0 +1,412 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./xarray/core/dataset.py,set_index,establish_multiindex_from_coords,3968,4106,"def set_index(self, indexes: Mapping[Any, Hashable | Sequence[Hashable]] | None=None, append: bool=False, **indexes_kwargs: Hashable | Sequence[Hashable]) -> Dataset:
+    """"""Set Dataset (multi-)indexes using one or more existing coordinates
+        or variables.
+
+        Parameters
+        ----------
+        indexes : {dim: index, ...}
+            Mapping from names matching dimensions and values given
+            by (lists of) the names of existing coordinates or variables to set
+            as new (multi-)index.
+        append : bool, default: False
+            If True, append the supplied index(es) to the existing index(es).
+            Otherwise replace the existing index(es) (default).
+        **indexes_kwargs : optional
+            The keyword arguments form of ``indexes``.
+            One of indexes or indexes_kwargs must be provided.
+
+        Returns
+        -------
+        obj : Dataset
+            Another dataset, with this dataset's data but replaced coordinates.
+
+        Examples
+        --------
+        >>> arr = xr.DataArray(
+        ...     data=np.ones((2, 3)),
+        ...     dims=[""x"", ""y""],
+        ...     coords={""x"": range(2), ""y"": range(3), ""a"": (""x"", [3, 4])},
+        ... )
+        >>> ds = xr.Dataset({""v"": arr})
+        >>> ds
+        <xarray.Dataset>
+        Dimensions:  (x: 2, y: 3)
+        Coordinates:
+          * x        (x) int64 0 1
+          * y        (y) int64 0 1 2
+            a        (x) int64 3 4
+        Data variables:
+            v        (x, y) float64 1.0 1.0 1.0 1.0 1.0 1.0
+        >>> ds.set_index(x=""a"")
+        <xarray.Dataset>
+        Dimensions:  (x: 2, y: 3)
+        Coordinates:
+          * x        (x) int64 3 4
+          * y        (y) int64 0 1 2
+        Data variables:
+            v        (x, y) float64 1.0 1.0 1.0 1.0 1.0 1.0
+
+        See Also
+        --------
+        Dataset.reset_index
+        Dataset.swap_dims
+        """"""
+    dim_coords = either_dict_or_kwargs(indexes, indexes_kwargs, 'set_index')
+    new_indexes: dict[Hashable, Index] = {}
+    new_variables: dict[Hashable, IndexVariable] = {}
+    maybe_drop_indexes: list[Hashable] = []
+    drop_variables: list[Hashable] = []
+    replace_dims: dict[Hashable, Hashable] = {}
+    for dim, _var_names in dim_coords.items():
+        if isinstance(_var_names, str) or not isinstance(_var_names, Sequence):
+            var_names = [_var_names]
+        else:
+            var_names = list(_var_names)
+        invalid_vars = set(var_names) - set(self._variables)
+        if invalid_vars:
+            raise ValueError(', '.join([str(v) for v in invalid_vars]) + ' variable(s) do not exist')
+        current_coord_names = self.xindexes.get_all_coords(dim, errors='ignore')
+        maybe_drop_indexes += list(current_coord_names) + var_names
+        for k in var_names:
+            maybe_drop_indexes += list(self.xindexes.get_all_coords(k, errors='ignore'))
+        drop_variables += var_names
+        if len(var_names) == 1 and (not append or dim not in self._indexes):
+            var_name = var_names[0]
+            var = self._variables[var_name]
+            if var.dims != (dim,):
+                raise ValueError(f'dimension mismatch: try setting an index for dimension {dim!r} with variable {var_name!r} that has dimensions {var.dims}')
+            idx = PandasIndex.from_variables({dim: var})
+            idx_vars = idx.create_variables({var_name: var})
+        else:
+            if append:
+                current_variables = {k: self._variables[k] for k in current_coord_names}
+            else:
+                current_variables = {}
+            idx, idx_vars = PandasMultiIndex.from_variables_maybe_expand(dim, current_variables, {k: self._variables[k] for k in var_names})
+            for n in idx.index.names:
+                replace_dims[n] = dim
+        new_indexes.update({k: idx for k in idx_vars})
+        new_variables.update(idx_vars)
+    indexes_: dict[Any, Index] = {k: v for k, v in self._indexes.items() if k not in maybe_drop_indexes}
+    indexes_.update(new_indexes)
+    variables = {k: v for k, v in self._variables.items() if k not in drop_variables}
+    variables.update(new_variables)
+    for k, v in variables.items():
+        if any((d in replace_dims for d in v.dims)):
+            new_dims = [replace_dims.get(d, d) for d in v.dims]
+            variables[k] = v._replace(dims=new_dims)
+    coord_names = self._coord_names - set(drop_variables) | set(new_variables)
+    return self._replace_with_new_dims(variables, coord_names=coord_names, indexes=indexes_)","def establish_multiindex_from_coords(self, indexes: Mapping[Any, Hashable | Sequence[Hashable]] | None=None, append: bool=False, **indexes_kwargs: Hashable | Sequence[Hashable]) -> Dataset:
+    """"""Set Dataset (multi-)indexes using one or more existing coordinates
+        or variables.
+
+        Parameters
+        ----------
+        indexes : {dim: index, ...}
+            Mapping from names matching dimensions and values given
+            by (lists of) the names of existing coordinates or variables to set
+            as new (multi-)index.
+        append : bool, default: False
+            If True, append the supplied index(es) to the existing index(es).
+            Otherwise replace the existing index(es) (default).
+        **indexes_kwargs : optional
+            The keyword arguments form of ``indexes``.
+            One of indexes or indexes_kwargs must be provided.
+
+        Returns
+        -------
+        obj : Dataset
+            Another dataset, with this dataset's data but replaced coordinates.
+
+        Examples
+        --------
+        >>> arr = xr.DataArray(
+        ...     data=np.ones((2, 3)),
+        ...     dims=[""x"", ""y""],
+        ...     coords={""x"": range(2), ""y"": range(3), ""a"": (""x"", [3, 4])},
+        ... )
+        >>> ds = xr.Dataset({""v"": arr})
+        >>> ds
+        <xarray.Dataset>
+        Dimensions:  (x: 2, y: 3)
+        Coordinates:
+          * x        (x) int64 0 1
+          * y        (y) int64 0 1 2
+            a        (x) int64 3 4
+        Data variables:
+            v        (x, y) float64 1.0 1.0 1.0 1.0 1.0 1.0
+        >>> ds.set_index(x=""a"")
+        <xarray.Dataset>
+        Dimensions:  (x: 2, y: 3)
+        Coordinates:
+          * x        (x) int64 3 4
+          * y        (y) int64 0 1 2
+        Data variables:
+            v        (x, y) float64 1.0 1.0 1.0 1.0 1.0 1.0
+
+        See Also
+        --------
+        Dataset.reset_index
+        Dataset.swap_dims
+        """"""
+    dim_coords = either_dict_or_kwargs(indexes, indexes_kwargs, 'set_index')
+    new_indexes: dict[Hashable, Index] = {}
+    new_variables: dict[Hashable, IndexVariable] = {}
+    maybe_drop_indexes: list[Hashable] = []
+    drop_variables: list[Hashable] = []
+    replace_dims: dict[Hashable, Hashable] = {}
+    for dim, _var_names in dim_coords.items():
+        if isinstance(_var_names, str) or not isinstance(_var_names, Sequence):
+            var_names = [_var_names]
+        else:
+            var_names = list(_var_names)
+        invalid_vars = set(var_names) - set(self._variables)
+        if invalid_vars:
+            raise ValueError(', '.join([str(v) for v in invalid_vars]) + ' variable(s) do not exist')
+        current_coord_names = self.xindexes.get_all_coords(dim, errors='ignore')
+        maybe_drop_indexes += list(current_coord_names) + var_names
+        for k in var_names:
+            maybe_drop_indexes += list(self.xindexes.get_all_coords(k, errors='ignore'))
+        drop_variables += var_names
+        if len(var_names) == 1 and (not append or dim not in self._indexes):
+            var_name = var_names[0]
+            var = self._variables[var_name]
+            if var.dims != (dim,):
+                raise ValueError(f'dimension mismatch: try setting an index for dimension {dim!r} with variable {var_name!r} that has dimensions {var.dims}')
+            idx = PandasIndex.from_variables({dim: var})
+            idx_vars = idx.create_variables({var_name: var})
+        else:
+            if append:
+                current_variables = {k: self._variables[k] for k in current_coord_names}
+            else:
+                current_variables = {}
+            idx, idx_vars = PandasMultiIndex.from_variables_maybe_expand(dim, current_variables, {k: self._variables[k] for k in var_names})
+            for n in idx.index.names:
+                replace_dims[n] = dim
+        new_indexes.update({k: idx for k in idx_vars})
+        new_variables.update(idx_vars)
+    indexes_: dict[Any, Index] = {k: v for k, v in self._indexes.items() if k not in maybe_drop_indexes}
+    indexes_.update(new_indexes)
+    variables = {k: v for k, v in self._variables.items() if k not in drop_variables}
+    variables.update(new_variables)
+    for k, v in variables.items():
+        if any((d in replace_dims for d in v.dims)):
+            new_dims = [replace_dims.get(d, d) for d in v.dims]
+            variables[k] = v._replace(dims=new_dims)
+    coord_names = self._coord_names - set(drop_variables) | set(new_variables)
+    return self._replace_with_new_dims(variables, coord_names=coord_names, indexes=indexes_)","[{""var"": ""n"", ""rename"": ""dimension_variable_names""}, {""var"": ""replace_dims"", ""rename"": ""dimension_replacement_map""}, {""var"": ""var_names"", ""rename"": ""variable_names_list""}, {""var"": ""idx_vars"", ""rename"": ""index_variables""}, {""var"": ""current_coord_names"", ""rename"": ""existing_coord_names""}, {""var"": ""dim_coords"", ""rename"": ""dimension_to_coordinate_map""}, {""var"": ""d"", ""rename"": ""dimension_coordinates""}, {""var"": ""maybe_drop_indexes"", ""rename"": ""potential_indexes_to_drop""}, {""var"": ""new_indexes"", ""rename"": ""updated_index_mapping""}, {""var"": ""k"", ""rename"": ""variable_name""}, {""var"": ""_var_names"", ""rename"": ""dimension_variable_names""}, {""var"": ""var"", ""rename"": ""coordinate_variable""}, {""var"": ""var_name"", ""rename"": ""primary_index_variable""}, {""var"": ""variables"", ""rename"": ""dataset_variables""}, {""var"": ""v"", ""rename"": ""dataset_data_array""}, {""var"": ""new_variables"", ""rename"": ""updated_index_variables""}, {""var"": ""idx"", ""rename"": ""new_index_entry""}, {""var"": ""invalid_vars"", ""rename"": ""nonexistent_variables""}, {""var"": ""new_dims"", ""rename"": ""updated_dimensions""}, {""var"": ""indexes_"", ""rename"": ""updated_indexes_map""}, {""var"": ""current_variables"", ""rename"": ""existing_variables_map""}, {""var"": ""dim"", ""rename"": ""dimension_name""}, {""var"": ""coord_names"", ""rename"": ""updated_coord_names""}, {""var"": ""drop_variables"", ""rename"": ""variables_to_remove""}]"
+./xarray/core/dataset.py,reset_index,restore_coordinate_structure,4108,4182,"def reset_index(self: T_Dataset, dims_or_levels: Hashable | Sequence[Hashable], drop: bool=False) -> T_Dataset:
+    """"""Reset the specified index(es) or multi-index level(s).
+
+        Parameters
+        ----------
+        dims_or_levels : Hashable or Sequence of Hashable
+            Name(s) of the dimension(s) and/or multi-index level(s) that will
+            be reset.
+        drop : bool, default: False
+            If True, remove the specified indexes and/or multi-index levels
+            instead of extracting them as new coordinates (default: False).
+
+        Returns
+        -------
+        obj : Dataset
+            Another dataset, with this dataset's data but replaced coordinates.
+
+        See Also
+        --------
+        Dataset.set_index
+        """"""
+    if isinstance(dims_or_levels, str) or not isinstance(dims_or_levels, Sequence):
+        dims_or_levels = [dims_or_levels]
+    invalid_coords = set(dims_or_levels) - set(self._indexes)
+    if invalid_coords:
+        raise ValueError(f'{tuple(invalid_coords)} are not coordinates with an index')
+    drop_indexes: list[Hashable] = []
+    drop_variables: list[Hashable] = []
+    replaced_indexes: list[PandasMultiIndex] = []
+    new_indexes: dict[Hashable, Index] = {}
+    new_variables: dict[Hashable, IndexVariable] = {}
+    for name in dims_or_levels:
+        index = self._indexes[name]
+        drop_indexes += list(self.xindexes.get_all_coords(name))
+        if isinstance(index, PandasMultiIndex) and name not in self.dims:
+            if index not in replaced_indexes:
+                level_names = index.index.names
+                level_vars = {k: self._variables[k] for k in level_names if k not in dims_or_levels}
+                if level_vars:
+                    idx = index.keep_levels(level_vars)
+                    idx_vars = idx.create_variables(level_vars)
+                    new_indexes.update({k: idx for k in idx_vars})
+                    new_variables.update(idx_vars)
+            replaced_indexes.append(index)
+        if drop:
+            drop_variables.append(name)
+    indexes = {k: v for k, v in self._indexes.items() if k not in drop_indexes}
+    indexes.update(new_indexes)
+    variables = {k: v for k, v in self._variables.items() if k not in drop_variables}
+    variables.update(new_variables)
+    coord_names = set(new_variables) | self._coord_names
+    return self._replace(variables, coord_names=coord_names, indexes=indexes)","def restore_coordinate_structure(self: T_Dataset, dims_or_levels: Hashable | Sequence[Hashable], drop: bool=False) -> T_Dataset:
+    """"""Reset the specified index(es) or multi-index level(s).
+
+        Parameters
+        ----------
+        dims_or_levels : Hashable or Sequence of Hashable
+            Name(s) of the dimension(s) and/or multi-index level(s) that will
+            be reset.
+        drop : bool, default: False
+            If True, remove the specified indexes and/or multi-index levels
+            instead of extracting them as new coordinates (default: False).
+
+        Returns
+        -------
+        obj : Dataset
+            Another dataset, with this dataset's data but replaced coordinates.
+
+        See Also
+        --------
+        Dataset.set_index
+        """"""
+    if isinstance(dims_or_levels, str) or not isinstance(dims_or_levels, Sequence):
+        dims_or_levels = [dims_or_levels]
+    invalid_coords = set(dims_or_levels) - set(self._indexes)
+    if invalid_coords:
+        raise ValueError(f'{tuple(invalid_coords)} are not coordinates with an index')
+    drop_indexes: list[Hashable] = []
+    drop_variables: list[Hashable] = []
+    replaced_indexes: list[PandasMultiIndex] = []
+    new_indexes: dict[Hashable, Index] = {}
+    new_variables: dict[Hashable, IndexVariable] = {}
+    for name in dims_or_levels:
+        index = self._indexes[name]
+        drop_indexes += list(self.xindexes.get_all_coords(name))
+        if isinstance(index, PandasMultiIndex) and name not in self.dims:
+            if index not in replaced_indexes:
+                level_names = index.index.names
+                level_vars = {k: self._variables[k] for k in level_names if k not in dims_or_levels}
+                if level_vars:
+                    idx = index.keep_levels(level_vars)
+                    idx_vars = idx.create_variables(level_vars)
+                    new_indexes.update({k: idx for k in idx_vars})
+                    new_variables.update(idx_vars)
+            replaced_indexes.append(index)
+        if drop:
+            drop_variables.append(name)
+    indexes = {k: v for k, v in self._indexes.items() if k not in drop_indexes}
+    indexes.update(new_indexes)
+    variables = {k: v for k, v in self._variables.items() if k not in drop_variables}
+    variables.update(new_variables)
+    coord_names = set(new_variables) | self._coord_names
+    return self._replace(variables, coord_names=coord_names, indexes=indexes)","[{""var"": ""new_indexes"", ""rename"": ""updated_indexes_map""}, {""var"": ""replaced_indexes"", ""rename"": ""processed_multi_indexes""}, {""var"": ""level_names"", ""rename"": ""multiindex_level_names""}, {""var"": ""name"", ""rename"": ""index_name""}, {""var"": ""index"", ""rename"": ""current_index_structure""}, {""var"": ""k"", ""rename"": ""level_keys""}, {""var"": ""indexes"", ""rename"": ""updated_indexes""}, {""var"": ""drop_indexes"", ""rename"": ""indexes_to_remove""}, {""var"": ""invalid_coords"", ""rename"": ""unrecognized_index_coords""}, {""var"": ""level_vars"", ""rename"": ""multi_index_level_vars""}, {""var"": ""idx_vars"", ""rename"": ""index_level_variables""}, {""var"": ""variables"", ""rename"": ""updated_dataset_variables""}, {""var"": ""v"", ""rename"": ""reset_dimensions_or_levels""}, {""var"": ""new_variables"", ""rename"": ""reset_index_variables""}, {""var"": ""idx"", ""rename"": ""multi_index_subset""}, {""var"": ""coord_names"", ""rename"": ""updated_coordinate_names""}, {""var"": ""drop_variables"", ""rename"": ""indexes_to_remove""}]"
+./xarray/core/dataset.py,reorder_levels,rearrange_multiindex_levels,4184,4231,"def reorder_levels(self: T_Dataset, dim_order: Mapping[Any, Sequence[int | Hashable]] | None=None, **dim_order_kwargs: Sequence[int | Hashable]) -> T_Dataset:
+    """"""Rearrange index levels using input order.
+
+        Parameters
+        ----------
+        dim_order : dict-like of Hashable to Sequence of int or Hashable, optional
+            Mapping from names matching dimensions and values given
+            by lists representing new level orders. Every given dimension
+            must have a multi-index.
+        **dim_order_kwargs : Sequence of int or Hashable, optional
+            The keyword arguments form of ``dim_order``.
+            One of dim_order or dim_order_kwargs must be provided.
+
+        Returns
+        -------
+        obj : Dataset
+            Another dataset, with this dataset's data but replaced
+            coordinates.
+        """"""
+    dim_order = either_dict_or_kwargs(dim_order, dim_order_kwargs, 'reorder_levels')
+    variables = self._variables.copy()
+    indexes = dict(self._indexes)
+    new_indexes: dict[Hashable, Index] = {}
+    new_variables: dict[Hashable, IndexVariable] = {}
+    for dim, order in dim_order.items():
+        index = self._indexes[dim]
+        if not isinstance(index, PandasMultiIndex):
+            raise ValueError(f'coordinate {dim} has no MultiIndex')
+        level_vars = {k: self._variables[k] for k in order}
+        idx = index.reorder_levels(level_vars)
+        idx_vars = idx.create_variables(level_vars)
+        new_indexes.update({k: idx for k in idx_vars})
+        new_variables.update(idx_vars)
+    indexes = {k: v for k, v in self._indexes.items() if k not in new_indexes}
+    indexes.update(new_indexes)
+    variables = {k: v for k, v in self._variables.items() if k not in new_variables}
+    variables.update(new_variables)
+    return self._replace(variables, indexes=indexes)","def rearrange_multiindex_levels(self: T_Dataset, dim_order: Mapping[Any, Sequence[int | Hashable]] | None=None, **dim_order_kwargs: Sequence[int | Hashable]) -> T_Dataset:
+    """"""Rearrange index levels using input order.
+
+        Parameters
+        ----------
+        dim_order : dict-like of Hashable to Sequence of int or Hashable, optional
+            Mapping from names matching dimensions and values given
+            by lists representing new level orders. Every given dimension
+            must have a multi-index.
+        **dim_order_kwargs : Sequence of int or Hashable, optional
+            The keyword arguments form of ``dim_order``.
+            One of dim_order or dim_order_kwargs must be provided.
+
+        Returns
+        -------
+        obj : Dataset
+            Another dataset, with this dataset's data but replaced
+            coordinates.
+        """"""
+    dim_order = either_dict_or_kwargs(dim_order, dim_order_kwargs, 'reorder_levels')
+    variables = self._variables.copy()
+    indexes = dict(self._indexes)
+    new_indexes: dict[Hashable, Index] = {}
+    new_variables: dict[Hashable, IndexVariable] = {}
+    for dim, order in dim_order.items():
+        index = self._indexes[dim]
+        if not isinstance(index, PandasMultiIndex):
+            raise ValueError(f'coordinate {dim} has no MultiIndex')
+        level_vars = {k: self._variables[k] for k in order}
+        idx = index.reorder_levels(level_vars)
+        idx_vars = idx.create_variables(level_vars)
+        new_indexes.update({k: idx for k in idx_vars})
+        new_variables.update(idx_vars)
+    indexes = {k: v for k, v in self._indexes.items() if k not in new_indexes}
+    indexes.update(new_indexes)
+    variables = {k: v for k, v in self._variables.items() if k not in new_variables}
+    variables.update(new_variables)
+    return self._replace(variables, indexes=indexes)","[{""var"": ""new_indexes"", ""rename"": ""reordered_indexes""}, {""var"": ""index"", ""rename"": ""level_index_reordered""}, {""var"": ""indexes"", ""rename"": ""current_indexes""}, {""var"": ""k"", ""rename"": ""level_variable_key""}, {""var"": ""level_vars"", ""rename"": ""level_order_variables""}, {""var"": ""variables"", ""rename"": ""dataset_variables""}, {""var"": ""idx_vars"", ""rename"": ""index_level_variables""}, {""var"": ""v"", ""rename"": ""final_indexes""}, {""var"": ""new_variables"", ""rename"": ""reordered_index_variables""}, {""var"": ""dim"", ""rename"": ""dimension_level_mapping""}, {""var"": ""idx"", ""rename"": ""reordered_index""}, {""var"": ""order"", ""rename"": ""level_reorder_map""}]"
+./xarray/core/indexes.py,keep_levels,filter_and_reconstruct_index_by_levels,705,722,"def keep_levels(self, level_variables: Mapping[Any, Variable]) -> PandasMultiIndex | PandasIndex:
+    """"""Keep only the provided levels and return a new multi-index with its
+        corresponding coordinates.
+
+        """"""
+    index = self.index.droplevel([k for k in self.index.names if k not in level_variables])
+    if isinstance(index, pd.MultiIndex):
+        level_coords_dtype = {k: self.level_coords_dtype[k] for k in index.names}
+        return self._replace(index, level_coords_dtype=level_coords_dtype)
+    else:
+        return PandasIndex(index, self.dim, coord_dtype=self.level_coords_dtype[index.name])","def filter_and_reconstruct_index_by_levels(self, level_variables: Mapping[Any, Variable]) -> PandasMultiIndex | PandasIndex:
+    """"""Keep only the provided levels and return a new multi-index with its
+        corresponding coordinates.
+
+        """"""
+    index = self.index.droplevel([k for k in self.index.names if k not in level_variables])
+    if isinstance(index, pd.MultiIndex):
+        level_coords_dtype = {k: self.level_coords_dtype[k] for k in index.names}
+        return self._replace(index, level_coords_dtype=level_coords_dtype)
+    else:
+        return PandasIndex(index, self.dim, coord_dtype=self.level_coords_dtype[index.name])","[{""var"": ""level_coords_dtype"", ""rename"": ""level_coordinate_data_types""}, {""var"": ""index"", ""rename"": ""filtered_levels_index""}, {""var"": ""k"", ""rename"": ""current_level_name""}]"
+./xarray/core/indexes.py,reorder_levels,rearrange_index_levels_with_coords,724,733,"def reorder_levels(self, level_variables: Mapping[Any, Variable]) -> PandasMultiIndex:
+    """"""Re-arrange index levels using input order and return a new multi-index with
+        its corresponding coordinates.
+
+        """"""
+    index = self.index.reorder_levels(level_variables.keys())
+    level_coords_dtype = {k: self.level_coords_dtype[k] for k in index.names}
+    return self._replace(index, level_coords_dtype=level_coords_dtype)","def rearrange_index_levels_with_coords(self, level_variables: Mapping[Any, Variable]) -> PandasMultiIndex:
+    """"""Re-arrange index levels using input order and return a new multi-index with
+        its corresponding coordinates.
+
+        """"""
+    index = self.index.reorder_levels(level_variables.keys())
+    level_coords_dtype = {k: self.level_coords_dtype[k] for k in index.names}
+    return self._replace(index, level_coords_dtype=level_coords_dtype)","[{""var"": ""level_coords_dtype"", ""rename"": ""level_coords_data_types""}, {""var"": ""index"", ""rename"": ""reordered_multi_index""}, {""var"": ""k"", ""rename"": ""level_key""}]"

@@ -1,0 +1,19 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/db/backends/base/schema.py,_field_should_be_altered,_should_update_field_schema,1372,1398,"def _field_should_be_altered(self, old_field, new_field):
+    _, old_path, old_args, old_kwargs = old_field.deconstruct()
+    _, new_path, new_args, new_kwargs = new_field.deconstruct()
+    non_database_attrs = ['blank', 'db_column', 'editable', 'error_messages', 'help_text', 'limit_choices_to', 'on_delete', 'related_name', 'related_query_name', 'validators', 'verbose_name']
+    for attr in non_database_attrs:
+        old_kwargs.pop(attr, None)
+        new_kwargs.pop(attr, None)
+    return self.quote_name(old_field.column) != self.quote_name(new_field.column) or (old_path, old_args, old_kwargs) != (new_path, new_args, new_kwargs)","def _should_update_field_schema(self, old_field, new_field):
+    _, old_path, old_args, old_kwargs = old_field.deconstruct()
+    _, new_path, new_args, new_kwargs = new_field.deconstruct()
+    non_database_attrs = ['blank', 'db_column', 'editable', 'error_messages', 'help_text', 'limit_choices_to', 'on_delete', 'related_name', 'related_query_name', 'validators', 'verbose_name']
+    for attr in non_database_attrs:
+        old_kwargs.pop(attr, None)
+        new_kwargs.pop(attr, None)
+    return self.quote_name(old_field.column) != self.quote_name(new_field.column) or (old_path, old_args, old_kwargs) != (new_path, new_args, new_kwargs)","[{""var"": ""new_kwargs"", ""rename"": ""new_field_attributes""}, {""var"": ""attr"", ""rename"": ""non_db_field_attributes""}, {""var"": ""old_kwargs"", ""rename"": ""old_field_attributes""}, {""var"": ""_"", ""rename"": ""should_alter_field""}, {""var"": ""new_args"", ""rename"": ""new_field_arguments""}, {""var"": ""new_path"", ""rename"": ""new_field_path""}, {""var"": ""non_database_attrs"", ""rename"": ""non_structural_field_attributes""}, {""var"": ""old_path"", ""rename"": ""original_field_path""}, {""var"": ""old_args"", ""rename"": ""previous_field_args""}]"
+./django/db/models/fields/__init__.py,_description,get_field_type_description,155,158,"def _description(self):
+    return _('Field of type: %(field_type)s') % {'field_type': self.__class__.__name__}","def get_field_type_description(self):
+    return _('Field of type: %(field_type)s') % {'field_type': self.__class__.__name__}",[]

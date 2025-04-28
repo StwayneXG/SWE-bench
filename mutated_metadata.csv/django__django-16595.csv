@@ -1,0 +1,12 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/db/migrations/operations/fields.py,reduce,process_field_operation_reduction,249,267,"def reduce(self, operation, app_label):
+    if isinstance(operation, RemoveField) and self.is_same_field_operation(operation):
+        return [operation]
+    elif isinstance(operation, RenameField) and self.is_same_field_operation(operation) and (self.field.db_column is None):
+        return [operation, AlterField(model_name=self.model_name, name=operation.new_name, field=self.field)]
+    return super().reduce(operation, app_label)","def process_field_operation_reduction(self, operation, app_label):
+    if isinstance(operation, RemoveField) and self.is_same_field_operation(operation):
+        return [operation]
+    elif isinstance(operation, RenameField) and self.is_same_field_operation(operation) and (self.field.db_column is None):
+        return [operation, AlterField(model_name=self.model_name, name=operation.new_name, field=self.field)]
+    return super().reduce(operation, app_label)",[]

@@ -1,0 +1,64 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./sympy/core/function.py,_eval_evalf,convert_and_evaluate_with_mpmath,500,547,"def _eval_evalf(self, prec):
+    fname = self.func.__name__
+    try:
+        if not hasattr(mpmath, fname):
+            from sympy.utilities.lambdify import MPMATH_TRANSLATIONS
+            fname = MPMATH_TRANSLATIONS[fname]
+        func = getattr(mpmath, fname)
+    except (AttributeError, KeyError):
+        try:
+            return Float(self._imp_(*self.args), prec)
+        except (AttributeError, TypeError, ValueError):
+            return
+    try:
+        args = [arg._to_mpmath(prec + 5) for arg in self.args]
+
+        def bad(m):
+            from mpmath import mpf, mpc
+            if isinstance(m, mpf):
+                m = m._mpf_
+                return m[1] != 1 and m[-1] == 1
+            elif isinstance(m, mpc):
+                m, n = m._mpc_
+                return m[1] != 1 and m[-1] == 1 and (n[1] != 1) and (n[-1] == 1)
+            else:
+                return False
+        if any((bad(a) for a in args)):
+            raise ValueError
+    except ValueError:
+        return
+    with mpmath.workprec(prec):
+        v = func(*args)
+    return Expr._from_mpmath(v, prec)","def convert_and_evaluate_with_mpmath(self, prec):
+    fname = self.func.__name__
+    try:
+        if not hasattr(mpmath, fname):
+            from sympy.utilities.lambdify import MPMATH_TRANSLATIONS
+            fname = MPMATH_TRANSLATIONS[fname]
+        func = getattr(mpmath, fname)
+    except (AttributeError, KeyError):
+        try:
+            return Float(self._imp_(*self.args), prec)
+        except (AttributeError, TypeError, ValueError):
+            return
+    try:
+        args = [arg._to_mpmath(prec + 5) for arg in self.args]
+
+        def bad(m):
+            from mpmath import mpf, mpc
+            if isinstance(m, mpf):
+                m = m._mpf_
+                return m[1] != 1 and m[-1] == 1
+            elif isinstance(m, mpc):
+                m, n = m._mpc_
+                return m[1] != 1 and m[-1] == 1 and (n[1] != 1) and (n[-1] == 1)
+            else:
+                return False
+        if any((bad(a) for a in args)):
+            raise ValueError
+    except ValueError:
+        return
+    with mpmath.workprec(prec):
+        v = func(*args)
+    return Expr._from_mpmath(v, prec)","[{""var"": ""arg"", ""rename"": ""precision_transformed_arguments""}, {""var"": ""n"", ""rename"": ""evaluation_value""}, {""var"": ""a"", ""rename"": ""numeric_argument""}, {""var"": ""func"", ""rename"": ""mpmath_function""}, {""var"": ""v"", ""rename"": ""computed_result""}, {""var"": ""fname"", ""rename"": ""function_name""}, {""var"": ""args"", ""rename"": ""converted_mpmath_args""}]"

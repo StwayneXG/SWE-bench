@@ -1,0 +1,86 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/db/models/expressions.py,_combine,construct_combined_expression,56,66,"def _combine(self, other, connector, reversed):
+    if not hasattr(other, 'resolve_expression'):
+        if isinstance(other, datetime.timedelta):
+            other = DurationValue(other, output_field=fields.DurationField())
+        else:
+            other = Value(other)
+    if reversed:
+        return CombinedExpression(other, connector, self)
+    return CombinedExpression(self, connector, other)","def construct_combined_expression(self, other, connector, reversed):
+    if not hasattr(other, 'resolve_expression'):
+        if isinstance(other, datetime.timedelta):
+            other = DurationValue(other, output_field=fields.DurationField())
+        else:
+            other = Value(other)
+    if reversed:
+        return CombinedExpression(other, connector, self)
+    return CombinedExpression(self, connector, other)",[]
+./django/db/models/expressions.py,as_sql,compile_expression_to_sql,443,471,"def as_sql(self, compiler, connection):
+    try:
+        lhs_output = self.lhs.output_field
+    except FieldError:
+        lhs_output = None
+    try:
+        rhs_output = self.rhs.output_field
+    except FieldError:
+        rhs_output = None
+    if not connection.features.has_native_duration_field and (lhs_output and lhs_output.get_internal_type() == 'DurationField' or (rhs_output and rhs_output.get_internal_type() == 'DurationField')):
+        return DurationExpression(self.lhs, self.connector, self.rhs).as_sql(compiler, connection)
+    if lhs_output and rhs_output and (self.connector == self.SUB) and (lhs_output.get_internal_type() in {'DateField', 'DateTimeField', 'TimeField'}) and (lhs_output.get_internal_type() == rhs_output.get_internal_type()):
+        return TemporalSubtraction(self.lhs, self.rhs).as_sql(compiler, connection)
+    expressions = []
+    expression_params = []
+    sql, params = compiler.compile(self.lhs)
+    expressions.append(sql)
+    expression_params.extend(params)
+    sql, params = compiler.compile(self.rhs)
+    expressions.append(sql)
+    expression_params.extend(params)
+    expression_wrapper = '(%s)'
+    sql = connection.ops.combine_expression(self.connector, expressions)
+    return (expression_wrapper % sql, expression_params)","def compile_expression_to_sql(self, compiler, connection):
+    try:
+        lhs_output = self.lhs.output_field
+    except FieldError:
+        lhs_output = None
+    try:
+        rhs_output = self.rhs.output_field
+    except FieldError:
+        rhs_output = None
+    if not connection.features.has_native_duration_field and (lhs_output and lhs_output.get_internal_type() == 'DurationField' or (rhs_output and rhs_output.get_internal_type() == 'DurationField')):
+        return DurationExpression(self.lhs, self.connector, self.rhs).as_sql(compiler, connection)
+    if lhs_output and rhs_output and (self.connector == self.SUB) and (lhs_output.get_internal_type() in {'DateField', 'DateTimeField', 'TimeField'}) and (lhs_output.get_internal_type() == rhs_output.get_internal_type()):
+        return TemporalSubtraction(self.lhs, self.rhs).as_sql(compiler, connection)
+    expressions = []
+    expression_params = []
+    sql, params = compiler.compile(self.lhs)
+    expressions.append(sql)
+    expression_params.extend(params)
+    sql, params = compiler.compile(self.rhs)
+    expressions.append(sql)
+    expression_params.extend(params)
+    expression_wrapper = '(%s)'
+    sql = connection.ops.combine_expression(self.connector, expressions)
+    return (expression_wrapper % sql, expression_params)","[{""var"": ""expressions"", ""rename"": ""compiled_sql_segments""}, {""var"": ""params"", ""rename"": ""compiled_expression_params""}, {""var"": ""expression_wrapper"", ""rename"": ""sql_expression_template""}, {""var"": ""expression_params"", ""rename"": ""python\ncompiled_expression_parameters""}, {""var"": ""sql"", ""rename"": ""compiled_expression_sql""}, {""var"": ""lhs_output"", ""rename"": ""lhs_output_field""}, {""var"": ""rhs_output"", ""rename"": ""rhs_output_field""}]"
+./django/db/models/expressions.py,compile,compile_with_duration_handling,482,492,"def compile(self, side, compiler, connection):
+    if not isinstance(side, DurationValue):
+        try:
+            output = side.output_field
+        except FieldError:
+            pass
+        else:
+            if output.get_internal_type() == 'DurationField':
+                sql, params = compiler.compile(side)
+                return (connection.ops.format_for_duration_arithmetic(sql), params)
+    return compiler.compile(side)","def compile_with_duration_handling(self, side, compiler, connection):
+    if not isinstance(side, DurationValue):
+        try:
+            output = side.output_field
+        except FieldError:
+            pass
+        else:
+            if output.get_internal_type() == 'DurationField':
+                sql, params = compiler.compile(side)
+                return (connection.ops.format_for_duration_arithmetic(sql), params)
+    return compiler.compile(side)","[{""var"": ""sql"", ""rename"": ""duration_sql_expression""}, {""var"": ""output"", ""rename"": ""side_output_field""}, {""var"": ""params"", ""rename"": ""query_duration_parameters""}]"

@@ -1,0 +1,4 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/db/models/fields/__init__.py,__subclasscheck__,is_subclass_or_registered,2526,2527,"def __subclasscheck__(self, subclass):
+    return subclass in self._subclasses or super().__subclasscheck__(subclass)","def is_subclass_or_registered(self, subclass):
+    return subclass in self._subclasses or super().__subclasscheck__(subclass)",[]

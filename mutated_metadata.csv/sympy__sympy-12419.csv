@@ -1,0 +1,13 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./sympy/matrices/expressions/matexpr.py,_entry,identity_matrix_diagonal_checker,478,482,"def _entry(self, i, j):
+    if i == j:
+        return S.One
+    else:
+        return S.Zero","def identity_matrix_diagonal_checker(self, i, j):
+    if i == j:
+        return S.One
+    else:
+        return S.Zero",[]
+./sympy/matrices/expressions/matexpr.py,_eval_determinant,_return_identity_determinant,484,485,"def _eval_determinant(self):
+    return S.One","def _return_identity_determinant(self):
+    return S.One",[]

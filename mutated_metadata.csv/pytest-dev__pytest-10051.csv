@@ -1,0 +1,37 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./src/_pytest/logging.py,handleError,raiseLogRecordExceptionIfEnabled,348,354,"def handleError(self, record: logging.LogRecord) -> None:
+    if logging.raiseExceptions:
+        raise","def raiseLogRecordExceptionIfEnabled(self, record: logging.LogRecord) -> None:
+    if logging.raiseExceptions:
+        raise",[]
+./src/_pytest/logging.py,set_level,configure_logger_for_test_duration,445,461,"def set_level(self, level: Union[int, str], logger: Optional[str]=None) -> None:
+    """"""Set the level of a logger for the duration of a test.
+
+        .. versionchanged:: 3.4
+            The levels of the loggers changed by this function will be
+            restored to their initial values at the end of the test.
+
+        :param int level: The level.
+        :param str logger: The logger to update. If not given, the root logger.
+        """"""
+    logger_obj = logging.getLogger(logger)
+    self._initial_logger_levels.setdefault(logger, logger_obj.level)
+    logger_obj.setLevel(level)
+    if self._initial_handler_level is None:
+        self._initial_handler_level = self.handler.level
+    self.handler.setLevel(level)","def configure_logger_for_test_duration(self, level: Union[int, str], logger: Optional[str]=None) -> None:
+    """"""Set the level of a logger for the duration of a test.
+
+        .. versionchanged:: 3.4
+            The levels of the loggers changed by this function will be
+            restored to their initial values at the end of the test.
+
+        :param int level: The level.
+        :param str logger: The logger to update. If not given, the root logger.
+        """"""
+    logger_obj = logging.getLogger(logger)
+    self._initial_logger_levels.setdefault(logger, logger_obj.level)
+    logger_obj.setLevel(level)
+    if self._initial_handler_level is None:
+        self._initial_handler_level = self.handler.level
+    self.handler.setLevel(level)","[{""var"": ""logger_obj"", ""rename"": ""target_logger""}]"

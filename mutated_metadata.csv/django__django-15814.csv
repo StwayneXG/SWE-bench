@@ -1,0 +1,128 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/db/models/sql/query.py,deferred_to_data,convert_deferred_loading_to_field_structure,721,802,"def deferred_to_data(self, target):
+    """"""
+        Convert the self.deferred_loading data structure to an alternate data
+        structure, describing the field that *will* be loaded. This is used to
+        compute the columns to select from the database and also by the
+        QuerySet class to work out which fields are being initialized on each
+        model. Models that have all their fields included aren't mentioned in
+        the result, only those that have field restrictions in place.
+
+        The ""target"" parameter is the instance that is populated (in place).
+        """"""
+    field_names, defer = self.deferred_loading
+    if not field_names:
+        return
+    orig_opts = self.get_meta()
+    seen = {}
+    must_include = {orig_opts.concrete_model: {orig_opts.pk}}
+    for field_name in field_names:
+        parts = field_name.split(LOOKUP_SEP)
+        cur_model = self.model._meta.concrete_model
+        opts = orig_opts
+        for name in parts[:-1]:
+            old_model = cur_model
+            if name in self._filtered_relations:
+                name = self._filtered_relations[name].relation_name
+            source = opts.get_field(name)
+            if is_reverse_o2o(source):
+                cur_model = source.related_model
+            else:
+                cur_model = source.remote_field.model
+            opts = cur_model._meta
+            if not is_reverse_o2o(source):
+                must_include[old_model].add(source)
+            add_to_dict(must_include, cur_model, opts.pk)
+        field = opts.get_field(parts[-1])
+        is_reverse_object = field.auto_created and (not field.concrete)
+        model = field.related_model if is_reverse_object else field.model
+        model = model._meta.concrete_model
+        if model == opts.model:
+            model = cur_model
+        if not is_reverse_o2o(field):
+            add_to_dict(seen, model, field)
+    if defer:
+        workset = {}
+        for model, values in seen.items():
+            for field in model._meta.local_fields:
+                if field not in values:
+                    m = field.model._meta.concrete_model
+                    add_to_dict(workset, m, field)
+        for model, values in must_include.items():
+            if model in workset:
+                workset[model].update(values)
+        for model, fields in workset.items():
+            target[model] = {f.attname for f in fields}
+    else:
+        for model, values in must_include.items():
+            if model in seen:
+                seen[model].update(values)
+            else:
+                seen[model] = values
+        for model in orig_opts.get_parent_list():
+            seen.setdefault(model, set())
+        for model, fields in seen.items():
+            target[model] = {f.attname for f in fields}","def convert_deferred_loading_to_field_structure(self, target):
+    """"""
+        Convert the self.deferred_loading data structure to an alternate data
+        structure, describing the field that *will* be loaded. This is used to
+        compute the columns to select from the database and also by the
+        QuerySet class to work out which fields are being initialized on each
+        model. Models that have all their fields included aren't mentioned in
+        the result, only those that have field restrictions in place.
+
+        The ""target"" parameter is the instance that is populated (in place).
+        """"""
+    field_names, defer = self.deferred_loading
+    if not field_names:
+        return
+    orig_opts = self.get_meta()
+    seen = {}
+    must_include = {orig_opts.concrete_model: {orig_opts.pk}}
+    for field_name in field_names:
+        parts = field_name.split(LOOKUP_SEP)
+        cur_model = self.model._meta.concrete_model
+        opts = orig_opts
+        for name in parts[:-1]:
+            old_model = cur_model
+            if name in self._filtered_relations:
+                name = self._filtered_relations[name].relation_name
+            source = opts.get_field(name)
+            if is_reverse_o2o(source):
+                cur_model = source.related_model
+            else:
+                cur_model = source.remote_field.model
+            opts = cur_model._meta
+            if not is_reverse_o2o(source):
+                must_include[old_model].add(source)
+            add_to_dict(must_include, cur_model, opts.pk)
+        field = opts.get_field(parts[-1])
+        is_reverse_object = field.auto_created and (not field.concrete)
+        model = field.related_model if is_reverse_object else field.model
+        model = model._meta.concrete_model
+        if model == opts.model:
+            model = cur_model
+        if not is_reverse_o2o(field):
+            add_to_dict(seen, model, field)
+    if defer:
+        workset = {}
+        for model, values in seen.items():
+            for field in model._meta.local_fields:
+                if field not in values:
+                    m = field.model._meta.concrete_model
+                    add_to_dict(workset, m, field)
+        for model, values in must_include.items():
+            if model in workset:
+                workset[model].update(values)
+        for model, fields in workset.items():
+            target[model] = {f.attname for f in fields}
+    else:
+        for model, values in must_include.items():
+            if model in seen:
+                seen[model].update(values)
+            else:
+                seen[model] = values
+        for model in orig_opts.get_parent_list():
+            seen.setdefault(model, set())
+        for model, fields in seen.items():
+            target[model] = {f.attname for f in fields}","[{""var"": ""source"", ""rename"": ""current_field_source""}, {""var"": ""fields"", ""rename"": ""loading_field_list""}, {""var"": ""orig_opts"", ""rename"": ""original_model_metadata""}, {""var"": ""workset"", ""rename"": ""field_selection_map""}, {""var"": ""values"", ""rename"": ""field_columns""}, {""var"": ""cur_model"", ""rename"": ""current_concrete_model""}, {""var"": ""name"", ""rename"": ""target_instance""}, {""var"": ""model"", ""rename"": ""resolved_field_model""}, {""var"": ""defer"", ""rename"": ""deferred_loading_flag""}, {""var"": ""is_reverse_object"", ""rename"": ""is_reverse_generated_field""}, {""var"": ""seen"", ""rename"": ""loaded_fields_tracker""}, {""var"": ""parts"", ""rename"": ""field_name_parts""}, {""var"": ""must_include"", ""rename"": ""required_fields_map""}, {""var"": ""opts"", ""rename"": ""field_option_metadata""}, {""var"": ""m"", ""rename"": ""field_model_mapping""}, {""var"": ""field_names"", ""rename"": ""deferred_field_names""}, {""var"": ""field"", ""rename"": ""database_field_descriptor""}, {""var"": ""f"", ""rename"": ""field_mapping""}, {""var"": ""old_model"", ""rename"": ""previous_model_instance""}, {""var"": ""field_name"", ""rename"": ""fields_to_process""}]"

@@ -1,0 +1,23 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./sympy/physics/quantum/dagger.py,__new__,create_with_adjoint_or_conjugate_transpose,79,86,"def __new__(cls, arg):
+    if hasattr(arg, 'adjoint'):
+        obj = arg.adjoint()
+    elif hasattr(arg, 'conjugate') and hasattr(arg, 'transpose'):
+        obj = arg.conjugate().transpose()
+    if obj is not None:
+        return obj
+    return Expr.__new__(cls, arg)","def create_with_adjoint_or_conjugate_transpose(cls, arg):
+    if hasattr(arg, 'adjoint'):
+        obj = arg.adjoint()
+    elif hasattr(arg, 'conjugate') and hasattr(arg, 'transpose'):
+        obj = arg.conjugate().transpose()
+    if obj is not None:
+        return obj
+    return Expr.__new__(cls, arg)","[{""var"": ""obj"", ""rename"": ""transformed_arg_representation""}]"
+./sympy/physics/quantum/operator.py,__mul__,multiply_or_return_operator,308,313,"def __mul__(self, other):
+    if isinstance(other, Operator):
+        return other
+    return Mul(self, other)","def multiply_or_return_operator(self, other):
+    if isinstance(other, Operator):
+        return other
+    return Mul(self, other)",[]

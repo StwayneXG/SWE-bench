@@ -1,0 +1,46 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./sklearn/ensemble/voting.py,fit,initialize_and_validate_estimators,64,101,"@abstractmethod
+def fit(self, X, y, sample_weight=None):
+    """"""
+        common fit operations.
+        """"""
+    if self.estimators is None or len(self.estimators) == 0:
+        raise AttributeError('Invalid `estimators` attribute, `estimators` should be a list of (string, estimator) tuples')
+    if self.weights is not None and len(self.weights) != len(self.estimators):
+        raise ValueError('Number of `estimators` and weights must be equal; got %d weights, %d estimators' % (len(self.weights), len(self.estimators)))
+    if sample_weight is not None:
+        for name, step in self.estimators:
+            if not has_fit_parameter(step, 'sample_weight'):
+                raise ValueError(""Underlying estimator '%s' does not support sample weights."" % name)
+    names, clfs = zip(*self.estimators)
+    self._validate_names(names)
+    n_isnone = np.sum([clf is None for _, clf in self.estimators])
+    if n_isnone == len(self.estimators):
+        raise ValueError('All estimators are None. At least one is required!')
+    self.estimators_ = Parallel(n_jobs=self.n_jobs)((delayed(_parallel_fit_estimator)(clone(clf), X, y, sample_weight=sample_weight) for clf in clfs if clf is not None))
+    self.named_estimators_ = Bunch()
+    for k, e in zip(self.estimators, self.estimators_):
+        self.named_estimators_[k[0]] = e
+    return self","@abstractmethod
+def initialize_and_validate_estimators(self, X, y, sample_weight=None):
+    """"""
+        common fit operations.
+        """"""
+    if self.estimators is None or len(self.estimators) == 0:
+        raise AttributeError('Invalid `estimators` attribute, `estimators` should be a list of (string, estimator) tuples')
+    if self.weights is not None and len(self.weights) != len(self.estimators):
+        raise ValueError('Number of `estimators` and weights must be equal; got %d weights, %d estimators' % (len(self.weights), len(self.estimators)))
+    if sample_weight is not None:
+        for name, step in self.estimators:
+            if not has_fit_parameter(step, 'sample_weight'):
+                raise ValueError(""Underlying estimator '%s' does not support sample weights."" % name)
+    names, clfs = zip(*self.estimators)
+    self._validate_names(names)
+    n_isnone = np.sum([clf is None for _, clf in self.estimators])
+    if n_isnone == len(self.estimators):
+        raise ValueError('All estimators are None. At least one is required!')
+    self.estimators_ = Parallel(n_jobs=self.n_jobs)((delayed(_parallel_fit_estimator)(clone(clf), X, y, sample_weight=sample_weight) for clf in clfs if clf is not None))
+    self.named_estimators_ = Bunch()
+    for k, e in zip(self.estimators, self.estimators_):
+        self.named_estimators_[k[0]] = e
+    return self","[{""var"": ""step"", ""rename"": ""estimator_step""}, {""var"": ""name"", ""rename"": ""estimator_name""}, {""var"": ""k"", ""rename"": ""estimator_name""}, {""var"": ""_"", ""rename"": ""abstract_fit_method""}, {""var"": ""clf"", ""rename"": ""classifier_models""}, {""var"": ""n_isnone"", ""rename"": ""num_none_estimators""}, {""var"": ""e"", ""rename"": ""estimator_instance""}, {""var"": ""names"", ""rename"": ""estimator_names""}, {""var"": ""clfs"", ""rename"": ""classifier_models""}]"

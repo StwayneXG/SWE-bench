@@ -1,0 +1,6 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./pylint/lint/expand_modules.py,_is_ignored_file,should_exclude_based_on_ignore_patterns,49,60,"def _is_ignored_file(element: str, ignore_list: list[str], ignore_list_re: list[Pattern[str]], ignore_list_paths_re: list[Pattern[str]]) -> bool:
+    basename = os.path.basename(element)
+    return basename in ignore_list or _is_in_ignore_list_re(basename, ignore_list_re) or _is_in_ignore_list_re(element, ignore_list_paths_re)","def should_exclude_based_on_ignore_patterns(element: str, ignore_list: list[str], ignore_list_re: list[Pattern[str]], ignore_list_paths_re: list[Pattern[str]]) -> bool:
+    basename = os.path.basename(element)
+    return basename in ignore_list or _is_in_ignore_list_re(basename, ignore_list_re) or _is_in_ignore_list_re(element, ignore_list_paths_re)","[{""var"": ""basename"", ""rename"": ""file_basename""}]"

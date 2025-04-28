@@ -1,0 +1,64 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/core/validators.py,__call__,validate_and_normalize_url,101,142,"def __call__(self, value):
+    if not isinstance(value, str):
+        raise ValidationError(self.message, code=self.code, params={'value': value})
+    scheme = value.split('://')[0].lower()
+    if scheme not in self.schemes:
+        raise ValidationError(self.message, code=self.code, params={'value': value})
+    try:
+        super().__call__(value)
+    except ValidationError as e:
+        if value:
+            try:
+                scheme, netloc, path, query, fragment = urlsplit(value)
+            except ValueError:
+                raise ValidationError(self.message, code=self.code, params={'value': value})
+            try:
+                netloc = punycode(netloc)
+            except UnicodeError:
+                raise e
+            url = urlunsplit((scheme, netloc, path, query, fragment))
+            super().__call__(url)
+        else:
+            raise
+    else:
+        host_match = re.search('^\\[(.+)\\](?::\\d{2,5})?$', urlsplit(value).netloc)
+        if host_match:
+            potential_ip = host_match[1]
+            try:
+                validate_ipv6_address(potential_ip)
+            except ValidationError:
+                raise ValidationError(self.message, code=self.code, params={'value': value})
+    if len(urlsplit(value).hostname) > 253:
+        raise ValidationError(self.message, code=self.code, params={'value': value})","def validate_and_normalize_url(self, value):
+    if not isinstance(value, str):
+        raise ValidationError(self.message, code=self.code, params={'value': value})
+    scheme = value.split('://')[0].lower()
+    if scheme not in self.schemes:
+        raise ValidationError(self.message, code=self.code, params={'value': value})
+    try:
+        super().__call__(value)
+    except ValidationError as e:
+        if value:
+            try:
+                scheme, netloc, path, query, fragment = urlsplit(value)
+            except ValueError:
+                raise ValidationError(self.message, code=self.code, params={'value': value})
+            try:
+                netloc = punycode(netloc)
+            except UnicodeError:
+                raise e
+            url = urlunsplit((scheme, netloc, path, query, fragment))
+            super().__call__(url)
+        else:
+            raise
+    else:
+        host_match = re.search('^\\[(.+)\\](?::\\d{2,5})?$', urlsplit(value).netloc)
+        if host_match:
+            potential_ip = host_match[1]
+            try:
+                validate_ipv6_address(potential_ip)
+            except ValidationError:
+                raise ValidationError(self.message, code=self.code, params={'value': value})
+    if len(urlsplit(value).hostname) > 253:
+        raise ValidationError(self.message, code=self.code, params={'value': value})","[{""var"": ""url"", ""rename"": ""validated_url""}, {""var"": ""query"", ""rename"": ""url_query_component""}, {""var"": ""path"", ""rename"": ""url_path_component""}, {""var"": ""fragment"", ""rename"": ""url_fragment""}, {""var"": ""host_match"", ""rename"": ""matched_ipv6_host""}, {""var"": ""netloc"", ""rename"": ""network_location""}, {""var"": ""scheme"", ""rename"": ""url_scheme""}, {""var"": ""potential_ip"", ""rename"": ""potential_ipv6_address""}]"

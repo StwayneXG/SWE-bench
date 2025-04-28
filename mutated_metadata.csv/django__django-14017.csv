@@ -1,0 +1,28 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/db/models/query_utils.py,_combine,merge_query_objects,42,59,"def _combine(self, other, conn):
+    if not isinstance(other, Q):
+        raise TypeError(other)
+    if not other:
+        _, args, kwargs = self.deconstruct()
+        return type(self)(*args, **kwargs)
+    elif not self:
+        _, args, kwargs = other.deconstruct()
+        return type(other)(*args, **kwargs)
+    obj = type(self)()
+    obj.connector = conn
+    obj.add(self, conn)
+    obj.add(other, conn)
+    return obj","def merge_query_objects(self, other, conn):
+    if not isinstance(other, Q):
+        raise TypeError(other)
+    if not other:
+        _, args, kwargs = self.deconstruct()
+        return type(self)(*args, **kwargs)
+    elif not self:
+        _, args, kwargs = other.deconstruct()
+        return type(other)(*args, **kwargs)
+    obj = type(self)()
+    obj.connector = conn
+    obj.add(self, conn)
+    obj.add(other, conn)
+    return obj","[{""var"": ""obj"", ""rename"": ""combined_query""}, {""var"": ""_"", ""rename"": ""combined_query_object""}, {""var"": ""kwargs"", ""rename"": ""deconstructed_kwargs""}, {""var"": ""args"", ""rename"": ""deconstructed_args""}]"

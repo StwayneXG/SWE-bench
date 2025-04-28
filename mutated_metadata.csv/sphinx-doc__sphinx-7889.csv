@@ -1,0 +1,4 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./sphinx/ext/autodoc/mock.py,__getitem__,create_mock_subclass_with_key,55,56,"def __getitem__(self, key: str) -> '_MockObject':
+    return _make_subclass(key, self.__display_name__, self.__class__)()","def create_mock_subclass_with_key(self, key: str) -> '_MockObject':
+    return _make_subclass(key, self.__display_name__, self.__class__)()",[]

@@ -1,0 +1,47 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./lib/matplotlib/colorbar.py,_add_solids,_draw_color_mesh_and_hatches,634,655,"def _add_solids(self, X, Y, C):
+    """"""Draw the colors; optionally add separators.""""""
+    if self.solids is not None:
+        self.solids.remove()
+    for solid in self.solids_patches:
+        solid.remove()
+    mappable = getattr(self, 'mappable', None)
+    if isinstance(mappable, contour.ContourSet) and any((hatch is not None for hatch in mappable.hatches)):
+        self._add_solids_patches(X, Y, C, mappable)
+    else:
+        self.solids = self.ax.pcolormesh(X, Y, C, cmap=self.cmap, norm=self.norm, alpha=self.alpha, edgecolors='none', shading='flat')
+        if not self.drawedges:
+            if len(self._y) >= self.n_rasterize:
+                self.solids.set_rasterized(True)
+    self.dividers.set_segments(np.dstack([X, Y])[1:-1] if self.drawedges else [])","def _draw_color_mesh_and_hatches(self, X, Y, C):
+    """"""Draw the colors; optionally add separators.""""""
+    if self.solids is not None:
+        self.solids.remove()
+    for solid in self.solids_patches:
+        solid.remove()
+    mappable = getattr(self, 'mappable', None)
+    if isinstance(mappable, contour.ContourSet) and any((hatch is not None for hatch in mappable.hatches)):
+        self._add_solids_patches(X, Y, C, mappable)
+    else:
+        self.solids = self.ax.pcolormesh(X, Y, C, cmap=self.cmap, norm=self.norm, alpha=self.alpha, edgecolors='none', shading='flat')
+        if not self.drawedges:
+            if len(self._y) >= self.n_rasterize:
+                self.solids.set_rasterized(True)
+    self.dividers.set_segments(np.dstack([X, Y])[1:-1] if self.drawedges else [])","[{""var"": ""hatch"", ""rename"": ""contour_hatch_pattern""}, {""var"": ""solid"", ""rename"": ""color_mesh""}, {""var"": ""mappable"", ""rename"": ""contour_mappable_data""}]"
+./lib/matplotlib/colorbar.py,_add_solids_patches,generate_hatched_solids_patches,657,671,"def _add_solids_patches(self, X, Y, C, mappable):
+    hatches = mappable.hatches * len(C)
+    patches = []
+    for i in range(len(X) - 1):
+        xy = np.array([[X[i, 0], Y[i, 0]], [X[i, 1], Y[i, 0]], [X[i + 1, 1], Y[i + 1, 0]], [X[i + 1, 0], Y[i + 1, 1]]])
+        patch = mpatches.PathPatch(mpath.Path(xy), facecolor=self.cmap(self.norm(C[i][0])), hatch=hatches[i], linewidth=0, antialiased=False, alpha=self.alpha)
+        self.ax.add_patch(patch)
+        patches.append(patch)
+    self.solids_patches = patches","def generate_hatched_solids_patches(self, X, Y, C, mappable):
+    hatches = mappable.hatches * len(C)
+    patches = []
+    for i in range(len(X) - 1):
+        xy = np.array([[X[i, 0], Y[i, 0]], [X[i, 1], Y[i, 0]], [X[i + 1, 1], Y[i + 1, 0]], [X[i + 1, 0], Y[i + 1, 1]]])
+        patch = mpatches.PathPatch(mpath.Path(xy), facecolor=self.cmap(self.norm(C[i][0])), hatch=hatches[i], linewidth=0, antialiased=False, alpha=self.alpha)
+        self.ax.add_patch(patch)
+        patches.append(patch)
+    self.solids_patches = patches","[{""var"": ""patch"", ""rename"": ""polygon_shape_patch""}, {""var"": ""hatches"", ""rename"": ""repeated_hatch_patterns""}, {""var"": ""i"", ""rename"": ""current_patch_index""}, {""var"": ""patches"", ""rename"": ""surface_area_patches""}, {""var"": ""xy"", ""rename"": ""polygon_vertices""}]"

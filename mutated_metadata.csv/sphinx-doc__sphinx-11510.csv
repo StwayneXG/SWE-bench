@@ -1,0 +1,43 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./sphinx/directives/other.py,setup,register_sphinx_directives,382,405,"def setup(app: Sphinx) -> dict[str, Any]:
+    directives.register_directive('toctree', TocTree)
+    directives.register_directive('sectionauthor', Author)
+    directives.register_directive('moduleauthor', Author)
+    directives.register_directive('codeauthor', Author)
+    directives.register_directive('seealso', SeeAlso)
+    directives.register_directive('tabularcolumns', TabularColumns)
+    directives.register_directive('centered', Centered)
+    directives.register_directive('acks', Acks)
+    directives.register_directive('hlist', HList)
+    directives.register_directive('only', Only)
+    directives.register_directive('include', Include)
+    directives.register_directive('cssclass', Class)
+    directives.register_directive('rst-class', Class)
+    return {'version': 'builtin', 'parallel_read_safe': True, 'parallel_write_safe': True}","def register_sphinx_directives(app: Sphinx) -> dict[str, Any]:
+    directives.register_directive('toctree', TocTree)
+    directives.register_directive('sectionauthor', Author)
+    directives.register_directive('moduleauthor', Author)
+    directives.register_directive('codeauthor', Author)
+    directives.register_directive('seealso', SeeAlso)
+    directives.register_directive('tabularcolumns', TabularColumns)
+    directives.register_directive('centered', Centered)
+    directives.register_directive('acks', Acks)
+    directives.register_directive('hlist', HList)
+    directives.register_directive('only', Only)
+    directives.register_directive('include', Include)
+    directives.register_directive('cssclass', Class)
+    directives.register_directive('rst-class', Class)
+    return {'version': 'builtin', 'parallel_read_safe': True, 'parallel_write_safe': True}",[]
+./sphinx/directives/other.py,run,resolve_and_include_file_path,371,379,"def run(self) -> list[Node]:
+    if self.arguments[0].startswith('<') and self.arguments[0].endswith('>'):
+        return super().run()
+    rel_filename, filename = self.env.relfn2path(self.arguments[0])
+    self.arguments[0] = filename
+    self.env.note_included(filename)
+    return super().run()","def resolve_and_include_file_path(self) -> list[Node]:
+    if self.arguments[0].startswith('<') and self.arguments[0].endswith('>'):
+        return super().run()
+    rel_filename, filename = self.env.relfn2path(self.arguments[0])
+    self.arguments[0] = filename
+    self.env.note_included(filename)
+    return super().run()","[{""var"": ""filename"", ""rename"": ""resolved_file_path""}, {""var"": ""rel_filename"", ""rename"": ""relative_file_path""}]"

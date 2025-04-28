@@ -1,0 +1,148 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./lib/matplotlib/axes/_base.py,__clear,reset_axes_configuration,1271,1393,"def __clear(self):
+    """"""Clear the Axes.""""""
+    if hasattr(self, 'patch'):
+        patch_visible = self.patch.get_visible()
+    else:
+        patch_visible = True
+    xaxis_visible = self.xaxis.get_visible()
+    yaxis_visible = self.yaxis.get_visible()
+    for axis in self._axis_map.values():
+        axis.clear()
+    for spine in self.spines.values():
+        spine.clear()
+    self.ignore_existing_data_limits = True
+    self.callbacks = cbook.CallbackRegistry(signals=['xlim_changed', 'ylim_changed', 'zlim_changed'])
+    if mpl.rcParams['xtick.minor.visible']:
+        self.xaxis.set_minor_locator(mticker.AutoMinorLocator())
+    if mpl.rcParams['ytick.minor.visible']:
+        self.yaxis.set_minor_locator(mticker.AutoMinorLocator())
+    self._xmargin = mpl.rcParams['axes.xmargin']
+    self._ymargin = mpl.rcParams['axes.ymargin']
+    self._tight = None
+    self._use_sticky_edges = True
+    self._get_lines = _process_plot_var_args(self)
+    self._get_patches_for_fill = _process_plot_var_args(self, 'fill')
+    self._gridOn = mpl.rcParams['axes.grid']
+    self._children = []
+    self._mouseover_set = _OrderedSet()
+    self.child_axes = []
+    self._current_image = None
+    self._projection_init = None
+    self.legend_ = None
+    self.containers = []
+    self.grid(False)
+    self.grid(self._gridOn, which=mpl.rcParams['axes.grid.which'], axis=mpl.rcParams['axes.grid.axis'])
+    props = font_manager.FontProperties(size=mpl.rcParams['axes.titlesize'], weight=mpl.rcParams['axes.titleweight'])
+    y = mpl.rcParams['axes.titley']
+    if y is None:
+        y = 1.0
+        self._autotitlepos = True
+    else:
+        self._autotitlepos = False
+    self.title = mtext.Text(x=0.5, y=y, text='', fontproperties=props, verticalalignment='baseline', horizontalalignment='center')
+    self._left_title = mtext.Text(x=0.0, y=y, text='', fontproperties=props.copy(), verticalalignment='baseline', horizontalalignment='left')
+    self._right_title = mtext.Text(x=1.0, y=y, text='', fontproperties=props.copy(), verticalalignment='baseline', horizontalalignment='right')
+    title_offset_points = mpl.rcParams['axes.titlepad']
+    self._set_title_offset_trans(title_offset_points)
+    for _title in (self.title, self._left_title, self._right_title):
+        self._set_artist_props(_title)
+    self.patch = self._gen_axes_patch()
+    self.patch.set_figure(self.figure)
+    self.patch.set_facecolor(self._facecolor)
+    self.patch.set_edgecolor('none')
+    self.patch.set_linewidth(0)
+    self.patch.set_transform(self.transAxes)
+    self.set_axis_on()
+    self.xaxis.set_clip_path(self.patch)
+    self.yaxis.set_clip_path(self.patch)
+    self._shared_axes['x'].clean()
+    self._shared_axes['y'].clean()
+    if self._sharex is not None:
+        self.xaxis.set_visible(xaxis_visible)
+        self.patch.set_visible(patch_visible)
+    if self._sharey is not None:
+        self.yaxis.set_visible(yaxis_visible)
+        self.patch.set_visible(patch_visible)
+    for name, axis in self._axis_map.items():
+        share = getattr(self, f'_share{name}')
+        if share is not None:
+            getattr(self, f'share{name}')(share)
+        else:
+            axis._set_scale('linear')
+            axis._set_lim(0, 1, auto=True)
+    self._update_transScale()
+    self.stale = True","def reset_axes_configuration(self):
+    """"""Clear the Axes.""""""
+    if hasattr(self, 'patch'):
+        patch_visible = self.patch.get_visible()
+    else:
+        patch_visible = True
+    xaxis_visible = self.xaxis.get_visible()
+    yaxis_visible = self.yaxis.get_visible()
+    for axis in self._axis_map.values():
+        axis.clear()
+    for spine in self.spines.values():
+        spine.clear()
+    self.ignore_existing_data_limits = True
+    self.callbacks = cbook.CallbackRegistry(signals=['xlim_changed', 'ylim_changed', 'zlim_changed'])
+    if mpl.rcParams['xtick.minor.visible']:
+        self.xaxis.set_minor_locator(mticker.AutoMinorLocator())
+    if mpl.rcParams['ytick.minor.visible']:
+        self.yaxis.set_minor_locator(mticker.AutoMinorLocator())
+    self._xmargin = mpl.rcParams['axes.xmargin']
+    self._ymargin = mpl.rcParams['axes.ymargin']
+    self._tight = None
+    self._use_sticky_edges = True
+    self._get_lines = _process_plot_var_args(self)
+    self._get_patches_for_fill = _process_plot_var_args(self, 'fill')
+    self._gridOn = mpl.rcParams['axes.grid']
+    self._children = []
+    self._mouseover_set = _OrderedSet()
+    self.child_axes = []
+    self._current_image = None
+    self._projection_init = None
+    self.legend_ = None
+    self.containers = []
+    self.grid(False)
+    self.grid(self._gridOn, which=mpl.rcParams['axes.grid.which'], axis=mpl.rcParams['axes.grid.axis'])
+    props = font_manager.FontProperties(size=mpl.rcParams['axes.titlesize'], weight=mpl.rcParams['axes.titleweight'])
+    y = mpl.rcParams['axes.titley']
+    if y is None:
+        y = 1.0
+        self._autotitlepos = True
+    else:
+        self._autotitlepos = False
+    self.title = mtext.Text(x=0.5, y=y, text='', fontproperties=props, verticalalignment='baseline', horizontalalignment='center')
+    self._left_title = mtext.Text(x=0.0, y=y, text='', fontproperties=props.copy(), verticalalignment='baseline', horizontalalignment='left')
+    self._right_title = mtext.Text(x=1.0, y=y, text='', fontproperties=props.copy(), verticalalignment='baseline', horizontalalignment='right')
+    title_offset_points = mpl.rcParams['axes.titlepad']
+    self._set_title_offset_trans(title_offset_points)
+    for _title in (self.title, self._left_title, self._right_title):
+        self._set_artist_props(_title)
+    self.patch = self._gen_axes_patch()
+    self.patch.set_figure(self.figure)
+    self.patch.set_facecolor(self._facecolor)
+    self.patch.set_edgecolor('none')
+    self.patch.set_linewidth(0)
+    self.patch.set_transform(self.transAxes)
+    self.set_axis_on()
+    self.xaxis.set_clip_path(self.patch)
+    self.yaxis.set_clip_path(self.patch)
+    self._shared_axes['x'].clean()
+    self._shared_axes['y'].clean()
+    if self._sharex is not None:
+        self.xaxis.set_visible(xaxis_visible)
+        self.patch.set_visible(patch_visible)
+    if self._sharey is not None:
+        self.yaxis.set_visible(yaxis_visible)
+        self.patch.set_visible(patch_visible)
+    for name, axis in self._axis_map.items():
+        share = getattr(self, f'_share{name}')
+        if share is not None:
+            getattr(self, f'share{name}')(share)
+        else:
+            axis._set_scale('linear')
+            axis._set_lim(0, 1, auto=True)
+    self._update_transScale()
+    self.stale = True","[{""var"": ""yaxis_visible"", ""rename"": ""y_axis_visibility_status""}, {""var"": ""_title"", ""rename"": ""_axis_title""}, {""var"": ""name"", ""rename"": ""axis_name""}, {""var"": ""y"", ""rename"": ""title_vertical_position""}, {""var"": ""title_offset_points"", ""rename"": ""title_padding_points""}, {""var"": ""share"", ""rename"": ""axis_sharing_reference""}, {""var"": ""props"", ""rename"": ""title_font_properties""}, {""var"": ""xaxis_visible"", ""rename"": ""x_axis_initial_visibility""}, {""var"": ""axis"", ""rename"": ""coordinate_axis""}, {""var"": ""patch_visible"", ""rename"": ""axes_patch_visibility""}, {""var"": ""spine"", ""rename"": ""axis_spine""}]"

@@ -1,0 +1,320 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./sphinx/domains/python.py,_parse_annotation,extract_type_annotation_nodes,110,186,"def _parse_annotation(annotation: str, env: BuildEnvironment=None) -> List[Node]:
+    """"""Parse type annotation.""""""
+
+    def unparse(node: ast.AST) -> List[Node]:
+        if isinstance(node, ast.Attribute):
+            return [nodes.Text('%s.%s' % (unparse(node.value)[0], node.attr))]
+        elif isinstance(node, ast.BinOp):
+            result: List[Node] = unparse(node.left)
+            result.extend(unparse(node.op))
+            result.extend(unparse(node.right))
+            return result
+        elif isinstance(node, ast.BitOr):
+            return [nodes.Text(' '), addnodes.desc_sig_punctuation('', '|'), nodes.Text(' ')]
+        elif isinstance(node, ast.Constant):
+            if node.value is Ellipsis:
+                return [addnodes.desc_sig_punctuation('', '...')]
+            else:
+                return [nodes.Text(node.value)]
+        elif isinstance(node, ast.Expr):
+            return unparse(node.value)
+        elif isinstance(node, ast.Index):
+            return unparse(node.value)
+        elif isinstance(node, ast.List):
+            result = [addnodes.desc_sig_punctuation('', '[')]
+            if node.elts:
+                for elem in node.elts:
+                    result.extend(unparse(elem))
+                    result.append(addnodes.desc_sig_punctuation('', ', '))
+                result.pop()
+            result.append(addnodes.desc_sig_punctuation('', ']'))
+            return result
+        elif isinstance(node, ast.Module):
+            return sum((unparse(e) for e in node.body), [])
+        elif isinstance(node, ast.Name):
+            return [nodes.Text(node.id)]
+        elif isinstance(node, ast.Subscript):
+            result = unparse(node.value)
+            result.append(addnodes.desc_sig_punctuation('', '['))
+            result.extend(unparse(node.slice))
+            result.append(addnodes.desc_sig_punctuation('', ']'))
+            return result
+        elif isinstance(node, ast.Tuple):
+            if node.elts:
+                result = []
+                for elem in node.elts:
+                    result.extend(unparse(elem))
+                    result.append(addnodes.desc_sig_punctuation('', ', '))
+                result.pop()
+            else:
+                result = [addnodes.desc_sig_punctuation('', '('), addnodes.desc_sig_punctuation('', ')')]
+            return result
+        else:
+            if sys.version_info < (3, 8):
+                if isinstance(node, ast.Ellipsis):
+                    return [addnodes.desc_sig_punctuation('', '...')]
+                elif isinstance(node, ast.NameConstant):
+                    return [nodes.Text(node.value)]
+            raise SyntaxError
+    if env is None:
+        warnings.warn('The env parameter for _parse_annotation becomes required now.', RemovedInSphinx50Warning, stacklevel=2)
+    try:
+        tree = ast_parse(annotation)
+        result = unparse(tree)
+        for i, node in enumerate(result):
+            if isinstance(node, nodes.Text) and node.strip():
+                result[i] = type_to_xref(str(node), env)
+        return result
+    except SyntaxError:
+        return [type_to_xref(annotation, env)]","def extract_type_annotation_nodes(annotation: str, env: BuildEnvironment=None) -> List[Node]:
+    """"""Parse type annotation.""""""
+
+    def unparse(node: ast.AST) -> List[Node]:
+        if isinstance(node, ast.Attribute):
+            return [nodes.Text('%s.%s' % (unparse(node.value)[0], node.attr))]
+        elif isinstance(node, ast.BinOp):
+            result: List[Node] = unparse(node.left)
+            result.extend(unparse(node.op))
+            result.extend(unparse(node.right))
+            return result
+        elif isinstance(node, ast.BitOr):
+            return [nodes.Text(' '), addnodes.desc_sig_punctuation('', '|'), nodes.Text(' ')]
+        elif isinstance(node, ast.Constant):
+            if node.value is Ellipsis:
+                return [addnodes.desc_sig_punctuation('', '...')]
+            else:
+                return [nodes.Text(node.value)]
+        elif isinstance(node, ast.Expr):
+            return unparse(node.value)
+        elif isinstance(node, ast.Index):
+            return unparse(node.value)
+        elif isinstance(node, ast.List):
+            result = [addnodes.desc_sig_punctuation('', '[')]
+            if node.elts:
+                for elem in node.elts:
+                    result.extend(unparse(elem))
+                    result.append(addnodes.desc_sig_punctuation('', ', '))
+                result.pop()
+            result.append(addnodes.desc_sig_punctuation('', ']'))
+            return result
+        elif isinstance(node, ast.Module):
+            return sum((unparse(e) for e in node.body), [])
+        elif isinstance(node, ast.Name):
+            return [nodes.Text(node.id)]
+        elif isinstance(node, ast.Subscript):
+            result = unparse(node.value)
+            result.append(addnodes.desc_sig_punctuation('', '['))
+            result.extend(unparse(node.slice))
+            result.append(addnodes.desc_sig_punctuation('', ']'))
+            return result
+        elif isinstance(node, ast.Tuple):
+            if node.elts:
+                result = []
+                for elem in node.elts:
+                    result.extend(unparse(elem))
+                    result.append(addnodes.desc_sig_punctuation('', ', '))
+                result.pop()
+            else:
+                result = [addnodes.desc_sig_punctuation('', '('), addnodes.desc_sig_punctuation('', ')')]
+            return result
+        else:
+            if sys.version_info < (3, 8):
+                if isinstance(node, ast.Ellipsis):
+                    return [addnodes.desc_sig_punctuation('', '...')]
+                elif isinstance(node, ast.NameConstant):
+                    return [nodes.Text(node.value)]
+            raise SyntaxError
+    if env is None:
+        warnings.warn('The env parameter for _parse_annotation becomes required now.', RemovedInSphinx50Warning, stacklevel=2)
+    try:
+        tree = ast_parse(annotation)
+        result = unparse(tree)
+        for i, node in enumerate(result):
+            if isinstance(node, nodes.Text) and node.strip():
+                result[i] = type_to_xref(str(node), env)
+        return result
+    except SyntaxError:
+        return [type_to_xref(annotation, env)]","[{""var"": ""tree"", ""rename"": ""annotation_ast_tree""}, {""var"": ""i"", ""rename"": ""node_index""}, {""var"": ""result"", ""rename"": ""parsed_nodes""}, {""var"": ""elem"", ""rename"": ""element_node""}, {""var"": ""e"", ""rename"": ""module_body_element""}]"
+./sphinx/domains/python.py,_parse_arglist,parse_and_format_argument_list,189,236,"def _parse_arglist(arglist: str, env: BuildEnvironment=None) -> addnodes.desc_parameterlist:
+    """"""Parse a list of arguments using AST parser""""""
+    params = addnodes.desc_parameterlist(arglist)
+    sig = signature_from_str('(%s)' % arglist)
+    last_kind = None
+    for param in sig.parameters.values():
+        if param.kind != param.POSITIONAL_ONLY and last_kind == param.POSITIONAL_ONLY:
+            params += addnodes.desc_parameter('', '', addnodes.desc_sig_operator('', '/'))
+        if param.kind == param.KEYWORD_ONLY and last_kind in (param.POSITIONAL_OR_KEYWORD, param.POSITIONAL_ONLY, None):
+            params += addnodes.desc_parameter('', '', addnodes.desc_sig_operator('', '*'))
+        node = addnodes.desc_parameter()
+        if param.kind == param.VAR_POSITIONAL:
+            node += addnodes.desc_sig_operator('', '*')
+            node += addnodes.desc_sig_name('', param.name)
+        elif param.kind == param.VAR_KEYWORD:
+            node += addnodes.desc_sig_operator('', '**')
+            node += addnodes.desc_sig_name('', param.name)
+        else:
+            node += addnodes.desc_sig_name('', param.name)
+        if param.annotation is not param.empty:
+            children = _parse_annotation(param.annotation, env)
+            node += addnodes.desc_sig_punctuation('', ':')
+            node += nodes.Text(' ')
+            node += addnodes.desc_sig_name('', '', *children)
+        if param.default is not param.empty:
+            if param.annotation is not param.empty:
+                node += nodes.Text(' ')
+                node += addnodes.desc_sig_operator('', '=')
+                node += nodes.Text(' ')
+            else:
+                node += addnodes.desc_sig_operator('', '=')
+            node += nodes.inline('', param.default, classes=['default_value'], support_smartquotes=False)
+        params += node
+        last_kind = param.kind
+    if last_kind == Parameter.POSITIONAL_ONLY:
+        params += addnodes.desc_parameter('', '', addnodes.desc_sig_operator('', '/'))
+    return params","def parse_and_format_argument_list(arglist: str, env: BuildEnvironment=None) -> addnodes.desc_parameterlist:
+    """"""Parse a list of arguments using AST parser""""""
+    params = addnodes.desc_parameterlist(arglist)
+    sig = signature_from_str('(%s)' % arglist)
+    last_kind = None
+    for param in sig.parameters.values():
+        if param.kind != param.POSITIONAL_ONLY and last_kind == param.POSITIONAL_ONLY:
+            params += addnodes.desc_parameter('', '', addnodes.desc_sig_operator('', '/'))
+        if param.kind == param.KEYWORD_ONLY and last_kind in (param.POSITIONAL_OR_KEYWORD, param.POSITIONAL_ONLY, None):
+            params += addnodes.desc_parameter('', '', addnodes.desc_sig_operator('', '*'))
+        node = addnodes.desc_parameter()
+        if param.kind == param.VAR_POSITIONAL:
+            node += addnodes.desc_sig_operator('', '*')
+            node += addnodes.desc_sig_name('', param.name)
+        elif param.kind == param.VAR_KEYWORD:
+            node += addnodes.desc_sig_operator('', '**')
+            node += addnodes.desc_sig_name('', param.name)
+        else:
+            node += addnodes.desc_sig_name('', param.name)
+        if param.annotation is not param.empty:
+            children = _parse_annotation(param.annotation, env)
+            node += addnodes.desc_sig_punctuation('', ':')
+            node += nodes.Text(' ')
+            node += addnodes.desc_sig_name('', '', *children)
+        if param.default is not param.empty:
+            if param.annotation is not param.empty:
+                node += nodes.Text(' ')
+                node += addnodes.desc_sig_operator('', '=')
+                node += nodes.Text(' ')
+            else:
+                node += addnodes.desc_sig_operator('', '=')
+            node += nodes.inline('', param.default, classes=['default_value'], support_smartquotes=False)
+        params += node
+        last_kind = param.kind
+    if last_kind == Parameter.POSITIONAL_ONLY:
+        params += addnodes.desc_parameter('', '', addnodes.desc_sig_operator('', '/'))
+    return params","[{""var"": ""param"", ""rename"": ""parsed_param_nodes""}, {""var"": ""last_kind"", ""rename"": ""previous_param_kind""}, {""var"": ""params"", ""rename"": ""parsed_parameters_list""}, {""var"": ""children"", ""rename"": ""parsed_annotation_nodes""}, {""var"": ""node"", ""rename"": ""parameter_node""}, {""var"": ""sig"", ""rename"": ""parsed_signature""}]"
+./sphinx/domains/python.py,unparse,ast_to_node_list,112,172,"def unparse(node: ast.AST) -> List[Node]:
+    if isinstance(node, ast.Attribute):
+        return [nodes.Text('%s.%s' % (unparse(node.value)[0], node.attr))]
+    elif isinstance(node, ast.BinOp):
+        result: List[Node] = unparse(node.left)
+        result.extend(unparse(node.op))
+        result.extend(unparse(node.right))
+        return result
+    elif isinstance(node, ast.BitOr):
+        return [nodes.Text(' '), addnodes.desc_sig_punctuation('', '|'), nodes.Text(' ')]
+    elif isinstance(node, ast.Constant):
+        if node.value is Ellipsis:
+            return [addnodes.desc_sig_punctuation('', '...')]
+        else:
+            return [nodes.Text(node.value)]
+    elif isinstance(node, ast.Expr):
+        return unparse(node.value)
+    elif isinstance(node, ast.Index):
+        return unparse(node.value)
+    elif isinstance(node, ast.List):
+        result = [addnodes.desc_sig_punctuation('', '[')]
+        if node.elts:
+            for elem in node.elts:
+                result.extend(unparse(elem))
+                result.append(addnodes.desc_sig_punctuation('', ', '))
+            result.pop()
+        result.append(addnodes.desc_sig_punctuation('', ']'))
+        return result
+    elif isinstance(node, ast.Module):
+        return sum((unparse(e) for e in node.body), [])
+    elif isinstance(node, ast.Name):
+        return [nodes.Text(node.id)]
+    elif isinstance(node, ast.Subscript):
+        result = unparse(node.value)
+        result.append(addnodes.desc_sig_punctuation('', '['))
+        result.extend(unparse(node.slice))
+        result.append(addnodes.desc_sig_punctuation('', ']'))
+        return result
+    elif isinstance(node, ast.Tuple):
+        if node.elts:
+            result = []
+            for elem in node.elts:
+                result.extend(unparse(elem))
+                result.append(addnodes.desc_sig_punctuation('', ', '))
+            result.pop()
+        else:
+            result = [addnodes.desc_sig_punctuation('', '('), addnodes.desc_sig_punctuation('', ')')]
+        return result
+    else:
+        if sys.version_info < (3, 8):
+            if isinstance(node, ast.Ellipsis):
+                return [addnodes.desc_sig_punctuation('', '...')]
+            elif isinstance(node, ast.NameConstant):
+                return [nodes.Text(node.value)]
+        raise SyntaxError","def ast_to_node_list(node: ast.AST) -> List[Node]:
+    if isinstance(node, ast.Attribute):
+        return [nodes.Text('%s.%s' % (unparse(node.value)[0], node.attr))]
+    elif isinstance(node, ast.BinOp):
+        result: List[Node] = unparse(node.left)
+        result.extend(unparse(node.op))
+        result.extend(unparse(node.right))
+        return result
+    elif isinstance(node, ast.BitOr):
+        return [nodes.Text(' '), addnodes.desc_sig_punctuation('', '|'), nodes.Text(' ')]
+    elif isinstance(node, ast.Constant):
+        if node.value is Ellipsis:
+            return [addnodes.desc_sig_punctuation('', '...')]
+        else:
+            return [nodes.Text(node.value)]
+    elif isinstance(node, ast.Expr):
+        return unparse(node.value)
+    elif isinstance(node, ast.Index):
+        return unparse(node.value)
+    elif isinstance(node, ast.List):
+        result = [addnodes.desc_sig_punctuation('', '[')]
+        if node.elts:
+            for elem in node.elts:
+                result.extend(unparse(elem))
+                result.append(addnodes.desc_sig_punctuation('', ', '))
+            result.pop()
+        result.append(addnodes.desc_sig_punctuation('', ']'))
+        return result
+    elif isinstance(node, ast.Module):
+        return sum((unparse(e) for e in node.body), [])
+    elif isinstance(node, ast.Name):
+        return [nodes.Text(node.id)]
+    elif isinstance(node, ast.Subscript):
+        result = unparse(node.value)
+        result.append(addnodes.desc_sig_punctuation('', '['))
+        result.extend(unparse(node.slice))
+        result.append(addnodes.desc_sig_punctuation('', ']'))
+        return result
+    elif isinstance(node, ast.Tuple):
+        if node.elts:
+            result = []
+            for elem in node.elts:
+                result.extend(unparse(elem))
+                result.append(addnodes.desc_sig_punctuation('', ', '))
+            result.pop()
+        else:
+            result = [addnodes.desc_sig_punctuation('', '('), addnodes.desc_sig_punctuation('', ')')]
+        return result
+    else:
+        if sys.version_info < (3, 8):
+            if isinstance(node, ast.Ellipsis):
+                return [addnodes.desc_sig_punctuation('', '...')]
+            elif isinstance(node, ast.NameConstant):
+                return [nodes.Text(node.value)]
+        raise SyntaxError","[{""var"": ""elem"", ""rename"": ""element_node""}, {""var"": ""e"", ""rename"": ""node_element""}, {""var"": ""result"", ""rename"": ""parsed_nodes""}]"

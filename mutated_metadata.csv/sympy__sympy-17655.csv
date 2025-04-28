@@ -1,0 +1,8 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./sympy/geometry/point.py,__neg__,negate_point_coordinates,281,284,"def __neg__(self):
+    """"""Negate the point.""""""
+    coords = [-x for x in self.args]
+    return Point(coords, evaluate=False)","def negate_point_coordinates(self):
+    """"""Negate the point.""""""
+    coords = [-x for x in self.args]
+    return Point(coords, evaluate=False)","[{""var"": ""x"", ""rename"": ""coordinate""}, {""var"": ""coords"", ""rename"": ""negated_coordinates""}]"

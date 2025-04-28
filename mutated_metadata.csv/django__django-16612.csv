@@ -1,0 +1,24 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/contrib/admin/sites.py,catch_all_view,redirect_to_slash_or_404,447,457,"@no_append_slash
+def catch_all_view(self, request, url):
+    if settings.APPEND_SLASH and (not url.endswith('/')):
+        urlconf = getattr(request, 'urlconf', None)
+        try:
+            match = resolve('%s/' % request.path_info, urlconf)
+        except Resolver404:
+            pass
+        else:
+            if getattr(match.func, 'should_append_slash', True):
+                return HttpResponsePermanentRedirect('%s/' % request.path)
+    raise Http404","@no_append_slash
+def redirect_to_slash_or_404(self, request, url):
+    if settings.APPEND_SLASH and (not url.endswith('/')):
+        urlconf = getattr(request, 'urlconf', None)
+        try:
+            match = resolve('%s/' % request.path_info, urlconf)
+        except Resolver404:
+            pass
+        else:
+            if getattr(match.func, 'should_append_slash', True):
+                return HttpResponsePermanentRedirect('%s/' % request.path)
+    raise Http404","[{""var"": ""urlconf"", ""rename"": ""request_url_configuration""}, {""var"": ""match"", ""rename"": ""resolved_url_match""}]"

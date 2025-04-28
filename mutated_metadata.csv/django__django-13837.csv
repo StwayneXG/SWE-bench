@@ -1,0 +1,48 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/utils/autoreload.py,get_child_arguments,generate_executable_arguments_with_extension_fix,213,246,"def get_child_arguments():
+    """"""
+    Return the executable. This contains a workaround for Windows if the
+    executable is reported to not have the .exe extension which can cause bugs
+    on reloading.
+    """"""
+    import django.__main__
+    django_main_path = Path(django.__main__.__file__)
+    py_script = Path(sys.argv[0])
+    args = [sys.executable] + ['-W%s' % o for o in sys.warnoptions]
+    if py_script == django_main_path:
+        args += ['-m', 'django']
+        args += sys.argv[1:]
+    elif not py_script.exists():
+        exe_entrypoint = py_script.with_suffix('.exe')
+        if exe_entrypoint.exists():
+            return [str(exe_entrypoint), *sys.argv[1:]]
+        script_entrypoint = py_script.with_name('%s-script.py' % py_script.name)
+        if script_entrypoint.exists():
+            return [*args, str(script_entrypoint), *sys.argv[1:]]
+        raise RuntimeError('Script %s does not exist.' % py_script)
+    else:
+        args += sys.argv
+    return args","def generate_executable_arguments_with_extension_fix():
+    """"""
+    Return the executable. This contains a workaround for Windows if the
+    executable is reported to not have the .exe extension which can cause bugs
+    on reloading.
+    """"""
+    import django.__main__
+    django_main_path = Path(django.__main__.__file__)
+    py_script = Path(sys.argv[0])
+    args = [sys.executable] + ['-W%s' % o for o in sys.warnoptions]
+    if py_script == django_main_path:
+        args += ['-m', 'django']
+        args += sys.argv[1:]
+    elif not py_script.exists():
+        exe_entrypoint = py_script.with_suffix('.exe')
+        if exe_entrypoint.exists():
+            return [str(exe_entrypoint), *sys.argv[1:]]
+        script_entrypoint = py_script.with_name('%s-script.py' % py_script.name)
+        if script_entrypoint.exists():
+            return [*args, str(script_entrypoint), *sys.argv[1:]]
+        raise RuntimeError('Script %s does not exist.' % py_script)
+    else:
+        args += sys.argv
+    return args","[{""var"": ""script_entrypoint"", ""rename"": ""executable_script_entrypoint""}, {""var"": ""o"", ""rename"": ""warning_option""}, {""var"": ""py_script"", ""rename"": ""python_entry_script""}, {""var"": ""args"", ""rename"": ""executable_arguments_list""}, {""var"": ""django_main_path"", ""rename"": ""django_executable_path""}, {""var"": ""exe_entrypoint"", ""rename"": ""windows_executable_path""}]"

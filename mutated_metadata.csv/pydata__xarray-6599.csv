@@ -1,0 +1,53 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./xarray/core/computation.py,_ensure_numeric,convert_datetime_to_float,1920,1949,"def _ensure_numeric(data: T_Xarray) -> T_Xarray:
+    """"""Converts all datetime64 variables to float64
+
+    Parameters
+    ----------
+    data : DataArray or Dataset
+        Variables with possible datetime dtypes.
+
+    Returns
+    -------
+    DataArray or Dataset
+        Variables with datetime64 dtypes converted to float64.
+    """"""
+    from .dataset import Dataset
+
+    def to_floatable(x: DataArray) -> DataArray:
+        if x.dtype.kind in 'mM':
+            return x.copy(data=datetime_to_numeric(x.data, offset=np.datetime64('1970-01-01'), datetime_unit='ns'))
+        return x
+    if isinstance(data, Dataset):
+        return data.map(to_floatable)
+    else:
+        return to_floatable(data)","def convert_datetime_to_float(data: T_Xarray) -> T_Xarray:
+    """"""Converts all datetime64 variables to float64
+
+    Parameters
+    ----------
+    data : DataArray or Dataset
+        Variables with possible datetime dtypes.
+
+    Returns
+    -------
+    DataArray or Dataset
+        Variables with datetime64 dtypes converted to float64.
+    """"""
+    from .dataset import Dataset
+
+    def to_floatable(x: DataArray) -> DataArray:
+        if x.dtype.kind in 'mM':
+            return x.copy(data=datetime_to_numeric(x.data, offset=np.datetime64('1970-01-01'), datetime_unit='ns'))
+        return x
+    if isinstance(data, Dataset):
+        return data.map(to_floatable)
+    else:
+        return to_floatable(data)",[]
+./xarray/core/computation.py,to_floatable,convert_datetime_to_floatable_dataarray,1935,1944,"def to_floatable(x: DataArray) -> DataArray:
+    if x.dtype.kind in 'mM':
+        return x.copy(data=datetime_to_numeric(x.data, offset=np.datetime64('1970-01-01'), datetime_unit='ns'))
+    return x","def convert_datetime_to_floatable_dataarray(x: DataArray) -> DataArray:
+    if x.dtype.kind in 'mM':
+        return x.copy(data=datetime_to_numeric(x.data, offset=np.datetime64('1970-01-01'), datetime_unit='ns'))
+    return x",[]

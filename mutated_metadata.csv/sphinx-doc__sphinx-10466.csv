@@ -1,0 +1,10 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./sphinx/builders/gettext.py,__iter__,iterate_messages_with_metadata,58,62,"def __iter__(self) -> Generator[Message, None, None]:
+    for message in self.messages:
+        positions = [(source, line) for source, line, uuid in self.metadata[message]]
+        uuids = [uuid for source, line, uuid in self.metadata[message]]
+        yield Message(message, positions, uuids)","def iterate_messages_with_metadata(self) -> Generator[Message, None, None]:
+    for message in self.messages:
+        positions = [(source, line) for source, line, uuid in self.metadata[message]]
+        uuids = [uuid for source, line, uuid in self.metadata[message]]
+        yield Message(message, positions, uuids)","[{""var"": ""uuid"", ""rename"": ""unique_identifier""}, {""var"": ""line"", ""rename"": ""line_number""}, {""var"": ""positions"", ""rename"": ""source_line_pairs""}, {""var"": ""message"", ""rename"": ""message_item""}, {""var"": ""source"", ""rename"": ""message_source""}, {""var"": ""uuids"", ""rename"": ""message_identifiers""}]"

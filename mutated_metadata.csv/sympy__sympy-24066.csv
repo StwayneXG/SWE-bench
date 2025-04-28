@@ -1,0 +1,86 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./sympy/physics/units/unitsystem.py,_collect_factor_and_dimension,_decompose_expression_to_factor_and_dimension,152,200,"def _collect_factor_and_dimension(self, expr):
+    """"""
+        Return tuple with scale factor expression and dimension expression.
+        """"""
+    from sympy.physics.units import Quantity
+    if isinstance(expr, Quantity):
+        return (expr.scale_factor, expr.dimension)
+    elif isinstance(expr, Mul):
+        factor = 1
+        dimension = Dimension(1)
+        for arg in expr.args:
+            arg_factor, arg_dim = self._collect_factor_and_dimension(arg)
+            factor *= arg_factor
+            dimension *= arg_dim
+        return (factor, dimension)
+    elif isinstance(expr, Pow):
+        factor, dim = self._collect_factor_and_dimension(expr.base)
+        exp_factor, exp_dim = self._collect_factor_and_dimension(expr.exp)
+        if self.get_dimension_system().is_dimensionless(exp_dim):
+            exp_dim = 1
+        return (factor ** exp_factor, dim ** (exp_factor * exp_dim))
+    elif isinstance(expr, Add):
+        factor, dim = self._collect_factor_and_dimension(expr.args[0])
+        for addend in expr.args[1:]:
+            addend_factor, addend_dim = self._collect_factor_and_dimension(addend)
+            if dim != addend_dim:
+                raise ValueError('Dimension of ""{}"" is {}, but it should be {}'.format(addend, addend_dim, dim))
+            factor += addend_factor
+        return (factor, dim)
+    elif isinstance(expr, Derivative):
+        factor, dim = self._collect_factor_and_dimension(expr.args[0])
+        for independent, count in expr.variable_count:
+            ifactor, idim = self._collect_factor_and_dimension(independent)
+            factor /= ifactor ** count
+            dim /= idim ** count
+        return (factor, dim)
+    elif isinstance(expr, Function):
+        fds = [self._collect_factor_and_dimension(arg) for arg in expr.args]
+        return (expr.func(*(f[0] for f in fds)), *(d[1] for d in fds))
+    elif isinstance(expr, Dimension):
+        return (S.One, expr)
+    else:
+        return (expr, Dimension(1))","def _decompose_expression_to_factor_and_dimension(self, expr):
+    """"""
+        Return tuple with scale factor expression and dimension expression.
+        """"""
+    from sympy.physics.units import Quantity
+    if isinstance(expr, Quantity):
+        return (expr.scale_factor, expr.dimension)
+    elif isinstance(expr, Mul):
+        factor = 1
+        dimension = Dimension(1)
+        for arg in expr.args:
+            arg_factor, arg_dim = self._collect_factor_and_dimension(arg)
+            factor *= arg_factor
+            dimension *= arg_dim
+        return (factor, dimension)
+    elif isinstance(expr, Pow):
+        factor, dim = self._collect_factor_and_dimension(expr.base)
+        exp_factor, exp_dim = self._collect_factor_and_dimension(expr.exp)
+        if self.get_dimension_system().is_dimensionless(exp_dim):
+            exp_dim = 1
+        return (factor ** exp_factor, dim ** (exp_factor * exp_dim))
+    elif isinstance(expr, Add):
+        factor, dim = self._collect_factor_and_dimension(expr.args[0])
+        for addend in expr.args[1:]:
+            addend_factor, addend_dim = self._collect_factor_and_dimension(addend)
+            if dim != addend_dim:
+                raise ValueError('Dimension of ""{}"" is {}, but it should be {}'.format(addend, addend_dim, dim))
+            factor += addend_factor
+        return (factor, dim)
+    elif isinstance(expr, Derivative):
+        factor, dim = self._collect_factor_and_dimension(expr.args[0])
+        for independent, count in expr.variable_count:
+            ifactor, idim = self._collect_factor_and_dimension(independent)
+            factor /= ifactor ** count
+            dim /= idim ** count
+        return (factor, dim)
+    elif isinstance(expr, Function):
+        fds = [self._collect_factor_and_dimension(arg) for arg in expr.args]
+        return (expr.func(*(f[0] for f in fds)), *(d[1] for d in fds))
+    elif isinstance(expr, Dimension):
+        return (S.One, expr)
+    else:
+        return (expr, Dimension(1))","[{""var"": ""count"", ""rename"": ""derivative_count""}, {""var"": ""d"", ""rename"": ""dimension_collector""}, {""var"": ""addend_dim"", ""rename"": ""addend_scale_dimension""}, {""var"": ""independent"", ""rename"": ""derivative_variable""}, {""var"": ""ifactor"", ""rename"": ""independent_factor""}, {""var"": ""arg"", ""rename"": ""expression_component""}, {""var"": ""f"", ""rename"": ""factor_and_dimension""}, {""var"": ""arg_dim"", ""rename"": ""argument_dimension""}, {""var"": ""fds"", ""rename"": ""factor_dimension_pairs""}, {""var"": ""exp_dim"", ""rename"": ""exponential_factor_dimension""}, {""var"": ""addend"", ""rename"": ""additional_term""}, {""var"": ""dimension"", ""rename"": ""dimension_expression""}, {""var"": ""idim"", ""rename"": ""independent_dimension""}, {""var"": ""dim"", ""rename"": ""dimension_expression""}, {""var"": ""addend_factor"", ""rename"": ""summand_factor""}, {""var"": ""arg_factor"", ""rename"": ""factor_expression""}, {""var"": ""exp_factor"", ""rename"": ""exponent_factor""}, {""var"": ""factor"", ""rename"": ""aggregate_scale_factor""}]"

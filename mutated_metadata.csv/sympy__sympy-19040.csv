@@ -1,0 +1,42 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./sympy/polys/factortools.py,dmp_ext_factor,factor_multivar_poly_algebraic_fields,1138,1165,"def dmp_ext_factor(f, u, K):
+    """"""Factor multivariate polynomials over algebraic number fields. """"""
+    if not u:
+        return dup_ext_factor(f, K)
+    lc = dmp_ground_LC(f, u, K)
+    f = dmp_ground_monic(f, u, K)
+    if all((d <= 0 for d in dmp_degree_list(f, u))):
+        return (lc, [])
+    f, F = (dmp_sqf_part(f, u, K), f)
+    s, g, r = dmp_sqf_norm(f, u, K)
+    factors = dmp_factor_list_include(r, u, K.dom)
+    if len(factors) == 1:
+        factors = [f]
+    else:
+        H = dmp_raise([K.one, s * K.unit], u, 0, K)
+        for i, (factor, _) in enumerate(factors):
+            h = dmp_convert(factor, u, K.dom, K)
+            h, _, g = dmp_inner_gcd(h, g, u, K)
+            h = dmp_compose(h, H, u, K)
+            factors[i] = h
+    return (lc, dmp_trial_division(F, factors, u, K))","def factor_multivar_poly_algebraic_fields(f, u, K):
+    """"""Factor multivariate polynomials over algebraic number fields. """"""
+    if not u:
+        return dup_ext_factor(f, K)
+    lc = dmp_ground_LC(f, u, K)
+    f = dmp_ground_monic(f, u, K)
+    if all((d <= 0 for d in dmp_degree_list(f, u))):
+        return (lc, [])
+    f, F = (dmp_sqf_part(f, u, K), f)
+    s, g, r = dmp_sqf_norm(f, u, K)
+    factors = dmp_factor_list_include(r, u, K.dom)
+    if len(factors) == 1:
+        factors = [f]
+    else:
+        H = dmp_raise([K.one, s * K.unit], u, 0, K)
+        for i, (factor, _) in enumerate(factors):
+            h = dmp_convert(factor, u, K.dom, K)
+            h, _, g = dmp_inner_gcd(h, g, u, K)
+            h = dmp_compose(h, H, u, K)
+            factors[i] = h
+    return (lc, dmp_trial_division(F, factors, u, K))","[{""var"": ""s"", ""rename"": ""scaling_factor""}, {""var"": ""r"", ""rename"": ""reduced_polynomial_remainder""}, {""var"": ""i"", ""rename"": ""factor_index""}, {""var"": ""lc"", ""rename"": ""leading_coefficient""}, {""var"": ""_"", ""rename"": ""multivariate_polynomial_factors""}, {""var"": ""F"", ""rename"": ""original_polynomial""}, {""var"": ""h"", ""rename"": ""converted_factor""}, {""var"": ""H"", ""rename"": ""raisedPolynomialFactor""}, {""var"": ""factors"", ""rename"": ""polynomial_factorization_list""}, {""var"": ""g"", ""rename"": ""gcd_polynomial""}, {""var"": ""d"", ""rename"": ""degree_list""}, {""var"": ""factor"", ""rename"": ""polynomial_component""}]"

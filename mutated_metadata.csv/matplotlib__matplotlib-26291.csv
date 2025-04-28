@@ -1,0 +1,14 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./lib/mpl_toolkits/axes_grid1/inset_locator.py,__call__,transform_bbox_to_canvas_coordinates,71,77,"def __call__(self, ax, renderer):
+    self.axes = ax
+    bbox = self.get_window_extent(renderer)
+    px, py = self.get_offset(bbox.width, bbox.height, 0, 0, renderer)
+    bbox_canvas = Bbox.from_bounds(px, py, bbox.width, bbox.height)
+    tr = ax.figure.transSubfigure.inverted()
+    return TransformedBbox(bbox_canvas, tr)","def transform_bbox_to_canvas_coordinates(self, ax, renderer):
+    self.axes = ax
+    bbox = self.get_window_extent(renderer)
+    px, py = self.get_offset(bbox.width, bbox.height, 0, 0, renderer)
+    bbox_canvas = Bbox.from_bounds(px, py, bbox.width, bbox.height)
+    tr = ax.figure.transSubfigure.inverted()
+    return TransformedBbox(bbox_canvas, tr)","[{""var"": ""bbox_canvas"", ""rename"": ""canvas_transformed_bbox""}, {""var"": ""tr"", ""rename"": ""inverted_transformation""}, {""var"": ""px"", ""rename"": ""offset_x""}, {""var"": ""py"", ""rename"": ""y_offset""}, {""var"": ""bbox"", ""rename"": ""bounding_box_window_extent""}]"

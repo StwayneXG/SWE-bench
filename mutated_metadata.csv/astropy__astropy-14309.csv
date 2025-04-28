@@ -1,0 +1,46 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./astropy/io/fits/connect.py,is_fits,validate_fits_format,48,72,"def is_fits(origin, filepath, fileobj, *args, **kwargs):
+    """"""
+    Determine whether `origin` is a FITS file.
+
+    Parameters
+    ----------
+    origin : str or readable file-like
+        Path or file object containing a potential FITS file.
+
+    Returns
+    -------
+    is_fits : bool
+        Returns `True` if the given file is a FITS file.
+    """"""
+    if fileobj is not None:
+        pos = fileobj.tell()
+        sig = fileobj.read(30)
+        fileobj.seek(pos)
+        return sig == FITS_SIGNATURE
+    elif filepath is not None:
+        if filepath.lower().endswith(('.fits', '.fits.gz', '.fit', '.fit.gz', '.fts', '.fts.gz')):
+            return True
+    return isinstance(args[0], (HDUList, TableHDU, BinTableHDU, GroupsHDU))","def validate_fits_format(origin, filepath, fileobj, *args, **kwargs):
+    """"""
+    Determine whether `origin` is a FITS file.
+
+    Parameters
+    ----------
+    origin : str or readable file-like
+        Path or file object containing a potential FITS file.
+
+    Returns
+    -------
+    is_fits : bool
+        Returns `True` if the given file is a FITS file.
+    """"""
+    if fileobj is not None:
+        pos = fileobj.tell()
+        sig = fileobj.read(30)
+        fileobj.seek(pos)
+        return sig == FITS_SIGNATURE
+    elif filepath is not None:
+        if filepath.lower().endswith(('.fits', '.fits.gz', '.fit', '.fit.gz', '.fts', '.fts.gz')):
+            return True
+    return isinstance(args[0], (HDUList, TableHDU, BinTableHDU, GroupsHDU))","[{""var"": ""pos"", ""rename"": ""file_initial_position""}, {""var"": ""sig"", ""rename"": ""python\nsignature_bytes""}]"

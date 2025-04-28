@@ -1,0 +1,53 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./src/_pytest/mark/structures.py,get_unpacked_marks,retrieve_normalized_marks_from_object,358,363,"def get_unpacked_marks(obj: object) -> Iterable[Mark]:
+    """"""Obtain the unpacked marks that are stored on an object.""""""
+    mark_list = getattr(obj, 'pytestmark', [])
+    if not isinstance(mark_list, list):
+        mark_list = [mark_list]
+    return normalize_mark_list(mark_list)","def retrieve_normalized_marks_from_object(obj: object) -> Iterable[Mark]:
+    """"""Obtain the unpacked marks that are stored on an object.""""""
+    mark_list = getattr(obj, 'pytestmark', [])
+    if not isinstance(mark_list, list):
+        mark_list = [mark_list]
+    return normalize_mark_list(mark_list)","[{""var"": ""mark_list"", ""rename"": ""collected_pytest_marks""}]"
+./src/_pytest/mark/structures.py,normalize_mark_list,extract_and_validate_marks,366,380,"def normalize_mark_list(mark_list: Iterable[Union[Mark, MarkDecorator]]) -> Iterable[Mark]:
+    """"""
+    Normalize an iterable of Mark or MarkDecorator objects into a list of marks
+    by retrieving the `mark` attribute on MarkDecorator instances.
+
+    :param mark_list: marks to normalize
+    :returns: A new list of the extracted Mark objects
+    """"""
+    for mark in mark_list:
+        mark_obj = getattr(mark, 'mark', mark)
+        if not isinstance(mark_obj, Mark):
+            raise TypeError(f'got {repr(mark_obj)} instead of Mark')
+        yield mark_obj","def extract_and_validate_marks(mark_list: Iterable[Union[Mark, MarkDecorator]]) -> Iterable[Mark]:
+    """"""
+    Normalize an iterable of Mark or MarkDecorator objects into a list of marks
+    by retrieving the `mark` attribute on MarkDecorator instances.
+
+    :param mark_list: marks to normalize
+    :returns: A new list of the extracted Mark objects
+    """"""
+    for mark in mark_list:
+        mark_obj = getattr(mark, 'mark', mark)
+        if not isinstance(mark_obj, Mark):
+            raise TypeError(f'got {repr(mark_obj)} instead of Mark')
+        yield mark_obj","[{""var"": ""mark"", ""rename"": ""normalized_mark""}, {""var"": ""mark_obj"", ""rename"": ""extracted_mark""}]"
+./src/_pytest/mark/structures.py,store_mark,attach_mark_to_object,383,391,"def store_mark(obj, mark: Mark) -> None:
+    """"""Store a Mark on an object.
+
+    This is used to implement the Mark declarations/decorators correctly.
+    """"""
+    assert isinstance(mark, Mark), mark
+    obj.pytestmark = [*get_unpacked_marks(obj), mark]","def attach_mark_to_object(obj, mark: Mark) -> None:
+    """"""Store a Mark on an object.
+
+    This is used to implement the Mark declarations/decorators correctly.
+    """"""
+    assert isinstance(mark, Mark), mark
+    obj.pytestmark = [*get_unpacked_marks(obj), mark]",[]
+./src/_pytest/mark/structures.py,__call__,apply_conditions_with_reason,409,415,"def __call__(self, condition: Union[str, bool]=..., *conditions: Union[str, bool], reason: str=...) -> MarkDecorator:
+    ...","def apply_conditions_with_reason(self, condition: Union[str, bool]=..., *conditions: Union[str, bool], reason: str=...) -> MarkDecorator:
+    ...",[]

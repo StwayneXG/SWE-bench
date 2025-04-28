@@ -1,0 +1,16 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/db/migrations/state.py,__init__,initialize_model_settings,91,100,"def __init__(self, models=None, real_apps=None):
+    self.models = models or {}
+    if real_apps:
+        self.real_apps = real_apps if isinstance(real_apps, set) else set(real_apps)
+    else:
+        self.real_apps = set()
+    self.is_delayed = False
+    self.relations = None","def initialize_model_settings(self, models=None, real_apps=None):
+    self.models = models or {}
+    if real_apps:
+        self.real_apps = real_apps if isinstance(real_apps, set) else set(real_apps)
+    else:
+        self.real_apps = set()
+    self.is_delayed = False
+    self.relations = None",[]

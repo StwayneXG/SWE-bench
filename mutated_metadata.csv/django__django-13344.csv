@@ -1,0 +1,104 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/contrib/sessions/middleware.py,__init__,initialize_session_store_and_response,15,20,"def __init__(self, get_response=None):
+    self._get_response_none_deprecation(get_response)
+    self.get_response = get_response
+    self._async_check()
+    engine = import_module(settings.SESSION_ENGINE)
+    self.SessionStore = engine.SessionStore","def initialize_session_store_and_response(self, get_response=None):
+    self._get_response_none_deprecation(get_response)
+    self.get_response = get_response
+    self._async_check()
+    engine = import_module(settings.SESSION_ENGINE)
+    self.SessionStore = engine.SessionStore","[{""var"": ""engine"", ""rename"": ""session_engine_module""}]"
+./django/middleware/cache.py,__init__,initialize_cache_middleware_settings,66,73,"def __init__(self, get_response=None):
+    self._get_response_none_deprecation(get_response)
+    self.cache_timeout = settings.CACHE_MIDDLEWARE_SECONDS
+    self.page_timeout = None
+    self.key_prefix = settings.CACHE_MIDDLEWARE_KEY_PREFIX
+    self.cache_alias = settings.CACHE_MIDDLEWARE_ALIAS
+    self.cache = caches[self.cache_alias]
+    self.get_response = get_response","def initialize_cache_middleware_settings(self, get_response=None):
+    self._get_response_none_deprecation(get_response)
+    self.cache_timeout = settings.CACHE_MIDDLEWARE_SECONDS
+    self.page_timeout = None
+    self.key_prefix = settings.CACHE_MIDDLEWARE_KEY_PREFIX
+    self.cache_alias = settings.CACHE_MIDDLEWARE_ALIAS
+    self.cache = caches[self.cache_alias]
+    self.get_response = get_response",[]
+./django/middleware/cache.py,__init__,initialize_cache_middleware_settings,130,135,"def __init__(self, get_response=None):
+    self._get_response_none_deprecation(get_response)
+    self.key_prefix = settings.CACHE_MIDDLEWARE_KEY_PREFIX
+    self.cache_alias = settings.CACHE_MIDDLEWARE_ALIAS
+    self.cache = caches[self.cache_alias]
+    self.get_response = get_response","def initialize_cache_middleware_settings(self, get_response=None):
+    self._get_response_none_deprecation(get_response)
+    self.key_prefix = settings.CACHE_MIDDLEWARE_KEY_PREFIX
+    self.cache_alias = settings.CACHE_MIDDLEWARE_ALIAS
+    self.cache = caches[self.cache_alias]
+    self.get_response = get_response",[]
+./django/middleware/cache.py,__init__,initialize_cache_middleware,175,203,"def __init__(self, get_response=None, cache_timeout=None, page_timeout=None, **kwargs):
+    self._get_response_none_deprecation(get_response)
+    self.get_response = get_response
+    try:
+        key_prefix = kwargs['key_prefix']
+        if key_prefix is None:
+            key_prefix = ''
+    except KeyError:
+        key_prefix = settings.CACHE_MIDDLEWARE_KEY_PREFIX
+    self.key_prefix = key_prefix
+    try:
+        cache_alias = kwargs['cache_alias']
+        if cache_alias is None:
+            cache_alias = DEFAULT_CACHE_ALIAS
+    except KeyError:
+        cache_alias = settings.CACHE_MIDDLEWARE_ALIAS
+    self.cache_alias = cache_alias
+    if cache_timeout is None:
+        cache_timeout = settings.CACHE_MIDDLEWARE_SECONDS
+    self.cache_timeout = cache_timeout
+    self.page_timeout = page_timeout
+    self.cache = caches[self.cache_alias]","def initialize_cache_middleware(self, get_response=None, cache_timeout=None, page_timeout=None, **kwargs):
+    self._get_response_none_deprecation(get_response)
+    self.get_response = get_response
+    try:
+        key_prefix = kwargs['key_prefix']
+        if key_prefix is None:
+            key_prefix = ''
+    except KeyError:
+        key_prefix = settings.CACHE_MIDDLEWARE_KEY_PREFIX
+    self.key_prefix = key_prefix
+    try:
+        cache_alias = kwargs['cache_alias']
+        if cache_alias is None:
+            cache_alias = DEFAULT_CACHE_ALIAS
+    except KeyError:
+        cache_alias = settings.CACHE_MIDDLEWARE_ALIAS
+    self.cache_alias = cache_alias
+    if cache_timeout is None:
+        cache_timeout = settings.CACHE_MIDDLEWARE_SECONDS
+    self.cache_timeout = cache_timeout
+    self.page_timeout = page_timeout
+    self.cache = caches[self.cache_alias]","[{""var"": ""key_prefix"", ""rename"": ""cache_key_prefix""}, {""var"": ""cache_alias"", ""rename"": ""cache_identifier_alias""}]"
+./django/middleware/security.py,__init__,initialize_security_settings,11,22,"def __init__(self, get_response=None):
+    self._get_response_none_deprecation(get_response)
+    self.sts_seconds = settings.SECURE_HSTS_SECONDS
+    self.sts_include_subdomains = settings.SECURE_HSTS_INCLUDE_SUBDOMAINS
+    self.sts_preload = settings.SECURE_HSTS_PRELOAD
+    self.content_type_nosniff = settings.SECURE_CONTENT_TYPE_NOSNIFF
+    self.xss_filter = settings.SECURE_BROWSER_XSS_FILTER
+    self.redirect = settings.SECURE_SSL_REDIRECT
+    self.redirect_host = settings.SECURE_SSL_HOST
+    self.redirect_exempt = [re.compile(r) for r in settings.SECURE_REDIRECT_EXEMPT]
+    self.referrer_policy = settings.SECURE_REFERRER_POLICY
+    self.get_response = get_response","def initialize_security_settings(self, get_response=None):
+    self._get_response_none_deprecation(get_response)
+    self.sts_seconds = settings.SECURE_HSTS_SECONDS
+    self.sts_include_subdomains = settings.SECURE_HSTS_INCLUDE_SUBDOMAINS
+    self.sts_preload = settings.SECURE_HSTS_PRELOAD
+    self.content_type_nosniff = settings.SECURE_CONTENT_TYPE_NOSNIFF
+    self.xss_filter = settings.SECURE_BROWSER_XSS_FILTER
+    self.redirect = settings.SECURE_SSL_REDIRECT
+    self.redirect_host = settings.SECURE_SSL_HOST
+    self.redirect_exempt = [re.compile(r) for r in settings.SECURE_REDIRECT_EXEMPT]
+    self.referrer_policy = settings.SECURE_REFERRER_POLICY
+    self.get_response = get_response","[{""var"": ""r"", ""rename"": ""exempt_path_pattern""}]"

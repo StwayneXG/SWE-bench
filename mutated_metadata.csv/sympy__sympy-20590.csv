@@ -1,0 +1,6 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./sympy/core/_print_helpers.py,__str__,string_representation_of_sympy_expression,22,24,"def __str__(self):
+    from sympy.printing.str import sstr
+    return sstr(self, order=None)","def string_representation_of_sympy_expression(self):
+    from sympy.printing.str import sstr
+    return sstr(self, order=None)",[]

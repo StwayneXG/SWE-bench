@@ -1,0 +1,6 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./pylint/checkers/similar.py,run,find_and_display_similarities,391,393,"def run(self) -> None:
+    """"""start looking for similarities and display results on stdout""""""
+    self._display_sims(self._compute_sims())","def find_and_display_similarities(self) -> None:
+    """"""start looking for similarities and display results on stdout""""""
+    self._display_sims(self._compute_sims())",[]

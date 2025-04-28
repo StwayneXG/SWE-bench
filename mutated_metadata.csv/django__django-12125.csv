@@ -1,0 +1,22 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/db/migrations/serializer.py,serialize,resolve_fully_qualified_name,259,272,"def serialize(self):
+    special_cases = [(models.Model, 'models.Model', []), (type(None), 'type(None)', [])]
+    for case, string, imports in special_cases:
+        if case is self.value:
+            return (string, set(imports))
+    if hasattr(self.value, '__module__'):
+        module = self.value.__module__
+        if module == builtins.__name__:
+            return (self.value.__name__, set())
+        else:
+            return ('%s.%s' % (module, self.value.__name__), {'import %s' % module})","def resolve_fully_qualified_name(self):
+    special_cases = [(models.Model, 'models.Model', []), (type(None), 'type(None)', [])]
+    for case, string, imports in special_cases:
+        if case is self.value:
+            return (string, set(imports))
+    if hasattr(self.value, '__module__'):
+        module = self.value.__module__
+        if module == builtins.__name__:
+            return (self.value.__name__, set())
+        else:
+            return ('%s.%s' % (module, self.value.__name__), {'import %s' % module})","[{""var"": ""special_cases"", ""rename"": ""serialization_exception_cases""}, {""var"": ""string"", ""rename"": ""serialized_representation""}, {""var"": ""case"", ""rename"": ""type_case""}, {""var"": ""module"", ""rename"": ""module_name_path""}, {""var"": ""imports"", ""rename"": ""required_imports""}]"

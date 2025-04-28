@@ -1,0 +1,40 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./src/_pytest/capture.py,__init__,initializeFileDescriptorCapture,357,398,"def __init__(self, targetfd: int) -> None:
+    self.targetfd = targetfd
+    try:
+        os.fstat(targetfd)
+    except OSError:
+        self.targetfd_invalid = os.open(os.devnull, os.O_RDWR)
+        os.dup2(self.targetfd_invalid, targetfd)
+    else:
+        self.targetfd_invalid = None
+    self.targetfd_save = os.dup(targetfd)
+    if targetfd == 0:
+        self.tmpfile = open(os.devnull)
+        self.syscapture = SysCapture(targetfd)
+    else:
+        self.tmpfile = EncodedFile(TemporaryFile(buffering=0), encoding='utf-8', errors='replace', write_through=True)
+        if targetfd in patchsysdict:
+            self.syscapture = SysCapture(targetfd, self.tmpfile)
+        else:
+            self.syscapture = NoCapture()
+    self._state = 'initialized'","def initializeFileDescriptorCapture(self, targetfd: int) -> None:
+    self.targetfd = targetfd
+    try:
+        os.fstat(targetfd)
+    except OSError:
+        self.targetfd_invalid = os.open(os.devnull, os.O_RDWR)
+        os.dup2(self.targetfd_invalid, targetfd)
+    else:
+        self.targetfd_invalid = None
+    self.targetfd_save = os.dup(targetfd)
+    if targetfd == 0:
+        self.tmpfile = open(os.devnull)
+        self.syscapture = SysCapture(targetfd)
+    else:
+        self.tmpfile = EncodedFile(TemporaryFile(buffering=0), encoding='utf-8', errors='replace', write_through=True)
+        if targetfd in patchsysdict:
+            self.syscapture = SysCapture(targetfd, self.tmpfile)
+        else:
+            self.syscapture = NoCapture()
+    self._state = 'initialized'",[]

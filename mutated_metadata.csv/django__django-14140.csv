@@ -1,0 +1,30 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/db/models/query_utils.py,deconstruct,construct_django_query_path_args_kwargs,83,97,"def deconstruct(self):
+    path = '%s.%s' % (self.__class__.__module__, self.__class__.__name__)
+    if path.startswith('django.db.models.query_utils'):
+        path = path.replace('django.db.models.query_utils', 'django.db.models')
+    args, kwargs = ((), {})
+    if len(self.children) == 1 and (not isinstance(self.children[0], Q)):
+        child = self.children[0]
+        kwargs = {child[0]: child[1]}
+    else:
+        args = tuple(self.children)
+        if self.connector != self.default:
+            kwargs = {'_connector': self.connector}
+    if self.negated:
+        kwargs['_negated'] = True
+    return (path, args, kwargs)","def construct_django_query_path_args_kwargs(self):
+    path = '%s.%s' % (self.__class__.__module__, self.__class__.__name__)
+    if path.startswith('django.db.models.query_utils'):
+        path = path.replace('django.db.models.query_utils', 'django.db.models')
+    args, kwargs = ((), {})
+    if len(self.children) == 1 and (not isinstance(self.children[0], Q)):
+        child = self.children[0]
+        kwargs = {child[0]: child[1]}
+    else:
+        args = tuple(self.children)
+        if self.connector != self.default:
+            kwargs = {'_connector': self.connector}
+    if self.negated:
+        kwargs['_negated'] = True
+    return (path, args, kwargs)","[{""var"": ""path"", ""rename"": ""class_import_path""}, {""var"": ""child"", ""rename"": ""single_condition""}, {""var"": ""kwargs"", ""rename"": ""query_attributes""}, {""var"": ""args"", ""rename"": ""children_arguments""}]"

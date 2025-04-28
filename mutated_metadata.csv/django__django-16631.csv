@@ -1,0 +1,100 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/contrib/auth/__init__.py,get_user,retrieve_authenticated_user_or_anonymous,182,209,"def get_user(request):
+    """"""
+    Return the user model instance associated with the given request session.
+    If no user is retrieved, return an instance of `AnonymousUser`.
+    """"""
+    from .models import AnonymousUser
+    user = None
+    try:
+        user_id = _get_user_session_key(request)
+        backend_path = request.session[BACKEND_SESSION_KEY]
+    except KeyError:
+        pass
+    else:
+        if backend_path in settings.AUTHENTICATION_BACKENDS:
+            backend = load_backend(backend_path)
+            user = backend.get_user(user_id)
+            if hasattr(user, 'get_session_auth_hash'):
+                session_hash = request.session.get(HASH_SESSION_KEY)
+                session_hash_verified = session_hash and constant_time_compare(session_hash, user.get_session_auth_hash())
+                if not session_hash_verified:
+                    request.session.flush()
+                    user = None
+    return user or AnonymousUser()","def retrieve_authenticated_user_or_anonymous(request):
+    """"""
+    Return the user model instance associated with the given request session.
+    If no user is retrieved, return an instance of `AnonymousUser`.
+    """"""
+    from .models import AnonymousUser
+    user = None
+    try:
+        user_id = _get_user_session_key(request)
+        backend_path = request.session[BACKEND_SESSION_KEY]
+    except KeyError:
+        pass
+    else:
+        if backend_path in settings.AUTHENTICATION_BACKENDS:
+            backend = load_backend(backend_path)
+            user = backend.get_user(user_id)
+            if hasattr(user, 'get_session_auth_hash'):
+                session_hash = request.session.get(HASH_SESSION_KEY)
+                session_hash_verified = session_hash and constant_time_compare(session_hash, user.get_session_auth_hash())
+                if not session_hash_verified:
+                    request.session.flush()
+                    user = None
+    return user or AnonymousUser()","[{""var"": ""session_hash_verified"", ""rename"": ""is_session_hash_validated""}, {""var"": ""backend_path"", ""rename"": ""python\nauthentication_backend_path""}, {""var"": ""backend"", ""rename"": ""authentication_backend""}, {""var"": ""session_hash"", ""rename"": ""session_authentication_hash""}, {""var"": ""user"", ""rename"": ""retrieved_user_instance""}, {""var"": ""user_id"", ""rename"": ""session_associated_user_id""}]"
+./django/contrib/auth/__init__.py,get_permission_codename,generate_permission_codename_for_action,212,216,"def get_permission_codename(action, opts):
+    """"""
+    Return the codename of the permission for the specified action.
+    """"""
+    return '%s_%s' % (action, opts.model_name)","def generate_permission_codename_for_action(action, opts):
+    """"""
+    Return the codename of the permission for the specified action.
+    """"""
+    return '%s_%s' % (action, opts.model_name)",[]
+./django/contrib/auth/__init__.py,update_session_auth_hash,refresh_session_on_password_change,219,230,"def update_session_auth_hash(request, user):
+    """"""
+    Updating a user's password logs out all sessions for the user.
+
+    Take the current request and the updated user object from which the new
+    session hash will be derived and update the session hash appropriately to
+    prevent a password change from logging out the session from which the
+    password was changed.
+    """"""
+    request.session.cycle_key()
+    if hasattr(user, 'get_session_auth_hash') and request.user == user:
+        request.session[HASH_SESSION_KEY] = user.get_session_auth_hash()","def refresh_session_on_password_change(request, user):
+    """"""
+    Updating a user's password logs out all sessions for the user.
+
+    Take the current request and the updated user object from which the new
+    session hash will be derived and update the session hash appropriately to
+    prevent a password change from logging out the session from which the
+    password was changed.
+    """"""
+    request.session.cycle_key()
+    if hasattr(user, 'get_session_auth_hash') and request.user == user:
+        request.session[HASH_SESSION_KEY] = user.get_session_auth_hash()",[]
+./django/contrib/auth/base_user.py,get_session_auth_hash,generate_password_hmac_for_session,134,143,"def get_session_auth_hash(self):
+    """"""
+        Return an HMAC of the password field.
+        """"""
+    key_salt = 'django.contrib.auth.models.AbstractBaseUser.get_session_auth_hash'
+    return salted_hmac(key_salt, self.password, algorithm='sha256').hexdigest()","def generate_password_hmac_for_session(self):
+    """"""
+        Return an HMAC of the password field.
+        """"""
+    key_salt = 'django.contrib.auth.models.AbstractBaseUser.get_session_auth_hash'
+    return salted_hmac(key_salt, self.password, algorithm='sha256').hexdigest()","[{""var"": ""key_salt"", ""rename"": ""session_auth_hash_key_identifier""}]"
+./django/contrib/auth/base_user.py,get_email_field_name,retrieve_email_field_or_default,146,150,"@classmethod
+def get_email_field_name(cls):
+    try:
+        return cls.EMAIL_FIELD
+    except AttributeError:
+        return 'email'","@classmethod
+def retrieve_email_field_or_default(cls):
+    try:
+        return cls.EMAIL_FIELD
+    except AttributeError:
+        return 'email'",[]

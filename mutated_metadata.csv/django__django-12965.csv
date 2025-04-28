@@ -1,0 +1,6 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/db/models/sql/compiler.py,single_alias,is_single_active_alias,1409,1410,"@cached_property
+def single_alias(self):
+    return sum((self.query.alias_refcount[t] > 0 for t in self.query.alias_map)) == 1","@cached_property
+def is_single_active_alias(self):
+    return sum((self.query.alias_refcount[t] > 0 for t in self.query.alias_map)) == 1","[{""var"": ""t"", ""rename"": ""alias_key""}]"

@@ -1,0 +1,493 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/db/models/sql/query.py,join,generateOrReuseJoinAlias,1014,1054,"def join(self, join, reuse=None):
+    """"""
+        Return an alias for the 'join', either reusing an existing alias for
+        that join or creating a new one. 'join' is either a base_table_class or
+        join_class.
+
+        The 'reuse' parameter can be either None which means all joins are
+        reusable, or it can be a set containing the aliases that can be reused.
+
+        A join is always created as LOUTER if the lhs alias is LOUTER to make
+        sure chains like t1 LOUTER t2 INNER t3 aren't generated. All new
+        joins are created as LOUTER if the join is nullable.
+        """"""
+    reuse_aliases = [a for a, j in self.alias_map.items() if (reuse is None or a in reuse) and j.equals(join)]
+    if reuse_aliases:
+        if join.table_alias in reuse_aliases:
+            reuse_alias = join.table_alias
+        else:
+            reuse_alias = reuse_aliases[-1]
+        self.ref_alias(reuse_alias)
+        return reuse_alias
+    alias, _ = self.table_alias(join.table_name, create=True, filtered_relation=join.filtered_relation)
+    if join.join_type:
+        if self.alias_map[join.parent_alias].join_type == LOUTER or join.nullable:
+            join_type = LOUTER
+        else:
+            join_type = INNER
+        join.join_type = join_type
+    join.table_alias = alias
+    self.alias_map[alias] = join
+    return alias","def generateOrReuseJoinAlias(self, join, reuse=None):
+    """"""
+        Return an alias for the 'join', either reusing an existing alias for
+        that join or creating a new one. 'join' is either a base_table_class or
+        join_class.
+
+        The 'reuse' parameter can be either None which means all joins are
+        reusable, or it can be a set containing the aliases that can be reused.
+
+        A join is always created as LOUTER if the lhs alias is LOUTER to make
+        sure chains like t1 LOUTER t2 INNER t3 aren't generated. All new
+        joins are created as LOUTER if the join is nullable.
+        """"""
+    reuse_aliases = [a for a, j in self.alias_map.items() if (reuse is None or a in reuse) and j.equals(join)]
+    if reuse_aliases:
+        if join.table_alias in reuse_aliases:
+            reuse_alias = join.table_alias
+        else:
+            reuse_alias = reuse_aliases[-1]
+        self.ref_alias(reuse_alias)
+        return reuse_alias
+    alias, _ = self.table_alias(join.table_name, create=True, filtered_relation=join.filtered_relation)
+    if join.join_type:
+        if self.alias_map[join.parent_alias].join_type == LOUTER or join.nullable:
+            join_type = LOUTER
+        else:
+            join_type = INNER
+        join.join_type = join_type
+    join.table_alias = alias
+    self.alias_map[alias] = join
+    return alias","[{""var"": ""join_type"", ""rename"": ""connection_mode""}, {""var"": ""a"", ""rename"": ""potential_reuse_alias""}, {""var"": ""_"", ""rename"": ""generated_alias""}, {""var"": ""j"", ""rename"": ""join_alias_supplier""}, {""var"": ""alias"", ""rename"": ""join_alias""}, {""var"": ""reuse_aliases"", ""rename"": ""potential_reusable_aliases""}, {""var"": ""reuse_alias"", ""rename"": ""selected_alias_for_reuse""}]"
+./django/db/models/sql/query.py,build_filter,construct_query_filter_clause,1318,1480,"def build_filter(self, filter_expr, branch_negated=False, current_negated=False, can_reuse=None, allow_joins=True, split_subq=True, check_filterable=True):
+    """"""
+        Build a WhereNode for a single filter clause but don't add it
+        to this Query. Query.add_q() will then add this filter to the where
+        Node.
+
+        The 'branch_negated' tells us if the current branch contains any
+        negations. This will be used to determine if subqueries are needed.
+
+        The 'current_negated' is used to determine if the current filter is
+        negated or not and this will be used to determine if IS NULL filtering
+        is needed.
+
+        The difference between current_negated and branch_negated is that
+        branch_negated is set on first negation, but current_negated is
+        flipped for each negation.
+
+        Note that add_filter will not do any negating itself, that is done
+        upper in the code by add_q().
+
+        The 'can_reuse' is a set of reusable joins for multijoins.
+
+        The method will create a filter clause that can be added to the current
+        query. However, if the filter isn't added to the query then the caller
+        is responsible for unreffing the joins used.
+        """"""
+    if isinstance(filter_expr, dict):
+        raise FieldError('Cannot parse keyword query as dict')
+    if isinstance(filter_expr, Q):
+        return self._add_q(filter_expr, branch_negated=branch_negated, current_negated=current_negated, used_aliases=can_reuse, allow_joins=allow_joins, split_subq=split_subq, check_filterable=check_filterable)
+    if hasattr(filter_expr, 'resolve_expression'):
+        if not getattr(filter_expr, 'conditional', False):
+            raise TypeError('Cannot filter against a non-conditional expression.')
+        condition = filter_expr.resolve_expression(self, allow_joins=allow_joins)
+        if not isinstance(condition, Lookup):
+            condition = self.build_lookup(['exact'], condition, True)
+        return (WhereNode([condition], connector=AND), [])
+    arg, value = filter_expr
+    if not arg:
+        raise FieldError('Cannot parse keyword query %r' % arg)
+    lookups, parts, reffed_expression = self.solve_lookup_type(arg)
+    if check_filterable:
+        self.check_filterable(reffed_expression)
+    if not allow_joins and len(parts) > 1:
+        raise FieldError('Joined field references are not permitted in this query')
+    pre_joins = self.alias_refcount.copy()
+    value = self.resolve_lookup_value(value, can_reuse, allow_joins)
+    used_joins = {k for k, v in self.alias_refcount.items() if v > pre_joins.get(k, 0)}
+    if check_filterable:
+        self.check_filterable(value)
+    if reffed_expression:
+        condition = self.build_lookup(lookups, reffed_expression, value)
+        return (WhereNode([condition], connector=AND), [])
+    opts = self.get_meta()
+    alias = self.get_initial_alias()
+    allow_many = not branch_negated or not split_subq
+    try:
+        join_info = self.setup_joins(parts, opts, alias, can_reuse=can_reuse, allow_many=allow_many)
+        if isinstance(value, Iterator):
+            value = list(value)
+        self.check_related_objects(join_info.final_field, value, join_info.opts)
+        self._lookup_joins = join_info.joins
+    except MultiJoin as e:
+        return self.split_exclude(filter_expr, can_reuse, e.names_with_path)
+    used_joins.update(join_info.joins)
+    targets, alias, join_list = self.trim_joins(join_info.targets, join_info.joins, join_info.path)
+    if can_reuse is not None:
+        can_reuse.update(join_list)
+    if join_info.final_field.is_relation:
+        num_lookups = len(lookups)
+        if num_lookups > 1:
+            raise FieldError('Related Field got invalid lookup: {}'.format(lookups[0]))
+        if len(targets) == 1:
+            col = self._get_col(targets[0], join_info.final_field, alias)
+        else:
+            col = MultiColSource(alias, targets, join_info.targets, join_info.final_field)
+    else:
+        col = self._get_col(targets[0], join_info.final_field, alias)
+    condition = self.build_lookup(lookups, col, value)
+    lookup_type = condition.lookup_name
+    clause = WhereNode([condition], connector=AND)
+    require_outer = lookup_type == 'isnull' and condition.rhs is True and (not current_negated)
+    if current_negated and (lookup_type != 'isnull' or condition.rhs is False) and (condition.rhs is not None):
+        require_outer = True
+        if lookup_type != 'isnull':
+            if self.is_nullable(targets[0]) or self.alias_map[join_list[-1]].join_type == LOUTER:
+                lookup_class = targets[0].get_lookup('isnull')
+                col = self._get_col(targets[0], join_info.targets[0], alias)
+                clause.add(lookup_class(col, False), AND)
+            if isinstance(value, Col) and self.is_nullable(value.target):
+                lookup_class = value.target.get_lookup('isnull')
+                clause.add(lookup_class(value, False), AND)
+    return (clause, used_joins if not require_outer else ())","def construct_query_filter_clause(self, filter_expr, branch_negated=False, current_negated=False, can_reuse=None, allow_joins=True, split_subq=True, check_filterable=True):
+    """"""
+        Build a WhereNode for a single filter clause but don't add it
+        to this Query. Query.add_q() will then add this filter to the where
+        Node.
+
+        The 'branch_negated' tells us if the current branch contains any
+        negations. This will be used to determine if subqueries are needed.
+
+        The 'current_negated' is used to determine if the current filter is
+        negated or not and this will be used to determine if IS NULL filtering
+        is needed.
+
+        The difference between current_negated and branch_negated is that
+        branch_negated is set on first negation, but current_negated is
+        flipped for each negation.
+
+        Note that add_filter will not do any negating itself, that is done
+        upper in the code by add_q().
+
+        The 'can_reuse' is a set of reusable joins for multijoins.
+
+        The method will create a filter clause that can be added to the current
+        query. However, if the filter isn't added to the query then the caller
+        is responsible for unreffing the joins used.
+        """"""
+    if isinstance(filter_expr, dict):
+        raise FieldError('Cannot parse keyword query as dict')
+    if isinstance(filter_expr, Q):
+        return self._add_q(filter_expr, branch_negated=branch_negated, current_negated=current_negated, used_aliases=can_reuse, allow_joins=allow_joins, split_subq=split_subq, check_filterable=check_filterable)
+    if hasattr(filter_expr, 'resolve_expression'):
+        if not getattr(filter_expr, 'conditional', False):
+            raise TypeError('Cannot filter against a non-conditional expression.')
+        condition = filter_expr.resolve_expression(self, allow_joins=allow_joins)
+        if not isinstance(condition, Lookup):
+            condition = self.build_lookup(['exact'], condition, True)
+        return (WhereNode([condition], connector=AND), [])
+    arg, value = filter_expr
+    if not arg:
+        raise FieldError('Cannot parse keyword query %r' % arg)
+    lookups, parts, reffed_expression = self.solve_lookup_type(arg)
+    if check_filterable:
+        self.check_filterable(reffed_expression)
+    if not allow_joins and len(parts) > 1:
+        raise FieldError('Joined field references are not permitted in this query')
+    pre_joins = self.alias_refcount.copy()
+    value = self.resolve_lookup_value(value, can_reuse, allow_joins)
+    used_joins = {k for k, v in self.alias_refcount.items() if v > pre_joins.get(k, 0)}
+    if check_filterable:
+        self.check_filterable(value)
+    if reffed_expression:
+        condition = self.build_lookup(lookups, reffed_expression, value)
+        return (WhereNode([condition], connector=AND), [])
+    opts = self.get_meta()
+    alias = self.get_initial_alias()
+    allow_many = not branch_negated or not split_subq
+    try:
+        join_info = self.setup_joins(parts, opts, alias, can_reuse=can_reuse, allow_many=allow_many)
+        if isinstance(value, Iterator):
+            value = list(value)
+        self.check_related_objects(join_info.final_field, value, join_info.opts)
+        self._lookup_joins = join_info.joins
+    except MultiJoin as e:
+        return self.split_exclude(filter_expr, can_reuse, e.names_with_path)
+    used_joins.update(join_info.joins)
+    targets, alias, join_list = self.trim_joins(join_info.targets, join_info.joins, join_info.path)
+    if can_reuse is not None:
+        can_reuse.update(join_list)
+    if join_info.final_field.is_relation:
+        num_lookups = len(lookups)
+        if num_lookups > 1:
+            raise FieldError('Related Field got invalid lookup: {}'.format(lookups[0]))
+        if len(targets) == 1:
+            col = self._get_col(targets[0], join_info.final_field, alias)
+        else:
+            col = MultiColSource(alias, targets, join_info.targets, join_info.final_field)
+    else:
+        col = self._get_col(targets[0], join_info.final_field, alias)
+    condition = self.build_lookup(lookups, col, value)
+    lookup_type = condition.lookup_name
+    clause = WhereNode([condition], connector=AND)
+    require_outer = lookup_type == 'isnull' and condition.rhs is True and (not current_negated)
+    if current_negated and (lookup_type != 'isnull' or condition.rhs is False) and (condition.rhs is not None):
+        require_outer = True
+        if lookup_type != 'isnull':
+            if self.is_nullable(targets[0]) or self.alias_map[join_list[-1]].join_type == LOUTER:
+                lookup_class = targets[0].get_lookup('isnull')
+                col = self._get_col(targets[0], join_info.targets[0], alias)
+                clause.add(lookup_class(col, False), AND)
+            if isinstance(value, Col) and self.is_nullable(value.target):
+                lookup_class = value.target.get_lookup('isnull')
+                clause.add(lookup_class(value, False), AND)
+    return (clause, used_joins if not require_outer else ())","[{""var"": ""join_info"", ""rename"": ""join_details""}, {""var"": ""clause"", ""rename"": ""filter_conditions_node""}, {""var"": ""targets"", ""rename"": ""filter_targets""}, {""var"": ""condition"", ""rename"": ""resolved_condition_expression""}, {""var"": ""require_outer"", ""rename"": ""needs_outer_join""}, {""var"": ""k"", ""rename"": ""used_joins_set""}, {""var"": ""arg"", ""rename"": ""filter_argument""}, {""var"": ""used_joins"", ""rename"": ""utilized_join_aliases""}, {""var"": ""parts"", ""rename"": ""lookup_parts""}, {""var"": ""pre_joins"", ""rename"": ""initial_alias_refcount_snapshot""}, {""var"": ""col"", ""rename"": ""column_reference""}, {""var"": ""reffed_expression"", ""rename"": ""referenced_expression""}, {""var"": ""opts"", ""rename"": ""model_metadata""}, {""var"": ""v"", ""rename"": ""filter_clause_variable""}, {""var"": ""value"", ""rename"": ""filter_value""}, {""var"": ""lookup_type"", ""rename"": ""expression_type""}, {""var"": ""lookup_class"", ""rename"": ""is_null_lookup_handler""}, {""var"": ""num_lookups"", ""rename"": ""lookup_count""}, {""var"": ""join_list"", ""rename"": ""pruned_join_paths""}, {""var"": ""lookups"", ""rename"": ""lookup_types""}, {""var"": ""alias"", ""rename"": ""initial_query_alias""}, {""var"": ""allow_many"", ""rename"": ""allow_multiple_joins""}]"
+./django/db/models/sql/query.py,add_filtered_relation,validate_and_add_filtered_relation,1572,1601,"def add_filtered_relation(self, filtered_relation, alias):
+    filtered_relation.alias = alias
+    lookups = dict(get_children_from_q(filtered_relation.condition))
+    relation_lookup_parts, relation_field_parts, _ = self.solve_lookup_type(filtered_relation.relation_name)
+    if relation_lookup_parts:
+        raise ValueError(""FilteredRelation's relation_name cannot contain lookups (got %r)."" % filtered_relation.relation_name)
+    for lookup in chain(lookups):
+        lookup_parts, lookup_field_parts, _ = self.solve_lookup_type(lookup)
+        shift = 2 if not lookup_parts else 1
+        lookup_field_path = lookup_field_parts[:-shift]
+        for idx, lookup_field_part in enumerate(lookup_field_path):
+            if len(relation_field_parts) > idx:
+                if relation_field_parts[idx] != lookup_field_part:
+                    raise ValueError(""FilteredRelation's condition doesn't support relations outside the %r (got %r)."" % (filtered_relation.relation_name, lookup))
+            else:
+                raise ValueError(""FilteredRelation's condition doesn't support nested relations deeper than the relation_name (got %r for %r)."" % (lookup, filtered_relation.relation_name))
+    self._filtered_relations[filtered_relation.alias] = filtered_relation","def validate_and_add_filtered_relation(self, filtered_relation, alias):
+    filtered_relation.alias = alias
+    lookups = dict(get_children_from_q(filtered_relation.condition))
+    relation_lookup_parts, relation_field_parts, _ = self.solve_lookup_type(filtered_relation.relation_name)
+    if relation_lookup_parts:
+        raise ValueError(""FilteredRelation's relation_name cannot contain lookups (got %r)."" % filtered_relation.relation_name)
+    for lookup in chain(lookups):
+        lookup_parts, lookup_field_parts, _ = self.solve_lookup_type(lookup)
+        shift = 2 if not lookup_parts else 1
+        lookup_field_path = lookup_field_parts[:-shift]
+        for idx, lookup_field_part in enumerate(lookup_field_path):
+            if len(relation_field_parts) > idx:
+                if relation_field_parts[idx] != lookup_field_part:
+                    raise ValueError(""FilteredRelation's condition doesn't support relations outside the %r (got %r)."" % (filtered_relation.relation_name, lookup))
+            else:
+                raise ValueError(""FilteredRelation's condition doesn't support nested relations deeper than the relation_name (got %r for %r)."" % (lookup, filtered_relation.relation_name))
+    self._filtered_relations[filtered_relation.alias] = filtered_relation","[{""var"": ""relation_lookup_parts"", ""rename"": ""relation_name_lookup_components""}, {""var"": ""shift"", ""rename"": ""lookup_path_adjustment""}, {""var"": ""lookup_field_path"", ""rename"": ""lookup_field_hierarchy_path""}, {""var"": ""lookup"", ""rename"": ""relation_condition_part""}, {""var"": ""lookup_field_part"", ""rename"": ""lookup_field_segment""}, {""var"": ""_"", ""rename"": ""validated_filtered_relation""}, {""var"": ""relation_field_parts"", ""rename"": ""relation_field_components""}, {""var"": ""idx"", ""rename"": ""lookup_field_index""}, {""var"": ""lookups"", ""rename"": ""python\ncondition_lookups""}, {""var"": ""lookup_field_parts"", ""rename"": ""lookup_field_components""}, {""var"": ""lookup_parts"", ""rename"": ""relation_lookup_segments""}]"
+./django/db/models/sql/query.py,setup_joins,compute_table_joins_through_fields,1719,1826,"def setup_joins(self, names, opts, alias, can_reuse=None, allow_many=True):
+    """"""
+        Compute the necessary table joins for the passage through the fields
+        given in 'names'. 'opts' is the Options class for the current model
+        (which gives the table we are starting from), 'alias' is the alias for
+        the table to start the joining from.
+
+        The 'can_reuse' defines the reverse foreign key joins we can reuse. It
+        can be None in which case all joins are reusable or a set of aliases
+        that can be reused. Note that non-reverse foreign keys are always
+        reusable when using setup_joins().
+
+        If 'allow_many' is False, then any reverse foreign key seen will
+        generate a MultiJoin exception.
+
+        Return the final field involved in the joins, the target field (used
+        for any 'where' constraint), the final 'opts' value, the joins, the
+        field path traveled to generate the joins, and a transform function
+        that takes a field and alias and is equivalent to `field.get_col(alias)`
+        in the simple case but wraps field transforms if they were included in
+        names.
+
+        The target field is the field containing the concrete value. Final
+        field can be something different, for example foreign key pointing to
+        that value. Final field is needed for example in some value
+        conversions (convert 'obj' in fk__id=obj to pk val using the foreign
+        key field for example).
+        """"""
+    joins = [alias]
+
+    def final_transformer(field, alias):
+        if not self.alias_cols:
+            alias = None
+        return field.get_col(alias)
+    last_field_exception = None
+    for pivot in range(len(names), 0, -1):
+        try:
+            path, final_field, targets, rest = self.names_to_path(names[:pivot], opts, allow_many, fail_on_missing=True)
+        except FieldError as exc:
+            if pivot == 1:
+                raise
+            else:
+                last_field_exception = exc
+        else:
+            transforms = names[pivot:]
+            break
+    for name in transforms:
+
+        def transform(field, alias, *, name, previous):
+            try:
+                wrapped = previous(field, alias)
+                return self.try_transform(wrapped, name)
+            except FieldError:
+                if isinstance(final_field, Field) and last_field_exception:
+                    raise last_field_exception
+                else:
+                    raise
+        final_transformer = functools.partial(transform, name=name, previous=final_transformer)
+    for join in path:
+        if join.filtered_relation:
+            filtered_relation = join.filtered_relation.clone()
+            table_alias = filtered_relation.alias
+        else:
+            filtered_relation = None
+            table_alias = None
+        opts = join.to_opts
+        if join.direct:
+            nullable = self.is_nullable(join.join_field)
+        else:
+            nullable = True
+        connection = self.join_class(opts.db_table, alias, table_alias, INNER, join.join_field, nullable, filtered_relation=filtered_relation)
+        reuse = can_reuse if join.m2m else None
+        alias = self.join(connection, reuse=reuse)
+        joins.append(alias)
+        if filtered_relation:
+            filtered_relation.path = joins[:]
+    return JoinInfo(final_field, targets, opts, joins, path, final_transformer)","def compute_table_joins_through_fields(self, names, opts, alias, can_reuse=None, allow_many=True):
+    """"""
+        Compute the necessary table joins for the passage through the fields
+        given in 'names'. 'opts' is the Options class for the current model
+        (which gives the table we are starting from), 'alias' is the alias for
+        the table to start the joining from.
+
+        The 'can_reuse' defines the reverse foreign key joins we can reuse. It
+        can be None in which case all joins are reusable or a set of aliases
+        that can be reused. Note that non-reverse foreign keys are always
+        reusable when using setup_joins().
+
+        If 'allow_many' is False, then any reverse foreign key seen will
+        generate a MultiJoin exception.
+
+        Return the final field involved in the joins, the target field (used
+        for any 'where' constraint), the final 'opts' value, the joins, the
+        field path traveled to generate the joins, and a transform function
+        that takes a field and alias and is equivalent to `field.get_col(alias)`
+        in the simple case but wraps field transforms if they were included in
+        names.
+
+        The target field is the field containing the concrete value. Final
+        field can be something different, for example foreign key pointing to
+        that value. Final field is needed for example in some value
+        conversions (convert 'obj' in fk__id=obj to pk val using the foreign
+        key field for example).
+        """"""
+    joins = [alias]
+
+    def final_transformer(field, alias):
+        if not self.alias_cols:
+            alias = None
+        return field.get_col(alias)
+    last_field_exception = None
+    for pivot in range(len(names), 0, -1):
+        try:
+            path, final_field, targets, rest = self.names_to_path(names[:pivot], opts, allow_many, fail_on_missing=True)
+        except FieldError as exc:
+            if pivot == 1:
+                raise
+            else:
+                last_field_exception = exc
+        else:
+            transforms = names[pivot:]
+            break
+    for name in transforms:
+
+        def transform(field, alias, *, name, previous):
+            try:
+                wrapped = previous(field, alias)
+                return self.try_transform(wrapped, name)
+            except FieldError:
+                if isinstance(final_field, Field) and last_field_exception:
+                    raise last_field_exception
+                else:
+                    raise
+        final_transformer = functools.partial(transform, name=name, previous=final_transformer)
+    for join in path:
+        if join.filtered_relation:
+            filtered_relation = join.filtered_relation.clone()
+            table_alias = filtered_relation.alias
+        else:
+            filtered_relation = None
+            table_alias = None
+        opts = join.to_opts
+        if join.direct:
+            nullable = self.is_nullable(join.join_field)
+        else:
+            nullable = True
+        connection = self.join_class(opts.db_table, alias, table_alias, INNER, join.join_field, nullable, filtered_relation=filtered_relation)
+        reuse = can_reuse if join.m2m else None
+        alias = self.join(connection, reuse=reuse)
+        joins.append(alias)
+        if filtered_relation:
+            filtered_relation.path = joins[:]
+    return JoinInfo(final_field, targets, opts, joins, path, final_transformer)","[{""var"": ""connection"", ""rename"": ""database_connection_link""}, {""var"": ""transforms"", ""rename"": ""field_transforms""}, {""var"": ""name"", ""rename"": ""field_names""}, {""var"": ""pivot"", ""rename"": ""path_traversal_index""}, {""var"": ""table_alias"", ""rename"": ""join_table_alias""}, {""var"": ""final_field"", ""rename"": ""terminal_field""}, {""var"": ""path"", ""rename"": ""field_traversal_path""}, {""var"": ""last_field_exception"", ""rename"": ""last_unhandled_field_error""}, {""var"": ""targets"", ""rename"": ""join_target_fields""}, {""var"": ""wrapped"", ""rename"": ""transformed_output""}, {""var"": ""final_transformer"", ""rename"": ""field_alias_transformer""}, {""var"": ""reuse"", ""rename"": ""reusable_aliases""}, {""var"": ""rest"", ""rename"": ""remaining_path_elements""}, {""var"": ""join"", ""rename"": ""table_joins""}, {""var"": ""nullable"", ""rename"": ""join_nullable_flag""}, {""var"": ""filtered_relation"", ""rename"": ""filtered_relation_clone""}, {""var"": ""joins"", ""rename"": ""table_join_aliases""}]"
+./django/db/models/sql/query.py,trim_joins,optimize_direct_joins,1828,1858,"def trim_joins(self, targets, joins, path):
+    """"""
+        The 'target' parameter is the final field being joined to, 'joins'
+        is the full list of join aliases. The 'path' contain the PathInfos
+        used to create the joins.
+
+        Return the final target field and table alias and the new active
+        joins.
+
+        Always trim any direct join if the target column is already in the
+        previous table. Can't trim reverse joins as it's unknown if there's
+        anything on the other side of the join.
+        """"""
+    joins = joins[:]
+    for pos, info in enumerate(reversed(path)):
+        if len(joins) == 1 or not info.direct:
+            break
+        if info.filtered_relation:
+            break
+        join_targets = {t.column for t in info.join_field.foreign_related_fields}
+        cur_targets = {t.column for t in targets}
+        if not cur_targets.issubset(join_targets):
+            break
+        targets_dict = {r[1].column: r[0] for r in info.join_field.related_fields if r[1].column in cur_targets}
+        targets = tuple((targets_dict[t.column] for t in targets))
+        self.unref_alias(joins.pop())
+    return (targets, joins[-1], joins)","def optimize_direct_joins(self, targets, joins, path):
+    """"""
+        The 'target' parameter is the final field being joined to, 'joins'
+        is the full list of join aliases. The 'path' contain the PathInfos
+        used to create the joins.
+
+        Return the final target field and table alias and the new active
+        joins.
+
+        Always trim any direct join if the target column is already in the
+        previous table. Can't trim reverse joins as it's unknown if there's
+        anything on the other side of the join.
+        """"""
+    joins = joins[:]
+    for pos, info in enumerate(reversed(path)):
+        if len(joins) == 1 or not info.direct:
+            break
+        if info.filtered_relation:
+            break
+        join_targets = {t.column for t in info.join_field.foreign_related_fields}
+        cur_targets = {t.column for t in targets}
+        if not cur_targets.issubset(join_targets):
+            break
+        targets_dict = {r[1].column: r[0] for r in info.join_field.related_fields if r[1].column in cur_targets}
+        targets = tuple((targets_dict[t.column] for t in targets))
+        self.unref_alias(joins.pop())
+    return (targets, joins[-1], joins)","[{""var"": ""pos"", ""rename"": ""reversed_path_index""}, {""var"": ""cur_targets"", ""rename"": ""current_target_columns""}, {""var"": ""join_targets"", ""rename"": ""join_field_columns""}, {""var"": ""r"", ""rename"": ""related_field_mapping""}, {""var"": ""targets_dict"", ""rename"": ""resolved_target_mappings""}, {""var"": ""t"", ""rename"": ""current_target""}, {""var"": ""info"", ""rename"": ""path_info""}]"
+./django/db/models/sql/query.py,final_transformer,resolve_field_with_optional_alias,1753,1756,"def final_transformer(field, alias):
+    if not self.alias_cols:
+        alias = None
+    return field.get_col(alias)","def resolve_field_with_optional_alias(field, alias):
+    if not self.alias_cols:
+        alias = None
+    return field.get_col(alias)",[]

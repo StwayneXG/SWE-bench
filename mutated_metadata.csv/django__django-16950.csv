@@ -1,0 +1,41 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/forms/models.py,add_fields,initialize_inline_foreign_key_field,1152,1183,"def add_fields(self, form, index):
+    super().add_fields(form, index)
+    if self._pk_field == self.fk:
+        name = self._pk_field.name
+        kwargs = {'pk_field': True}
+    else:
+        name = self.fk.name
+        kwargs = {'label': getattr(form.fields.get(name), 'label', capfirst(self.fk.verbose_name))}
+    if self.fk.remote_field.field_name != self.fk.remote_field.model._meta.pk.name:
+        kwargs['to_field'] = self.fk.remote_field.field_name
+    if self.instance._state.adding:
+        if kwargs.get('to_field') is not None:
+            to_field = self.instance._meta.get_field(kwargs['to_field'])
+        else:
+            to_field = self.instance._meta.pk
+        if to_field.has_default():
+            setattr(self.instance, to_field.attname, None)
+    form.fields[name] = InlineForeignKeyField(self.instance, **kwargs)","def initialize_inline_foreign_key_field(self, form, index):
+    super().add_fields(form, index)
+    if self._pk_field == self.fk:
+        name = self._pk_field.name
+        kwargs = {'pk_field': True}
+    else:
+        name = self.fk.name
+        kwargs = {'label': getattr(form.fields.get(name), 'label', capfirst(self.fk.verbose_name))}
+    if self.fk.remote_field.field_name != self.fk.remote_field.model._meta.pk.name:
+        kwargs['to_field'] = self.fk.remote_field.field_name
+    if self.instance._state.adding:
+        if kwargs.get('to_field') is not None:
+            to_field = self.instance._meta.get_field(kwargs['to_field'])
+        else:
+            to_field = self.instance._meta.pk
+        if to_field.has_default():
+            setattr(self.instance, to_field.attname, None)
+    form.fields[name] = InlineForeignKeyField(self.instance, **kwargs)","[{""var"": ""to_field"", ""rename"": ""target_foreign_key_field""}, {""var"": ""name"", ""rename"": ""field_name""}, {""var"": ""kwargs"", ""rename"": ""field_parameters""}]"
+./django/forms/models.py,get_unique_error_message,generate_custom_unique_error_message,1185,1187,"def get_unique_error_message(self, unique_check):
+    unique_check = [field for field in unique_check if field != self.fk.name]
+    return super().get_unique_error_message(unique_check)","def generate_custom_unique_error_message(self, unique_check):
+    unique_check = [field for field in unique_check if field != self.fk.name]
+    return super().get_unique_error_message(unique_check)","[{""var"": ""field"", ""rename"": ""filtered_fields_excluding_fk""}]"

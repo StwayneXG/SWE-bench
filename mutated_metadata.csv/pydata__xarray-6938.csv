@@ -1,0 +1,244 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./xarray/core/dataset.py,swap_dims,reassign_dimensions,3688,3790,"def swap_dims(self: T_Dataset, dims_dict: Mapping[Any, Hashable]=None, **dims_kwargs) -> T_Dataset:
+    """"""Returns a new object with swapped dimensions.
+
+        Parameters
+        ----------
+        dims_dict : dict-like
+            Dictionary whose keys are current dimension names and whose values
+            are new names.
+        **dims_kwargs : {existing_dim: new_dim, ...}, optional
+            The keyword arguments form of ``dims_dict``.
+            One of dims_dict or dims_kwargs must be provided.
+
+        Returns
+        -------
+        swapped : Dataset
+            Dataset with swapped dimensions.
+
+        Examples
+        --------
+        >>> ds = xr.Dataset(
+        ...     data_vars={""a"": (""x"", [5, 7]), ""b"": (""x"", [0.1, 2.4])},
+        ...     coords={""x"": [""a"", ""b""], ""y"": (""x"", [0, 1])},
+        ... )
+        >>> ds
+        <xarray.Dataset>
+        Dimensions:  (x: 2)
+        Coordinates:
+          * x        (x) <U1 'a' 'b'
+            y        (x) int64 0 1
+        Data variables:
+            a        (x) int64 5 7
+            b        (x) float64 0.1 2.4
+
+        >>> ds.swap_dims({""x"": ""y""})
+        <xarray.Dataset>
+        Dimensions:  (y: 2)
+        Coordinates:
+            x        (y) <U1 'a' 'b'
+          * y        (y) int64 0 1
+        Data variables:
+            a        (y) int64 5 7
+            b        (y) float64 0.1 2.4
+
+        >>> ds.swap_dims({""x"": ""z""})
+        <xarray.Dataset>
+        Dimensions:  (z: 2)
+        Coordinates:
+            x        (z) <U1 'a' 'b'
+            y        (z) int64 0 1
+        Dimensions without coordinates: z
+        Data variables:
+            a        (z) int64 5 7
+            b        (z) float64 0.1 2.4
+
+        See Also
+        --------
+        Dataset.rename
+        DataArray.swap_dims
+        """"""
+    dims_dict = either_dict_or_kwargs(dims_dict, dims_kwargs, 'swap_dims')
+    for k, v in dims_dict.items():
+        if k not in self.dims:
+            raise ValueError(f'cannot swap from dimension {k!r} because it is not an existing dimension')
+        if v in self.variables and self.variables[v].dims != (k,):
+            raise ValueError(f'replacement dimension {v!r} is not a 1D variable along the old dimension {k!r}')
+    result_dims = {dims_dict.get(dim, dim) for dim in self.dims}
+    coord_names = self._coord_names.copy()
+    coord_names.update({dim for dim in dims_dict.values() if dim in self.variables})
+    variables: dict[Hashable, Variable] = {}
+    indexes: dict[Hashable, Index] = {}
+    for k, v in self.variables.items():
+        dims = tuple((dims_dict.get(dim, dim) for dim in v.dims))
+        if k in result_dims:
+            var = v.to_index_variable()
+            var.dims = dims
+            if k in self._indexes:
+                indexes[k] = self._indexes[k]
+                variables[k] = var
+            else:
+                index, index_vars = create_default_index_implicit(var)
+                indexes.update({name: index for name in index_vars})
+                variables.update(index_vars)
+                coord_names.update(index_vars)
+        else:
+            var = v.to_base_variable()
+            var.dims = dims
+            variables[k] = var
+    return self._replace_with_new_dims(variables, coord_names, indexes=indexes)","def reassign_dimensions(self: T_Dataset, dims_dict: Mapping[Any, Hashable]=None, **dims_kwargs) -> T_Dataset:
+    """"""Returns a new object with swapped dimensions.
+
+        Parameters
+        ----------
+        dims_dict : dict-like
+            Dictionary whose keys are current dimension names and whose values
+            are new names.
+        **dims_kwargs : {existing_dim: new_dim, ...}, optional
+            The keyword arguments form of ``dims_dict``.
+            One of dims_dict or dims_kwargs must be provided.
+
+        Returns
+        -------
+        swapped : Dataset
+            Dataset with swapped dimensions.
+
+        Examples
+        --------
+        >>> ds = xr.Dataset(
+        ...     data_vars={""a"": (""x"", [5, 7]), ""b"": (""x"", [0.1, 2.4])},
+        ...     coords={""x"": [""a"", ""b""], ""y"": (""x"", [0, 1])},
+        ... )
+        >>> ds
+        <xarray.Dataset>
+        Dimensions:  (x: 2)
+        Coordinates:
+          * x        (x) <U1 'a' 'b'
+            y        (x) int64 0 1
+        Data variables:
+            a        (x) int64 5 7
+            b        (x) float64 0.1 2.4
+
+        >>> ds.swap_dims({""x"": ""y""})
+        <xarray.Dataset>
+        Dimensions:  (y: 2)
+        Coordinates:
+            x        (y) <U1 'a' 'b'
+          * y        (y) int64 0 1
+        Data variables:
+            a        (y) int64 5 7
+            b        (y) float64 0.1 2.4
+
+        >>> ds.swap_dims({""x"": ""z""})
+        <xarray.Dataset>
+        Dimensions:  (z: 2)
+        Coordinates:
+            x        (z) <U1 'a' 'b'
+            y        (z) int64 0 1
+        Dimensions without coordinates: z
+        Data variables:
+            a        (z) int64 5 7
+            b        (z) float64 0.1 2.4
+
+        See Also
+        --------
+        Dataset.rename
+        DataArray.swap_dims
+        """"""
+    dims_dict = either_dict_or_kwargs(dims_dict, dims_kwargs, 'swap_dims')
+    for k, v in dims_dict.items():
+        if k not in self.dims:
+            raise ValueError(f'cannot swap from dimension {k!r} because it is not an existing dimension')
+        if v in self.variables and self.variables[v].dims != (k,):
+            raise ValueError(f'replacement dimension {v!r} is not a 1D variable along the old dimension {k!r}')
+    result_dims = {dims_dict.get(dim, dim) for dim in self.dims}
+    coord_names = self._coord_names.copy()
+    coord_names.update({dim for dim in dims_dict.values() if dim in self.variables})
+    variables: dict[Hashable, Variable] = {}
+    indexes: dict[Hashable, Index] = {}
+    for k, v in self.variables.items():
+        dims = tuple((dims_dict.get(dim, dim) for dim in v.dims))
+        if k in result_dims:
+            var = v.to_index_variable()
+            var.dims = dims
+            if k in self._indexes:
+                indexes[k] = self._indexes[k]
+                variables[k] = var
+            else:
+                index, index_vars = create_default_index_implicit(var)
+                indexes.update({name: index for name in index_vars})
+                variables.update(index_vars)
+                coord_names.update(index_vars)
+        else:
+            var = v.to_base_variable()
+            var.dims = dims
+            variables[k] = var
+    return self._replace_with_new_dims(variables, coord_names, indexes=indexes)","[{""var"": ""name"", ""rename"": ""dimension_mapping""}, {""var"": ""index"", ""rename"": ""dimension_index""}, {""var"": ""k"", ""rename"": ""dimension_key""}, {""var"": ""indexes"", ""rename"": ""dimension_indexes""}, {""var"": ""var"", ""rename"": ""dimension_variable""}, {""var"": ""variables"", ""rename"": ""dimension_variables""}, {""var"": ""dim"", ""rename"": ""swapped_dimensions""}, {""var"": ""v"", ""rename"": ""dimension_variable""}, {""var"": ""dims"", ""rename"": ""dimension_map""}, {""var"": ""index_vars"", ""rename"": ""index_variable_mappings""}, {""var"": ""result_dims"", ""rename"": ""swapped_dimensions""}, {""var"": ""coord_names"", ""rename"": ""updated_coord_names""}]"
+./xarray/core/variable.py,to_base_variable,convert_to_base_xarray_variable,539,543,"def to_base_variable(self):
+    """"""Return this variable as a base xarray.Variable""""""
+    return Variable(self.dims, self._data, self._attrs, encoding=self._encoding, fastpath=True)","def convert_to_base_xarray_variable(self):
+    """"""Return this variable as a base xarray.Variable""""""
+    return Variable(self.dims, self._data, self._attrs, encoding=self._encoding, fastpath=True)",[]
+./xarray/core/variable.py,to_index_variable,convert_to_xarray_index_variable,547,551,"def to_index_variable(self):
+    """"""Return this variable as an xarray.IndexVariable""""""
+    return IndexVariable(self.dims, self._data, self._attrs, encoding=self._encoding, fastpath=True)","def convert_to_xarray_index_variable(self):
+    """"""Return this variable as an xarray.IndexVariable""""""
+    return IndexVariable(self.dims, self._data, self._attrs, encoding=self._encoding, fastpath=True)",[]
+./xarray/core/variable.py,to_index,convert_to_pandas_index,555,557,"def to_index(self):
+    """"""Convert this variable to a pandas.Index""""""
+    return self.to_index_variable().to_index()","def convert_to_pandas_index(self):
+    """"""Convert this variable to a pandas.Index""""""
+    return self.to_index_variable().to_index()",[]
+./xarray/core/variable.py,to_index_variable,convert_to_xarray_index_variable,2882,2884,"def to_index_variable(self):
+    """"""Return this variable as an xarray.IndexVariable""""""
+    return self","def convert_to_xarray_index_variable(self):
+    """"""Return this variable as an xarray.IndexVariable""""""
+    return self",[]
+./xarray/core/variable.py,to_index,convert_to_pandas_index,2888,2904,"def to_index(self):
+    """"""Convert this variable to a pandas.Index""""""
+    assert self.ndim == 1
+    index = self._data.array
+    if isinstance(index, pd.MultiIndex):
+        valid_level_names = [name or f'{self.dims[0]}_level_{i}' for i, name in enumerate(index.names)]
+        index = index.set_names(valid_level_names)
+    else:
+        index = index.set_names(self.name)
+    return index","def convert_to_pandas_index(self):
+    """"""Convert this variable to a pandas.Index""""""
+    assert self.ndim == 1
+    index = self._data.array
+    if isinstance(index, pd.MultiIndex):
+        valid_level_names = [name or f'{self.dims[0]}_level_{i}' for i, name in enumerate(index.names)]
+        index = index.set_names(valid_level_names)
+    else:
+        index = index.set_names(self.name)
+    return index","[{""var"": ""valid_level_names"", ""rename"": ""defaulted_multiindex_level_names""}, {""var"": ""i"", ""rename"": ""level_index""}, {""var"": ""name"", ""rename"": ""index_name""}, {""var"": ""index"", ""rename"": ""converted_pandas_index""}]"
+./xarray/core/variable.py,level_names,get_multiindex_level_names,2907,2915,"@property
+def level_names(self):
+    """"""Return MultiIndex level names or None if this IndexVariable has no
+        MultiIndex.
+        """"""
+    index = self.to_index()
+    if isinstance(index, pd.MultiIndex):
+        return index.names
+    else:
+        return None","@property
+def get_multiindex_level_names(self):
+    """"""Return MultiIndex level names or None if this IndexVariable has no
+        MultiIndex.
+        """"""
+    index = self.to_index()
+    if isinstance(index, pd.MultiIndex):
+        return index.names
+    else:
+        return None","[{""var"": ""index"", ""rename"": ""multi_index_representation""}]"
+./xarray/core/variable.py,name,primary_dimension_identifier,2925,2926,"@property
+def name(self):
+    return self.dims[0]","@property
+def primary_dimension_identifier(self):
+    return self.dims[0]",[]
+./xarray/core/variable.py,name,prohibit_index_variable_name_modification,2929,2930,"@name.setter
+def name(self, value):
+    raise AttributeError('cannot modify name of IndexVariable in-place')","@name.setter
+def prohibit_index_variable_name_modification(self, value):
+    raise AttributeError('cannot modify name of IndexVariable in-place')",[]

@@ -1,0 +1,86 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./lib/matplotlib/dates.py,format_ticks,generate_datetime_labels_with_offset,777,852,"def format_ticks(self, values):
+    tickdatetime = [num2date(value, tz=self._tz) for value in values]
+    tickdate = np.array([tdt.timetuple()[:6] for tdt in tickdatetime])
+    fmts = self.formats
+    zerofmts = self.zero_formats
+    offsetfmts = self.offset_formats
+    show_offset = self.show_offset
+    for level in range(5, -1, -1):
+        if len(np.unique(tickdate[:, level])) > 1:
+            if level < 2:
+                show_offset = False
+            break
+        elif level == 0:
+            level = 5
+    zerovals = [0, 1, 1, 0, 0, 0, 0]
+    labels = [''] * len(tickdate)
+    for nn in range(len(tickdate)):
+        if level < 5:
+            if tickdate[nn][level] == zerovals[level]:
+                fmt = zerofmts[level]
+            else:
+                fmt = fmts[level]
+        elif tickdatetime[nn].second == tickdatetime[nn].microsecond == 0:
+            fmt = zerofmts[level]
+        else:
+            fmt = fmts[level]
+        labels[nn] = tickdatetime[nn].strftime(fmt)
+    if level >= 5:
+        trailing_zeros = min((len(s) - len(s.rstrip('0')) for s in labels if '.' in s), default=None)
+        if trailing_zeros:
+            for nn in range(len(labels)):
+                if '.' in labels[nn]:
+                    labels[nn] = labels[nn][:-trailing_zeros].rstrip('.')
+    if show_offset:
+        self.offset_string = tickdatetime[-1].strftime(offsetfmts[level])
+        if self._usetex:
+            self.offset_string = _wrap_in_tex(self.offset_string)
+    else:
+        self.offset_string = ''
+    if self._usetex:
+        return [_wrap_in_tex(l) for l in labels]
+    else:
+        return labels","def generate_datetime_labels_with_offset(self, values):
+    tickdatetime = [num2date(value, tz=self._tz) for value in values]
+    tickdate = np.array([tdt.timetuple()[:6] for tdt in tickdatetime])
+    fmts = self.formats
+    zerofmts = self.zero_formats
+    offsetfmts = self.offset_formats
+    show_offset = self.show_offset
+    for level in range(5, -1, -1):
+        if len(np.unique(tickdate[:, level])) > 1:
+            if level < 2:
+                show_offset = False
+            break
+        elif level == 0:
+            level = 5
+    zerovals = [0, 1, 1, 0, 0, 0, 0]
+    labels = [''] * len(tickdate)
+    for nn in range(len(tickdate)):
+        if level < 5:
+            if tickdate[nn][level] == zerovals[level]:
+                fmt = zerofmts[level]
+            else:
+                fmt = fmts[level]
+        elif tickdatetime[nn].second == tickdatetime[nn].microsecond == 0:
+            fmt = zerofmts[level]
+        else:
+            fmt = fmts[level]
+        labels[nn] = tickdatetime[nn].strftime(fmt)
+    if level >= 5:
+        trailing_zeros = min((len(s) - len(s.rstrip('0')) for s in labels if '.' in s), default=None)
+        if trailing_zeros:
+            for nn in range(len(labels)):
+                if '.' in labels[nn]:
+                    labels[nn] = labels[nn][:-trailing_zeros].rstrip('.')
+    if show_offset:
+        self.offset_string = tickdatetime[-1].strftime(offsetfmts[level])
+        if self._usetex:
+            self.offset_string = _wrap_in_tex(self.offset_string)
+    else:
+        self.offset_string = ''
+    if self._usetex:
+        return [_wrap_in_tex(l) for l in labels]
+    else:
+        return labels","[{""var"": ""tdt"", ""rename"": ""formatted_datetime""}, {""var"": ""s"", ""rename"": ""formatted_output_labels""}, {""var"": ""level"", ""rename"": ""time_component_index""}, {""var"": ""offsetfmts"", ""rename"": ""offset_format_patterns""}, {""var"": ""l"", ""rename"": ""formatted_labels""}, {""var"": ""fmt"", ""rename"": ""tick_format""}, {""var"": ""nn"", ""rename"": ""tick_index""}, {""var"": ""tickdate"", ""rename"": ""tick_component_array""}, {""var"": ""zerofmts"", ""rename"": ""zero_date_formats""}, {""var"": ""zerovals"", ""rename"": ""standard_tick_values""}, {""var"": ""labels"", ""rename"": ""formatted_tick_labels""}, {""var"": ""show_offset"", ""rename"": ""display_offset""}, {""var"": ""trailing_zeros"", ""rename"": ""num_of_trailing_zeros_in_labels""}, {""var"": ""value"", ""rename"": ""datetime_numeric_value""}, {""var"": ""fmts"", ""rename"": ""date_time_formats""}, {""var"": ""tickdatetime"", ""rename"": ""datetime_ticks""}]"

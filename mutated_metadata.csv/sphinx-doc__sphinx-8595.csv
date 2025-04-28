@@ -1,0 +1,38 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./sphinx/ext/autodoc/__init__.py,get_object_members,filter_and_collect_object_members,1074,1098,"def get_object_members(self, want_all: bool) -> Tuple[bool, ObjectMembers]:
+    members = self.get_module_members()
+    if want_all:
+        if not self.__all__:
+            return (True, list(members.values()))
+        else:
+            for member in members.values():
+                if member.__name__ not in self.__all__:
+                    member.skipped = True
+            return (False, list(members.values()))
+    else:
+        memberlist = self.options.members or []
+        ret = []
+        for name in memberlist:
+            if name in members:
+                ret.append(members[name])
+            else:
+                logger.warning(__('missing attribute mentioned in :members: option: module %s, attribute %s') % (safe_getattr(self.object, '__name__', '???'), name), type='autodoc')
+        return (False, ret)","def filter_and_collect_object_members(self, want_all: bool) -> Tuple[bool, ObjectMembers]:
+    members = self.get_module_members()
+    if want_all:
+        if not self.__all__:
+            return (True, list(members.values()))
+        else:
+            for member in members.values():
+                if member.__name__ not in self.__all__:
+                    member.skipped = True
+            return (False, list(members.values()))
+    else:
+        memberlist = self.options.members or []
+        ret = []
+        for name in memberlist:
+            if name in members:
+                ret.append(members[name])
+            else:
+                logger.warning(__('missing attribute mentioned in :members: option: module %s, attribute %s') % (safe_getattr(self.object, '__name__', '???'), name), type='autodoc')
+        return (False, ret)","[{""var"": ""name"", ""rename"": ""member_name""}, {""var"": ""memberlist"", ""rename"": ""specified_member_names""}, {""var"": ""ret"", ""rename"": ""filtered_member_list""}, {""var"": ""member"", ""rename"": ""filtered_object_members""}, {""var"": ""members"", ""rename"": ""retrieved_module_members""}]"

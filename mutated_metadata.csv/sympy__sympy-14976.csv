@@ -1,0 +1,4 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./sympy/printing/pycode.py,_print_uppergamma,format_incomplete_gamma_expression,335,340,"def _print_uppergamma(self, e):
+    return '{0}({1}, {2}, {3})'.format(self._module_format('mpmath.gammainc'), self._print(e.args[0]), self._print(e.args[1]), self._module_format('mpmath.inf'))","def format_incomplete_gamma_expression(self, e):
+    return '{0}({1}, {2}, {3})'.format(self._module_format('mpmath.gammainc'), self._print(e.args[0]), self._print(e.args[1]), self._module_format('mpmath.inf'))",[]

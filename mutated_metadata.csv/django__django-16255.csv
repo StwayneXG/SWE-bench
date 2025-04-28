@@ -1,0 +1,20 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/contrib/sitemaps/__init__.py,get_latest_lastmod,retrieve_most_recent_modification_timestamp,165,174,"def get_latest_lastmod(self):
+    if not hasattr(self, 'lastmod'):
+        return None
+    if callable(self.lastmod):
+        try:
+            return max([self.lastmod(item) for item in self.items()])
+        except TypeError:
+            return None
+    else:
+        return self.lastmod","def retrieve_most_recent_modification_timestamp(self):
+    if not hasattr(self, 'lastmod'):
+        return None
+    if callable(self.lastmod):
+        try:
+            return max([self.lastmod(item) for item in self.items()])
+        except TypeError:
+            return None
+    else:
+        return self.lastmod","[{""var"": ""item"", ""rename"": ""current_item""}]"

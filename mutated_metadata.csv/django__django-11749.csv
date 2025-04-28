@@ -1,0 +1,116 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/core/management/__init__.py,call_command,execute_management_command,76,160,"def call_command(command_name, *args, **options):
+    """"""
+    Call the given command, with the given options and args/kwargs.
+
+    This is the primary API you should use for calling specific commands.
+
+    `command_name` may be a string or a command object. Using a string is
+    preferred unless the command object is required for further processing or
+    testing.
+
+    Some examples:
+        call_command('migrate')
+        call_command('shell', plain=True)
+        call_command('sqlmigrate', 'myapp')
+
+        from django.core.management.commands import flush
+        cmd = flush.Command()
+        call_command(cmd, verbosity=0, interactive=False)
+        # Do something with cmd ...
+    """"""
+    if isinstance(command_name, BaseCommand):
+        command = command_name
+        command_name = command.__class__.__module__.split('.')[-1]
+    else:
+        try:
+            app_name = get_commands()[command_name]
+        except KeyError:
+            raise CommandError('Unknown command: %r' % command_name)
+        if isinstance(app_name, BaseCommand):
+            command = app_name
+        else:
+            command = load_command_class(app_name, command_name)
+    parser = command.create_parser('', command_name)
+    opt_mapping = {min(s_opt.option_strings).lstrip('-').replace('-', '_'): s_opt.dest for s_opt in parser._actions if s_opt.option_strings}
+    arg_options = {opt_mapping.get(key, key): value for key, value in options.items()}
+    parse_args = [str(a) for a in args]
+
+    def get_actions(parser):
+        for opt in parser._actions:
+            if isinstance(opt, _SubParsersAction):
+                for sub_opt in opt.choices.values():
+                    yield from get_actions(sub_opt)
+            else:
+                yield opt
+    parser_actions = list(get_actions(parser))
+    parse_args += ['{}={}'.format(min(opt.option_strings), arg_options[opt.dest]) for opt in parser_actions if opt.required and opt.dest in options]
+    defaults = parser.parse_args(args=parse_args)
+    defaults = dict(defaults._get_kwargs(), **arg_options)
+    stealth_options = set(command.base_stealth_options + command.stealth_options)
+    dest_parameters = {action.dest for action in parser_actions}
+    valid_options = (dest_parameters | stealth_options).union(opt_mapping)
+    unknown_options = set(options) - valid_options
+    if unknown_options:
+        raise TypeError('Unknown option(s) for %s command: %s. Valid options are: %s.' % (command_name, ', '.join(sorted(unknown_options)), ', '.join(sorted(valid_options))))
+    args = defaults.pop('args', ())
+    if 'skip_checks' not in options:
+        defaults['skip_checks'] = True
+    return command.execute(*args, **defaults)","def execute_management_command(command_name, *args, **options):
+    """"""
+    Call the given command, with the given options and args/kwargs.
+
+    This is the primary API you should use for calling specific commands.
+
+    `command_name` may be a string or a command object. Using a string is
+    preferred unless the command object is required for further processing or
+    testing.
+
+    Some examples:
+        call_command('migrate')
+        call_command('shell', plain=True)
+        call_command('sqlmigrate', 'myapp')
+
+        from django.core.management.commands import flush
+        cmd = flush.Command()
+        call_command(cmd, verbosity=0, interactive=False)
+        # Do something with cmd ...
+    """"""
+    if isinstance(command_name, BaseCommand):
+        command = command_name
+        command_name = command.__class__.__module__.split('.')[-1]
+    else:
+        try:
+            app_name = get_commands()[command_name]
+        except KeyError:
+            raise CommandError('Unknown command: %r' % command_name)
+        if isinstance(app_name, BaseCommand):
+            command = app_name
+        else:
+            command = load_command_class(app_name, command_name)
+    parser = command.create_parser('', command_name)
+    opt_mapping = {min(s_opt.option_strings).lstrip('-').replace('-', '_'): s_opt.dest for s_opt in parser._actions if s_opt.option_strings}
+    arg_options = {opt_mapping.get(key, key): value for key, value in options.items()}
+    parse_args = [str(a) for a in args]
+
+    def get_actions(parser):
+        for opt in parser._actions:
+            if isinstance(opt, _SubParsersAction):
+                for sub_opt in opt.choices.values():
+                    yield from get_actions(sub_opt)
+            else:
+                yield opt
+    parser_actions = list(get_actions(parser))
+    parse_args += ['{}={}'.format(min(opt.option_strings), arg_options[opt.dest]) for opt in parser_actions if opt.required and opt.dest in options]
+    defaults = parser.parse_args(args=parse_args)
+    defaults = dict(defaults._get_kwargs(), **arg_options)
+    stealth_options = set(command.base_stealth_options + command.stealth_options)
+    dest_parameters = {action.dest for action in parser_actions}
+    valid_options = (dest_parameters | stealth_options).union(opt_mapping)
+    unknown_options = set(options) - valid_options
+    if unknown_options:
+        raise TypeError('Unknown option(s) for %s command: %s. Valid options are: %s.' % (command_name, ', '.join(sorted(unknown_options)), ', '.join(sorted(valid_options))))
+    args = defaults.pop('args', ())
+    if 'skip_checks' not in options:
+        defaults['skip_checks'] = True
+    return command.execute(*args, **defaults)","[{""var"": ""key"", ""rename"": ""option_key""}, {""var"": ""action"", ""rename"": ""parser_action""}, {""var"": ""opt"", ""rename"": ""command_options""}, {""var"": ""app_name"", ""rename"": ""command_package_name""}, {""var"": ""parser_actions"", ""rename"": ""extracted_parser_actions""}, {""var"": ""arg_options"", ""rename"": ""parsed_options""}, {""var"": ""command"", ""rename"": ""command_instance""}, {""var"": ""opt_mapping"", ""rename"": ""option_string_to_dest_mapping""}, {""var"": ""a"", ""rename"": ""command_arguments""}, {""var"": ""stealth_options"", ""rename"": ""concealed_command_options""}, {""var"": ""defaults"", ""rename"": ""parsed_command_options""}, {""var"": ""value"", ""rename"": ""parsed_value""}, {""var"": ""unknown_options"", ""rename"": ""unrecognized_command_options""}, {""var"": ""s_opt"", ""rename"": ""command_option""}, {""var"": ""valid_options"", ""rename"": ""allowed_command_options""}, {""var"": ""parser"", ""rename"": ""command_parser""}, {""var"": ""sub_opt"", ""rename"": ""sub_command_option""}, {""var"": ""parse_args"", ""rename"": ""formatted_command_args""}, {""var"": ""dest_parameters"", ""rename"": ""destination_parameters_set""}]"

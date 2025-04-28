@@ -1,0 +1,42 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./sklearn/model_selection/_split.py,_build_repr,generate_class_instance_representation,2138,2168,"def _build_repr(self):
+    cls = self.__class__
+    init = getattr(cls.__init__, 'deprecated_original', cls.__init__)
+    init_signature = signature(init)
+    if init is object.__init__:
+        args = []
+    else:
+        args = sorted([p.name for p in init_signature.parameters.values() if p.name != 'self' and p.kind != p.VAR_KEYWORD])
+    class_name = self.__class__.__name__
+    params = dict()
+    for key in args:
+        warnings.simplefilter('always', DeprecationWarning)
+        try:
+            with warnings.catch_warnings(record=True) as w:
+                value = getattr(self, key, None)
+            if len(w) and w[0].category == DeprecationWarning:
+                continue
+        finally:
+            warnings.filters.pop(0)
+        params[key] = value
+    return '%s(%s)' % (class_name, _pprint(params, offset=len(class_name)))","def generate_class_instance_representation(self):
+    cls = self.__class__
+    init = getattr(cls.__init__, 'deprecated_original', cls.__init__)
+    init_signature = signature(init)
+    if init is object.__init__:
+        args = []
+    else:
+        args = sorted([p.name for p in init_signature.parameters.values() if p.name != 'self' and p.kind != p.VAR_KEYWORD])
+    class_name = self.__class__.__name__
+    params = dict()
+    for key in args:
+        warnings.simplefilter('always', DeprecationWarning)
+        try:
+            with warnings.catch_warnings(record=True) as w:
+                value = getattr(self, key, None)
+            if len(w) and w[0].category == DeprecationWarning:
+                continue
+        finally:
+            warnings.filters.pop(0)
+        params[key] = value
+    return '%s(%s)' % (class_name, _pprint(params, offset=len(class_name)))","[{""var"": ""cls"", ""rename"": ""current_class""}, {""var"": ""init"", ""rename"": ""constructor_method""}, {""var"": ""params"", ""rename"": ""ctor_params_map""}, {""var"": ""key"", ""rename"": ""init_parameter""}, {""var"": ""p"", ""rename"": ""parameter""}, {""var"": ""init_signature"", ""rename"": ""constructor_signature""}, {""var"": ""w"", ""rename"": ""deprecation_warnings""}, {""var"": ""args"", ""rename"": ""constructor_param_names""}, {""var"": ""value"", ""rename"": ""attribute_value""}, {""var"": ""class_name"", ""rename"": ""python\nclass_identifier_name""}]"

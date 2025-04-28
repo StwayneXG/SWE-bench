@@ -1,0 +1,40 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/db/models/query.py,_batched_insert,_bulk_insert_with_conflict_handling,1205,1228,"def _batched_insert(self, objs, fields, batch_size, ignore_conflicts=False):
+    """"""
+        Helper method for bulk_create() to insert objs one batch at a time.
+        """"""
+    if ignore_conflicts and (not connections[self.db].features.supports_ignore_conflicts):
+        raise NotSupportedError('This database backend does not support ignoring conflicts.')
+    ops = connections[self.db].ops
+    batch_size = batch_size or max(ops.bulk_batch_size(fields, objs), 1)
+    inserted_rows = []
+    bulk_return = connections[self.db].features.can_return_rows_from_bulk_insert
+    for item in [objs[i:i + batch_size] for i in range(0, len(objs), batch_size)]:
+        if bulk_return and (not ignore_conflicts):
+            inserted_columns = self._insert(item, fields=fields, using=self.db, returning_fields=self.model._meta.db_returning_fields, ignore_conflicts=ignore_conflicts)
+            if isinstance(inserted_columns, list):
+                inserted_rows.extend(inserted_columns)
+            else:
+                inserted_rows.append(inserted_columns)
+        else:
+            self._insert(item, fields=fields, using=self.db, ignore_conflicts=ignore_conflicts)
+    return inserted_rows","def _bulk_insert_with_conflict_handling(self, objs, fields, batch_size, ignore_conflicts=False):
+    """"""
+        Helper method for bulk_create() to insert objs one batch at a time.
+        """"""
+    if ignore_conflicts and (not connections[self.db].features.supports_ignore_conflicts):
+        raise NotSupportedError('This database backend does not support ignoring conflicts.')
+    ops = connections[self.db].ops
+    batch_size = batch_size or max(ops.bulk_batch_size(fields, objs), 1)
+    inserted_rows = []
+    bulk_return = connections[self.db].features.can_return_rows_from_bulk_insert
+    for item in [objs[i:i + batch_size] for i in range(0, len(objs), batch_size)]:
+        if bulk_return and (not ignore_conflicts):
+            inserted_columns = self._insert(item, fields=fields, using=self.db, returning_fields=self.model._meta.db_returning_fields, ignore_conflicts=ignore_conflicts)
+            if isinstance(inserted_columns, list):
+                inserted_rows.extend(inserted_columns)
+            else:
+                inserted_rows.append(inserted_columns)
+        else:
+            self._insert(item, fields=fields, using=self.db, ignore_conflicts=ignore_conflicts)
+    return inserted_rows","[{""var"": ""inserted_columns"", ""rename"": ""bulk_inserted_records""}, {""var"": ""ops"", ""rename"": ""database_operations""}, {""var"": ""i"", ""rename"": ""start_index""}, {""var"": ""inserted_rows"", ""rename"": ""batch_inserted_records""}, {""var"": ""item"", ""rename"": ""batched_objects""}, {""var"": ""bulk_return"", ""rename"": ""supports_bulk_insert_with_return""}]"

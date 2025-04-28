@@ -1,0 +1,105 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/core/serializers/python.py,handle_m2m_field,process_many_to_many_relationship,64,88,"def handle_m2m_field(self, obj, field):
+    if field.remote_field.through._meta.auto_created:
+        if self.use_natural_foreign_keys and hasattr(field.remote_field.model, 'natural_key'):
+
+            def m2m_value(value):
+                return value.natural_key()
+
+            def queryset_iterator(obj, field):
+                return getattr(obj, field.name).iterator()
+        else:
+
+            def m2m_value(value):
+                return self._value_from_field(value, value._meta.pk)
+
+            def queryset_iterator(obj, field):
+                return getattr(obj, field.name).only('pk').iterator()
+        m2m_iter = getattr(obj, '_prefetched_objects_cache', {}).get(field.name, queryset_iterator(obj, field))
+        self._current[field.name] = [m2m_value(related) for related in m2m_iter]","def process_many_to_many_relationship(self, obj, field):
+    if field.remote_field.through._meta.auto_created:
+        if self.use_natural_foreign_keys and hasattr(field.remote_field.model, 'natural_key'):
+
+            def m2m_value(value):
+                return value.natural_key()
+
+            def queryset_iterator(obj, field):
+                return getattr(obj, field.name).iterator()
+        else:
+
+            def m2m_value(value):
+                return self._value_from_field(value, value._meta.pk)
+
+            def queryset_iterator(obj, field):
+                return getattr(obj, field.name).only('pk').iterator()
+        m2m_iter = getattr(obj, '_prefetched_objects_cache', {}).get(field.name, queryset_iterator(obj, field))
+        self._current[field.name] = [m2m_value(related) for related in m2m_iter]","[{""var"": ""related"", ""rename"": ""related_m2m_object""}, {""var"": ""m2m_iter"", ""rename"": ""related_objects_iterator""}]"
+./django/core/serializers/python.py,queryset_iterator,fetch_field_pk_as_iterator,81,82,"def queryset_iterator(obj, field):
+    return getattr(obj, field.name).only('pk').iterator()","def fetch_field_pk_as_iterator(obj, field):
+    return getattr(obj, field.name).only('pk').iterator()",[]
+./django/core/serializers/xml_serializer.py,handle_m2m_field,serialize_m2m_relationships_as_references,127,167,"def handle_m2m_field(self, obj, field):
+    """"""
+        Handle a ManyToManyField. Related objects are only serialized as
+        references to the object's PK (i.e. the related *data* is not dumped,
+        just the relation).
+        """"""
+    if field.remote_field.through._meta.auto_created:
+        self._start_relational_field(field)
+        if self.use_natural_foreign_keys and hasattr(field.remote_field.model, 'natural_key'):
+
+            def handle_m2m(value):
+                natural = value.natural_key()
+                self.xml.startElement('object', {})
+                for key_value in natural:
+                    self.xml.startElement('natural', {})
+                    self.xml.characters(str(key_value))
+                    self.xml.endElement('natural')
+                self.xml.endElement('object')
+
+            def queryset_iterator(obj, field):
+                return getattr(obj, field.name).iterator()
+        else:
+
+            def handle_m2m(value):
+                self.xml.addQuickElement('object', attrs={'pk': str(value.pk)})
+
+            def queryset_iterator(obj, field):
+                return getattr(obj, field.name).only('pk').iterator()
+        m2m_iter = getattr(obj, '_prefetched_objects_cache', {}).get(field.name, queryset_iterator(obj, field))
+        for relobj in m2m_iter:
+            handle_m2m(relobj)
+        self.xml.endElement('field')","def serialize_m2m_relationships_as_references(self, obj, field):
+    """"""
+        Handle a ManyToManyField. Related objects are only serialized as
+        references to the object's PK (i.e. the related *data* is not dumped,
+        just the relation).
+        """"""
+    if field.remote_field.through._meta.auto_created:
+        self._start_relational_field(field)
+        if self.use_natural_foreign_keys and hasattr(field.remote_field.model, 'natural_key'):
+
+            def handle_m2m(value):
+                natural = value.natural_key()
+                self.xml.startElement('object', {})
+                for key_value in natural:
+                    self.xml.startElement('natural', {})
+                    self.xml.characters(str(key_value))
+                    self.xml.endElement('natural')
+                self.xml.endElement('object')
+
+            def queryset_iterator(obj, field):
+                return getattr(obj, field.name).iterator()
+        else:
+
+            def handle_m2m(value):
+                self.xml.addQuickElement('object', attrs={'pk': str(value.pk)})
+
+            def queryset_iterator(obj, field):
+                return getattr(obj, field.name).only('pk').iterator()
+        m2m_iter = getattr(obj, '_prefetched_objects_cache', {}).get(field.name, queryset_iterator(obj, field))
+        for relobj in m2m_iter:
+            handle_m2m(relobj)
+        self.xml.endElement('field')","[{""var"": ""relobj"", ""rename"": ""related_object""}, {""var"": ""natural"", ""rename"": ""natural_key_representation""}, {""var"": ""m2m_iter"", ""rename"": ""python\nrelated_objects_iterator""}, {""var"": ""key_value"", ""rename"": ""natural_key_element""}]"
+./django/core/serializers/xml_serializer.py,queryset_iterator,iterate_pk_fields,157,158,"def queryset_iterator(obj, field):
+    return getattr(obj, field.name).only('pk').iterator()","def iterate_pk_fields(obj, field):
+    return getattr(obj, field.name).only('pk').iterator()",[]

@@ -1,0 +1,151 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./src/_pytest/config/__init__.py,_set_initial_conftests,_initialize_conftests_from_namespace,360,389,"def _set_initial_conftests(self, namespace):
+    """""" load initial conftest files given a preparsed ""namespace"".
+            As conftest files may add their own command line options
+            which have arguments ('--my-opt somepath') we might get some
+            false positives.  All builtin and 3rd party plugins will have
+            been loaded, however, so common options will not confuse our logic
+            here.
+        """"""
+    current = py.path.local()
+    self._confcutdir = unique_path(current.join(namespace.confcutdir, abs=True)) if namespace.confcutdir else None
+    self._noconftest = namespace.noconftest
+    self._using_pyargs = namespace.pyargs
+    testpaths = namespace.file_or_dir
+    foundanchor = False
+    for path in testpaths:
+        path = str(path)
+        i = path.find('::')
+        if i != -1:
+            path = path[:i]
+        anchor = current.join(path, abs=1)
+        if exists(anchor):
+            self._try_load_conftest(anchor)
+            foundanchor = True
+    if not foundanchor:
+        self._try_load_conftest(current)","def _initialize_conftests_from_namespace(self, namespace):
+    """""" load initial conftest files given a preparsed ""namespace"".
+            As conftest files may add their own command line options
+            which have arguments ('--my-opt somepath') we might get some
+            false positives.  All builtin and 3rd party plugins will have
+            been loaded, however, so common options will not confuse our logic
+            here.
+        """"""
+    current = py.path.local()
+    self._confcutdir = unique_path(current.join(namespace.confcutdir, abs=True)) if namespace.confcutdir else None
+    self._noconftest = namespace.noconftest
+    self._using_pyargs = namespace.pyargs
+    testpaths = namespace.file_or_dir
+    foundanchor = False
+    for path in testpaths:
+        path = str(path)
+        i = path.find('::')
+        if i != -1:
+            path = path[:i]
+        anchor = current.join(path, abs=1)
+        if exists(anchor):
+            self._try_load_conftest(anchor)
+            foundanchor = True
+    if not foundanchor:
+        self._try_load_conftest(current)","[{""var"": ""anchor"", ""rename"": ""potential_conftest_path""}, {""var"": ""i"", ""rename"": ""separator_index""}, {""var"": ""path"", ""rename"": ""test_file_path""}, {""var"": ""testpaths"", ""rename"": ""test_file_paths""}, {""var"": ""current"", ""rename"": ""initial_directory""}, {""var"": ""foundanchor"", ""rename"": ""anchorDetected""}]"
+./src/_pytest/config/__init__.py,_getconftestmodules,collectConftestModulesFromDirectory,400,423,"@lru_cache(maxsize=128)
+def _getconftestmodules(self, path):
+    if self._noconftest:
+        return []
+    if path.isfile():
+        directory = path.dirpath()
+    else:
+        directory = path
+    directory = unique_path(directory)
+    clist = []
+    for parent in directory.parts():
+        if self._confcutdir and self._confcutdir.relto(parent):
+            continue
+        conftestpath = parent.join('conftest.py')
+        if conftestpath.isfile():
+            mod = self._importconftest(conftestpath)
+            clist.append(mod)
+    self._dirpath2confmods[directory] = clist
+    return clist","@lru_cache(maxsize=128)
+def collectConftestModulesFromDirectory(self, path):
+    if self._noconftest:
+        return []
+    if path.isfile():
+        directory = path.dirpath()
+    else:
+        directory = path
+    directory = unique_path(directory)
+    clist = []
+    for parent in directory.parts():
+        if self._confcutdir and self._confcutdir.relto(parent):
+            continue
+        conftestpath = parent.join('conftest.py')
+        if conftestpath.isfile():
+            mod = self._importconftest(conftestpath)
+            clist.append(mod)
+    self._dirpath2confmods[directory] = clist
+    return clist","[{""var"": ""directory"", ""rename"": ""conf_directory_path""}, {""var"": ""parent"", ""rename"": ""ancestor_directory""}, {""var"": ""clist"", ""rename"": ""conftest_module_list""}, {""var"": ""mod"", ""rename"": ""conftest_module""}, {""var"": ""conftestpath"", ""rename"": ""config_test_file_path""}]"
+./src/_pytest/config/__init__.py,_rget_with_confmod,retrieve_attribute_from_conftest_modules,425,432,"def _rget_with_confmod(self, name, path):
+    modules = self._getconftestmodules(path)
+    for mod in reversed(modules):
+        try:
+            return (mod, getattr(mod, name))
+        except AttributeError:
+            continue
+    raise KeyError(name)","def retrieve_attribute_from_conftest_modules(self, name, path):
+    modules = self._getconftestmodules(path)
+    for mod in reversed(modules):
+        try:
+            return (mod, getattr(mod, name))
+        except AttributeError:
+            continue
+    raise KeyError(name)","[{""var"": ""mod"", ""rename"": ""current_conf_module""}, {""var"": ""modules"", ""rename"": ""conftest_module_list""}]"
+./src/_pytest/config/__init__.py,_importconftest,import_and_register_conftest_module,434,466,"def _importconftest(self, conftestpath):
+    conftestpath = unique_path(conftestpath)
+    try:
+        return self._conftestpath2mod[conftestpath]
+    except KeyError:
+        pkgpath = conftestpath.pypkgpath()
+        if pkgpath is None:
+            _ensure_removed_sysmodule(conftestpath.purebasename)
+        try:
+            mod = conftestpath.pyimport()
+            if hasattr(mod, 'pytest_plugins') and self._configured and (not self._using_pyargs):
+                _fail_on_non_top_pytest_plugins(conftestpath, self._confcutdir)
+        except Exception:
+            raise ConftestImportFailure(conftestpath, sys.exc_info())
+        self._conftest_plugins.add(mod)
+        self._conftestpath2mod[conftestpath] = mod
+        dirpath = conftestpath.dirpath()
+        if dirpath in self._dirpath2confmods:
+            for path, mods in self._dirpath2confmods.items():
+                if path and path.relto(dirpath) or path == dirpath:
+                    assert mod not in mods
+                    mods.append(mod)
+        self.trace('loaded conftestmodule %r' % mod)
+        self.consider_conftest(mod)
+        return mod","def import_and_register_conftest_module(self, conftestpath):
+    conftestpath = unique_path(conftestpath)
+    try:
+        return self._conftestpath2mod[conftestpath]
+    except KeyError:
+        pkgpath = conftestpath.pypkgpath()
+        if pkgpath is None:
+            _ensure_removed_sysmodule(conftestpath.purebasename)
+        try:
+            mod = conftestpath.pyimport()
+            if hasattr(mod, 'pytest_plugins') and self._configured and (not self._using_pyargs):
+                _fail_on_non_top_pytest_plugins(conftestpath, self._confcutdir)
+        except Exception:
+            raise ConftestImportFailure(conftestpath, sys.exc_info())
+        self._conftest_plugins.add(mod)
+        self._conftestpath2mod[conftestpath] = mod
+        dirpath = conftestpath.dirpath()
+        if dirpath in self._dirpath2confmods:
+            for path, mods in self._dirpath2confmods.items():
+                if path and path.relto(dirpath) or path == dirpath:
+                    assert mod not in mods
+                    mods.append(mod)
+        self.trace('loaded conftestmodule %r' % mod)
+        self.consider_conftest(mod)
+        return mod","[{""var"": ""mods"", ""rename"": ""config_modules""}, {""var"": ""path"", ""rename"": ""conftest_module_path""}, {""var"": ""pkgpath"", ""rename"": ""package_directory_path""}, {""var"": ""mod"", ""rename"": ""conftest_module""}, {""var"": ""dirpath"", ""rename"": ""conftest_directory_path""}]"

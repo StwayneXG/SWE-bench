@@ -1,0 +1,26 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/db/backends/base/schema.py,alter_index_together,update_model_index_assignments,386,400,"def alter_index_together(self, model, old_index_together, new_index_together):
+    """"""
+        Deal with a model changing its index_together. The input
+        index_togethers must be doubly-nested, not the single-nested
+        [""foo"", ""bar""] format.
+        """"""
+    olds = {tuple(fields) for fields in old_index_together}
+    news = {tuple(fields) for fields in new_index_together}
+    for fields in olds.difference(news):
+        self._delete_composed_index(model, fields, {'index': True}, self.sql_delete_index)
+    for field_names in news.difference(olds):
+        fields = [model._meta.get_field(field) for field in field_names]
+        self.execute(self._create_index_sql(model, fields, suffix='_idx'))","def update_model_index_assignments(self, model, old_index_together, new_index_together):
+    """"""
+        Deal with a model changing its index_together. The input
+        index_togethers must be doubly-nested, not the single-nested
+        [""foo"", ""bar""] format.
+        """"""
+    olds = {tuple(fields) for fields in old_index_together}
+    news = {tuple(fields) for fields in new_index_together}
+    for fields in olds.difference(news):
+        self._delete_composed_index(model, fields, {'index': True}, self.sql_delete_index)
+    for field_names in news.difference(olds):
+        fields = [model._meta.get_field(field) for field in field_names]
+        self.execute(self._create_index_sql(model, fields, suffix='_idx'))","[{""var"": ""field"", ""rename"": ""field_names_group""}, {""var"": ""olds"", ""rename"": ""existing_indices""}, {""var"": ""field_names"", ""rename"": ""index_together_fields""}, {""var"": ""news"", ""rename"": ""new_index_together_set""}, {""var"": ""fields"", ""rename"": ""index_field_tuples""}]"

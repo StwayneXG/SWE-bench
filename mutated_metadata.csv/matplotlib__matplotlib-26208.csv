@@ -1,0 +1,58 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./lib/matplotlib/axes/_base.py,twinx,createYAxisTwinWithSharedXAxis,4416,4444,"def twinx(self):
+    """"""
+        Create a twin Axes sharing the xaxis.
+
+        Create a new Axes with an invisible x-axis and an independent
+        y-axis positioned opposite to the original one (i.e. at right). The
+        x-axis autoscale setting will be inherited from the original
+        Axes.  To ensure that the tick marks of both y-axes align, see
+        `~matplotlib.ticker.LinearLocator`.
+
+        Returns
+        -------
+        Axes
+            The newly created Axes instance
+
+        Notes
+        -----
+        For those who are 'picking' artists while using twinx, pick
+        events are only called for the artists in the top-most Axes.
+        """"""
+    ax2 = self._make_twin_axes(sharex=self)
+    ax2.yaxis.tick_right()
+    ax2.yaxis.set_label_position('right')
+    ax2.yaxis.set_offset_position('right')
+    ax2.set_autoscalex_on(self.get_autoscalex_on())
+    self.yaxis.tick_left()
+    ax2.xaxis.set_visible(False)
+    ax2.patch.set_visible(False)
+    return ax2","def createYAxisTwinWithSharedXAxis(self):
+    """"""
+        Create a twin Axes sharing the xaxis.
+
+        Create a new Axes with an invisible x-axis and an independent
+        y-axis positioned opposite to the original one (i.e. at right). The
+        x-axis autoscale setting will be inherited from the original
+        Axes.  To ensure that the tick marks of both y-axes align, see
+        `~matplotlib.ticker.LinearLocator`.
+
+        Returns
+        -------
+        Axes
+            The newly created Axes instance
+
+        Notes
+        -----
+        For those who are 'picking' artists while using twinx, pick
+        events are only called for the artists in the top-most Axes.
+        """"""
+    ax2 = self._make_twin_axes(sharex=self)
+    ax2.yaxis.tick_right()
+    ax2.yaxis.set_label_position('right')
+    ax2.yaxis.set_offset_position('right')
+    ax2.set_autoscalex_on(self.get_autoscalex_on())
+    self.yaxis.tick_left()
+    ax2.xaxis.set_visible(False)
+    ax2.patch.set_visible(False)
+    return ax2","[{""var"": ""ax2"", ""rename"": ""twin_axes_y_right""}]"

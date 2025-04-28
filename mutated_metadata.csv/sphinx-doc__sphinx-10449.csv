@@ -1,0 +1,202 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./sphinx/ext/autodoc/typehints.py,merge_typehints,integrate_type_annotations_into_docs,37,70,"def merge_typehints(app: Sphinx, domain: str, objtype: str, contentnode: Element) -> None:
+    if domain != 'py':
+        return
+    if app.config.autodoc_typehints not in ('both', 'description'):
+        return
+    try:
+        signature = cast(addnodes.desc_signature, contentnode.parent[0])
+        if signature['module']:
+            fullname = '.'.join([signature['module'], signature['fullname']])
+        else:
+            fullname = signature['fullname']
+    except KeyError:
+        return
+    annotations = app.env.temp_data.get('annotations', {})
+    if annotations.get(fullname, {}):
+        field_lists = [n for n in contentnode if isinstance(n, nodes.field_list)]
+        if field_lists == []:
+            field_list = insert_field_list(contentnode)
+            field_lists.append(field_list)
+        for field_list in field_lists:
+            if app.config.autodoc_typehints_description_target == 'all':
+                modify_field_list(field_list, annotations[fullname])
+            elif app.config.autodoc_typehints_description_target == 'documented_params':
+                augment_descriptions_with_types(field_list, annotations[fullname], force_rtype=True)
+            else:
+                augment_descriptions_with_types(field_list, annotations[fullname], force_rtype=False)","def integrate_type_annotations_into_docs(app: Sphinx, domain: str, objtype: str, contentnode: Element) -> None:
+    if domain != 'py':
+        return
+    if app.config.autodoc_typehints not in ('both', 'description'):
+        return
+    try:
+        signature = cast(addnodes.desc_signature, contentnode.parent[0])
+        if signature['module']:
+            fullname = '.'.join([signature['module'], signature['fullname']])
+        else:
+            fullname = signature['fullname']
+    except KeyError:
+        return
+    annotations = app.env.temp_data.get('annotations', {})
+    if annotations.get(fullname, {}):
+        field_lists = [n for n in contentnode if isinstance(n, nodes.field_list)]
+        if field_lists == []:
+            field_list = insert_field_list(contentnode)
+            field_lists.append(field_list)
+        for field_list in field_lists:
+            if app.config.autodoc_typehints_description_target == 'all':
+                modify_field_list(field_list, annotations[fullname])
+            elif app.config.autodoc_typehints_description_target == 'documented_params':
+                augment_descriptions_with_types(field_list, annotations[fullname], force_rtype=True)
+            else:
+                augment_descriptions_with_types(field_list, annotations[fullname], force_rtype=False)","[{""var"": ""field_lists"", ""rename"": ""documented_field_lists""}, {""var"": ""n"", ""rename"": ""field_list_node""}, {""var"": ""annotations"", ""rename"": ""typehint_annotations""}, {""var"": ""field_list"", ""rename"": ""typehint_field_lists""}, {""var"": ""signature"", ""rename"": ""signature_node""}, {""var"": ""fullname"", ""rename"": ""qualified_object_name""}]"
+./sphinx/ext/autodoc/typehints.py,modify_field_list,enrich_field_list_with_annotations,86,130,"def modify_field_list(node: nodes.field_list, annotations: Dict[str, str]) -> None:
+    arguments: Dict[str, Dict[str, bool]] = {}
+    fields = cast(Iterable[nodes.field], node)
+    for field in fields:
+        field_name = field[0].astext()
+        parts = re.split(' +', field_name)
+        if parts[0] == 'param':
+            if len(parts) == 2:
+                arg = arguments.setdefault(parts[1], {})
+                arg['param'] = True
+            elif len(parts) > 2:
+                name = ' '.join(parts[2:])
+                arg = arguments.setdefault(name, {})
+                arg['param'] = True
+                arg['type'] = True
+        elif parts[0] == 'type':
+            name = ' '.join(parts[1:])
+            arg = arguments.setdefault(name, {})
+            arg['type'] = True
+        elif parts[0] == 'rtype':
+            arguments['return'] = {'type': True}
+    for name, annotation in annotations.items():
+        if name == 'return':
+            continue
+        arg = arguments.get(name, {})
+        if not arg.get('type'):
+            field = nodes.field()
+            field += nodes.field_name('', 'type ' + name)
+            field += nodes.field_body('', nodes.paragraph('', annotation))
+            node += field
+        if not arg.get('param'):
+            field = nodes.field()
+            field += nodes.field_name('', 'param ' + name)
+            field += nodes.field_body('', nodes.paragraph('', ''))
+            node += field
+    if 'return' in annotations and 'return' not in arguments:
+        field = nodes.field()
+        field += nodes.field_name('', 'rtype')
+        field += nodes.field_body('', nodes.paragraph('', annotation))
+        node += field","def enrich_field_list_with_annotations(node: nodes.field_list, annotations: Dict[str, str]) -> None:
+    arguments: Dict[str, Dict[str, bool]] = {}
+    fields = cast(Iterable[nodes.field], node)
+    for field in fields:
+        field_name = field[0].astext()
+        parts = re.split(' +', field_name)
+        if parts[0] == 'param':
+            if len(parts) == 2:
+                arg = arguments.setdefault(parts[1], {})
+                arg['param'] = True
+            elif len(parts) > 2:
+                name = ' '.join(parts[2:])
+                arg = arguments.setdefault(name, {})
+                arg['param'] = True
+                arg['type'] = True
+        elif parts[0] == 'type':
+            name = ' '.join(parts[1:])
+            arg = arguments.setdefault(name, {})
+            arg['type'] = True
+        elif parts[0] == 'rtype':
+            arguments['return'] = {'type': True}
+    for name, annotation in annotations.items():
+        if name == 'return':
+            continue
+        arg = arguments.get(name, {})
+        if not arg.get('type'):
+            field = nodes.field()
+            field += nodes.field_name('', 'type ' + name)
+            field += nodes.field_body('', nodes.paragraph('', annotation))
+            node += field
+        if not arg.get('param'):
+            field = nodes.field()
+            field += nodes.field_name('', 'param ' + name)
+            field += nodes.field_body('', nodes.paragraph('', ''))
+            node += field
+    if 'return' in annotations and 'return' not in arguments:
+        field = nodes.field()
+        field += nodes.field_name('', 'rtype')
+        field += nodes.field_body('', nodes.paragraph('', annotation))
+        node += field","[{""var"": ""name"", ""rename"": ""parameter_name""}, {""var"": ""field"", ""rename"": ""current_field""}, {""var"": ""arg"", ""rename"": ""argument_details""}, {""var"": ""field_name"", ""rename"": ""field_identifier""}, {""var"": ""arguments"", ""rename"": ""parameter_details""}, {""var"": ""annotation"", ""rename"": ""type_annotations_map""}, {""var"": ""fields"", ""rename"": ""node_fields""}, {""var"": ""parts"", ""rename"": ""field_parts""}]"
+./sphinx/ext/autodoc/typehints.py,augment_descriptions_with_types,enhance_field_list_with_type_annotations,133,179,"def augment_descriptions_with_types(node: nodes.field_list, annotations: Dict[str, str], force_rtype: bool) -> None:
+    fields = cast(Iterable[nodes.field], node)
+    has_description = set()
+    has_type = set()
+    for field in fields:
+        field_name = field[0].astext()
+        parts = re.split(' +', field_name)
+        if parts[0] == 'param':
+            if len(parts) == 2:
+                has_description.add(parts[1])
+            elif len(parts) > 2:
+                name = ' '.join(parts[2:])
+                has_description.add(name)
+                has_type.add(name)
+        elif parts[0] == 'type':
+            name = ' '.join(parts[1:])
+            has_type.add(name)
+        elif parts[0] in ('return', 'returns'):
+            has_description.add('return')
+        elif parts[0] == 'rtype':
+            has_type.add('return')
+    for name in annotations:
+        if name in ('return', 'returns'):
+            continue
+        if name in has_description and name not in has_type:
+            field = nodes.field()
+            field += nodes.field_name('', 'type ' + name)
+            field += nodes.field_body('', nodes.paragraph('', annotations[name]))
+            node += field
+    if 'return' in annotations:
+        rtype = annotations['return']
+        if 'return' not in has_type and ('return' in has_description or (force_rtype and rtype != 'None')):
+            field = nodes.field()
+            field += nodes.field_name('', 'rtype')
+            field += nodes.field_body('', nodes.paragraph('', rtype))
+            node += field","def enhance_field_list_with_type_annotations(node: nodes.field_list, annotations: Dict[str, str], force_rtype: bool) -> None:
+    fields = cast(Iterable[nodes.field], node)
+    has_description = set()
+    has_type = set()
+    for field in fields:
+        field_name = field[0].astext()
+        parts = re.split(' +', field_name)
+        if parts[0] == 'param':
+            if len(parts) == 2:
+                has_description.add(parts[1])
+            elif len(parts) > 2:
+                name = ' '.join(parts[2:])
+                has_description.add(name)
+                has_type.add(name)
+        elif parts[0] == 'type':
+            name = ' '.join(parts[1:])
+            has_type.add(name)
+        elif parts[0] in ('return', 'returns'):
+            has_description.add('return')
+        elif parts[0] == 'rtype':
+            has_type.add('return')
+    for name in annotations:
+        if name in ('return', 'returns'):
+            continue
+        if name in has_description and name not in has_type:
+            field = nodes.field()
+            field += nodes.field_name('', 'type ' + name)
+            field += nodes.field_body('', nodes.paragraph('', annotations[name]))
+            node += field
+    if 'return' in annotations:
+        rtype = annotations['return']
+        if 'return' not in has_type and ('return' in has_description or (force_rtype and rtype != 'None')):
+            field = nodes.field()
+            field += nodes.field_name('', 'rtype')
+            field += nodes.field_body('', nodes.paragraph('', rtype))
+            node += field","[{""var"": ""name"", ""rename"": ""description_or_type_name""}, {""var"": ""field"", ""rename"": ""docstring_fields""}, {""var"": ""rtype"", ""rename"": ""return_type_annotation""}, {""var"": ""field_name"", ""rename"": ""field_identifier""}, {""var"": ""has_type"", ""rename"": ""fields_with_type""}, {""var"": ""has_description"", ""rename"": ""fields_with_descriptions""}, {""var"": ""fields"", ""rename"": ""field_items""}, {""var"": ""parts"", ""rename"": ""field_components""}]"

@@ -1,0 +1,136 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./sphinx/ext/autodoc/__init__.py,_find_signature,_extract_signature_from_docstring,1040,1072,"def _find_signature(self, encoding: str=None) -> Tuple[str, str]:
+    if encoding is not None:
+        warnings.warn(""The 'encoding' argument to autodoc.%s._find_signature() is deprecated."" % self.__class__.__name__, RemovedInSphinx40Warning, stacklevel=2)
+    docstrings = self.get_doc()
+    self._new_docstrings = docstrings[:]
+    result = None
+    for i, doclines in enumerate(docstrings):
+        if not doclines:
+            continue
+        match = py_ext_sig_re.match(doclines[0])
+        if not match:
+            continue
+        exmod, path, base, args, retann = match.groups()
+        valid_names = [self.objpath[-1]]
+        if isinstance(self, ClassDocumenter):
+            valid_names.append('__init__')
+            if hasattr(self.object, '__mro__'):
+                valid_names.extend((cls.__name__ for cls in self.object.__mro__))
+        if base not in valid_names:
+            continue
+        tab_width = self.directive.state.document.settings.tab_width
+        self._new_docstrings[i] = prepare_docstring('\n'.join(doclines[1:]), tabsize=tab_width)
+        result = (args, retann)
+        break
+    return result","def _extract_signature_from_docstring(self, encoding: str=None) -> Tuple[str, str]:
+    if encoding is not None:
+        warnings.warn(""The 'encoding' argument to autodoc.%s._find_signature() is deprecated."" % self.__class__.__name__, RemovedInSphinx40Warning, stacklevel=2)
+    docstrings = self.get_doc()
+    self._new_docstrings = docstrings[:]
+    result = None
+    for i, doclines in enumerate(docstrings):
+        if not doclines:
+            continue
+        match = py_ext_sig_re.match(doclines[0])
+        if not match:
+            continue
+        exmod, path, base, args, retann = match.groups()
+        valid_names = [self.objpath[-1]]
+        if isinstance(self, ClassDocumenter):
+            valid_names.append('__init__')
+            if hasattr(self.object, '__mro__'):
+                valid_names.extend((cls.__name__ for cls in self.object.__mro__))
+        if base not in valid_names:
+            continue
+        tab_width = self.directive.state.document.settings.tab_width
+        self._new_docstrings[i] = prepare_docstring('\n'.join(doclines[1:]), tabsize=tab_width)
+        result = (args, retann)
+        break
+    return result","[{""var"": ""doclines"", ""rename"": ""document_lines""}, {""var"": ""tab_width"", ""rename"": ""document_tab_width""}, {""var"": ""cls"", ""rename"": ""class_in_hierarchy""}, {""var"": ""i"", ""rename"": ""docstring_index""}, {""var"": ""path"", ""rename"": ""module_path""}, {""var"": ""result"", ""rename"": ""signature_args_and_return""}, {""var"": ""match"", ""rename"": ""signature_match""}, {""var"": ""base"", ""rename"": ""matched_function_name""}, {""var"": ""retann"", ""rename"": ""return_annotation""}, {""var"": ""valid_names"", ""rename"": ""valid_signature_names""}, {""var"": ""args"", ""rename"": ""signature_parameters""}, {""var"": ""docstrings"", ""rename"": ""document_strings""}, {""var"": ""exmod"", ""rename"": ""extracted_module_name""}]"
+./sphinx/ext/autodoc/__init__.py,get_doc,retrieve_documentation_lines_with_warning,1074,1082,"def get_doc(self, encoding: str=None, ignore: int=None) -> List[List[str]]:
+    if encoding is not None:
+        warnings.warn(""The 'encoding' argument to autodoc.%s.get_doc() is deprecated."" % self.__class__.__name__, RemovedInSphinx40Warning, stacklevel=2)
+    lines = getattr(self, '_new_docstrings', None)
+    if lines is not None:
+        return lines
+    return super().get_doc(None, ignore)","def retrieve_documentation_lines_with_warning(self, encoding: str=None, ignore: int=None) -> List[List[str]]:
+    if encoding is not None:
+        warnings.warn(""The 'encoding' argument to autodoc.%s.get_doc() is deprecated."" % self.__class__.__name__, RemovedInSphinx40Warning, stacklevel=2)
+    lines = getattr(self, '_new_docstrings', None)
+    if lines is not None:
+        return lines
+    return super().get_doc(None, ignore)","[{""var"": ""lines"", ""rename"": ""document_strings""}]"
+./sphinx/ext/autodoc/__init__.py,format_signature,derive_and_format_signature,1084,1091,"def format_signature(self, **kwargs: Any) -> str:
+    if self.args is None and self.env.config.autodoc_docstring_signature:
+        result = self._find_signature()
+        if result is not None:
+            self.args, self.retann = result
+    return super().format_signature(**kwargs)","def derive_and_format_signature(self, **kwargs: Any) -> str:
+    if self.args is None and self.env.config.autodoc_docstring_signature:
+        result = self._find_signature()
+        if result is not None:
+            self.args, self.retann = result
+    return super().format_signature(**kwargs)","[{""var"": ""result"", ""rename"": ""signature_details""}]"
+./sphinx/ext/autodoc/__init__.py,format_signature,generate_and_validate_signature,1099,1109,"def format_signature(self, **kwargs: Any) -> str:
+    if self.args is None and self.env.config.autodoc_docstring_signature:
+        result = self._find_signature()
+        if result is not None:
+            _args, self.retann = result
+    return super().format_signature(**kwargs)","def generate_and_validate_signature(self, **kwargs: Any) -> str:
+    if self.args is None and self.env.config.autodoc_docstring_signature:
+        result = self._find_signature()
+        if result is not None:
+            _args, self.retann = result
+    return super().format_signature(**kwargs)","[{""var"": ""result"", ""rename"": ""signature_components""}, {""var"": ""_args"", ""rename"": ""extracted_args""}]"
+./sphinx/ext/autodoc/__init__.py,can_document_member,can_be_documented_as_function_or_attribute,1120,1124,"@classmethod
+def can_document_member(cls, member: Any, membername: str, isattr: bool, parent: Any) -> bool:
+    return inspect.isfunction(member) or inspect.isbuiltin(member) or (inspect.isroutine(member) and isinstance(parent, ModuleDocumenter))","@classmethod
+def can_be_documented_as_function_or_attribute(cls, member: Any, membername: str, isattr: bool, parent: Any) -> bool:
+    return inspect.isfunction(member) or inspect.isbuiltin(member) or (inspect.isroutine(member) and isinstance(parent, ModuleDocumenter))",[]
+./sphinx/ext/autodoc/__init__.py,format_args,generate_function_signature_representation,1126,1147,"def format_args(self, **kwargs: Any) -> str:
+    if self.env.config.autodoc_typehints in ('none', 'description'):
+        kwargs.setdefault('show_annotation', False)
+    try:
+        self.env.app.emit('autodoc-before-process-signature', self.object, False)
+        if inspect.is_singledispatch_function(self.object):
+            sig = inspect.signature(self.object, follow_wrapped=True)
+        else:
+            sig = inspect.signature(self.object)
+        args = stringify_signature(sig, **kwargs)
+    except TypeError as exc:
+        logger.warning(__('Failed to get a function signature for %s: %s'), self.fullname, exc)
+        return None
+    except ValueError:
+        args = ''
+    if self.env.config.strip_signature_backslash:
+        args = args.replace('\\', '\\\\')
+    return args","def generate_function_signature_representation(self, **kwargs: Any) -> str:
+    if self.env.config.autodoc_typehints in ('none', 'description'):
+        kwargs.setdefault('show_annotation', False)
+    try:
+        self.env.app.emit('autodoc-before-process-signature', self.object, False)
+        if inspect.is_singledispatch_function(self.object):
+            sig = inspect.signature(self.object, follow_wrapped=True)
+        else:
+            sig = inspect.signature(self.object)
+        args = stringify_signature(sig, **kwargs)
+    except TypeError as exc:
+        logger.warning(__('Failed to get a function signature for %s: %s'), self.fullname, exc)
+        return None
+    except ValueError:
+        args = ''
+    if self.env.config.strip_signature_backslash:
+        args = args.replace('\\', '\\\\')
+    return args","[{""var"": ""sig"", ""rename"": ""function_signature""}, {""var"": ""args"", ""rename"": ""formatted_signature""}]"
+./sphinx/ext/autodoc/__init__.py,format_args,validate_comma_in_formatted_args,1206,1211,"def format_args(self, **kwargs: Any) -> Any:
+    args = super().format_args(**kwargs)
+    if ',' in args:
+        return args
+    else:
+        return None","def validate_comma_in_formatted_args(self, **kwargs: Any) -> Any:
+    args = super().format_args(**kwargs)
+    if ',' in args:
+        return args
+    else:
+        return None","[{""var"": ""args"", ""rename"": ""formatted_argument_string""}]"

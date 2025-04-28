@@ -1,0 +1,28 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./sphinx/pycode/ast.py,visit_Subscript,generate_subscript_representation,168,169,"def visit_Subscript(self, node: ast.Subscript) -> str:
+    return '%s[%s]' % (self.visit(node.value), self.visit(node.slice))","def generate_subscript_representation(self, node: ast.Subscript) -> str:
+    return '%s[%s]' % (self.visit(node.value), self.visit(node.slice))",[]
+./sphinx/pycode/ast.py,visit_UnaryOp,format_unary_operation_to_string,171,172,"def visit_UnaryOp(self, node: ast.UnaryOp) -> str:
+    return '%s %s' % (self.visit(node.op), self.visit(node.operand))","def format_unary_operation_to_string(self, node: ast.UnaryOp) -> str:
+    return '%s %s' % (self.visit(node.op), self.visit(node.operand))",[]
+./sphinx/pycode/ast.py,visit_Tuple,concatenate_tuple_elements_as_string,174,178,"def visit_Tuple(self, node: ast.Tuple) -> str:
+    if node.elts:
+        return ', '.join((self.visit(e) for e in node.elts))
+    else:
+        return '()'","def concatenate_tuple_elements_as_string(self, node: ast.Tuple) -> str:
+    if node.elts:
+        return ', '.join((self.visit(e) for e in node.elts))
+    else:
+        return '()'","[{""var"": ""e"", ""rename"": ""element_node""}]"
+./sphinx/pycode/ast.py,visit_Constant,constant_node_to_string_representation,181,185,"def visit_Constant(self, node: ast.Constant) -> str:
+    if node.value is Ellipsis:
+        return '...'
+    else:
+        return repr(node.value)","def constant_node_to_string_representation(self, node: ast.Constant) -> str:
+    if node.value is Ellipsis:
+        return '...'
+    else:
+        return repr(node.value)",[]
+./sphinx/pycode/ast.py,visit_Bytes,convert_bytes_node_to_repr_string,189,190,"def visit_Bytes(self, node: ast.Bytes) -> str:
+    return repr(node.s)","def convert_bytes_node_to_repr_string(self, node: ast.Bytes) -> str:
+    return repr(node.s)",[]

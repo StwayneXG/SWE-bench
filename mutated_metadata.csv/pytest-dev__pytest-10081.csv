@@ -1,0 +1,30 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./src/_pytest/unittest.py,runtest,execute_test_case_with_debugging_and_async_support,301,329,"def runtest(self) -> None:
+    from _pytest.debugging import maybe_wrap_pytest_function_for_tracing
+    assert self._testcase is not None
+    maybe_wrap_pytest_function_for_tracing(self)
+    if is_async_function(self.obj):
+        self._testcase(result=self)
+    else:
+        if self.config.getoption('usepdb') and (not _is_skipped(self.obj)):
+            self._explicit_tearDown = self._testcase.tearDown
+            setattr(self._testcase, 'tearDown', lambda *args: None)
+        setattr(self._testcase, self.name, self.obj)
+        try:
+            self._testcase(result=self)
+        finally:
+            delattr(self._testcase, self.name)","def execute_test_case_with_debugging_and_async_support(self) -> None:
+    from _pytest.debugging import maybe_wrap_pytest_function_for_tracing
+    assert self._testcase is not None
+    maybe_wrap_pytest_function_for_tracing(self)
+    if is_async_function(self.obj):
+        self._testcase(result=self)
+    else:
+        if self.config.getoption('usepdb') and (not _is_skipped(self.obj)):
+            self._explicit_tearDown = self._testcase.tearDown
+            setattr(self._testcase, 'tearDown', lambda *args: None)
+        setattr(self._testcase, self.name, self.obj)
+        try:
+            self._testcase(result=self)
+        finally:
+            delattr(self._testcase, self.name)",[]

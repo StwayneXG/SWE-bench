@@ -1,0 +1,24 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/template/autoreload.py,get_template_directories,collect_template_source_directories,10,30,"def get_template_directories():
+    cwd = Path.cwd()
+    items = set()
+    for backend in engines.all():
+        if not isinstance(backend, DjangoTemplates):
+            continue
+        items.update((cwd / to_path(dir) for dir in backend.engine.dirs))
+        for loader in backend.engine.template_loaders:
+            if not hasattr(loader, 'get_dirs'):
+                continue
+            items.update((cwd / to_path(directory) for directory in loader.get_dirs() if not is_django_path(directory)))
+    return items","def collect_template_source_directories():
+    cwd = Path.cwd()
+    items = set()
+    for backend in engines.all():
+        if not isinstance(backend, DjangoTemplates):
+            continue
+        items.update((cwd / to_path(dir) for dir in backend.engine.dirs))
+        for loader in backend.engine.template_loaders:
+            if not hasattr(loader, 'get_dirs'):
+                continue
+            items.update((cwd / to_path(directory) for directory in loader.get_dirs() if not is_django_path(directory)))
+    return items","[{""var"": ""cwd"", ""rename"": ""current_working_directory""}, {""var"": ""directory"", ""rename"": ""template_path""}, {""var"": ""backend"", ""rename"": ""template_engine_backend""}, {""var"": ""loader"", ""rename"": ""template_loader_instance""}, {""var"": ""dir"", ""rename"": ""template_directory""}, {""var"": ""items"", ""rename"": ""template_directories""}]"

@@ -1,0 +1,391 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./sphinx/domains/python.py,get_signature_prefix,generate_signature_prefix_based_on_options,867,872,"def get_signature_prefix(self, sig: str) -> str:
+    prefix = ['property']
+    if 'abstractmethod' in self.options:
+        prefix.insert(0, 'abstract')
+    return ' '.join(prefix) + ' '","def generate_signature_prefix_based_on_options(self, sig: str) -> str:
+    prefix = ['property']
+    if 'abstractmethod' in self.options:
+        prefix.insert(0, 'abstract')
+    return ' '.join(prefix) + ' '","[{""var"": ""prefix"", ""rename"": ""signature_prefix_keywords""}]"
+./sphinx/domains/python.py,get_index_text,generate_class_attribute_index_text,874,886,"def get_index_text(self, modname: str, name_cls: Tuple[str, str]) -> str:
+    name, cls = name_cls
+    try:
+        clsname, attrname = name.rsplit('.', 1)
+        if modname and self.env.config.add_module_names:
+            clsname = '.'.join([modname, clsname])
+    except ValueError:
+        if modname:
+            return _('%s (in module %s)') % (name, modname)
+        else:
+            return name
+    return _('%s (%s property)') % (attrname, clsname)","def generate_class_attribute_index_text(self, modname: str, name_cls: Tuple[str, str]) -> str:
+    name, cls = name_cls
+    try:
+        clsname, attrname = name.rsplit('.', 1)
+        if modname and self.env.config.add_module_names:
+            clsname = '.'.join([modname, clsname])
+    except ValueError:
+        if modname:
+            return _('%s (in module %s)') % (name, modname)
+        else:
+            return name
+    return _('%s (%s property)') % (attrname, clsname)","[{""var"": ""attrname"", ""rename"": ""attribute_name""}, {""var"": ""name"", ""rename"": ""qualified_name_part""}, {""var"": ""clsname"", ""rename"": ""class_full_name""}, {""var"": ""cls"", ""rename"": ""class_type_label""}]"
+./sphinx/ext/autodoc/__init__.py,filter_members,determine_documentable_members,669,818,"def filter_members(self, members: ObjectMembers, want_all: bool) -> List[Tuple[str, Any, bool]]:
+    """"""Filter the given member list.
+
+        Members are skipped if
+
+        - they are private (except if given explicitly or the private-members
+          option is set)
+        - they are special methods (except if given explicitly or the
+          special-members option is set)
+        - they are undocumented (except if the undoc-members option is set)
+
+        The user can override the skipping decision by connecting to the
+        ``autodoc-skip-member`` event.
+        """"""
+
+    def is_filtered_inherited_member(name: str, obj: Any) -> bool:
+        if inspect.isclass(self.object):
+            for cls in self.object.__mro__:
+                if cls.__name__ == self.options.inherited_members and cls != self.object:
+                    return True
+                elif name in cls.__dict__:
+                    return False
+                elif name in self.get_attr(cls, '__annotations__', {}):
+                    return False
+                elif isinstance(obj, ObjectMember) and obj.class_ is cls:
+                    return False
+        return False
+    ret = []
+    namespace = '.'.join(self.objpath)
+    if self.analyzer:
+        attr_docs = self.analyzer.find_attr_docs()
+    else:
+        attr_docs = {}
+    for obj in members:
+        membername, member = obj
+        if member is INSTANCEATTR:
+            isattr = True
+        elif (namespace, membername) in attr_docs:
+            isattr = True
+        else:
+            isattr = False
+        doc = getdoc(member, self.get_attr, self.config.autodoc_inherit_docstrings, self.parent, self.object_name)
+        if not isinstance(doc, str):
+            doc = None
+        cls = self.get_attr(member, '__class__', None)
+        if cls:
+            cls_doc = self.get_attr(cls, '__doc__', None)
+            if cls_doc == doc:
+                doc = None
+        if isinstance(obj, ObjectMember) and obj.docstring:
+            doc = obj.docstring
+        doc, metadata = separate_metadata(doc)
+        has_doc = bool(doc)
+        if 'private' in metadata:
+            isprivate = True
+        elif 'public' in metadata:
+            isprivate = False
+        else:
+            isprivate = membername.startswith('_')
+        keep = False
+        if ismock(member):
+            pass
+        elif self.options.exclude_members and membername in self.options.exclude_members:
+            keep = False
+        elif want_all and special_member_re.match(membername):
+            if self.options.special_members and membername in self.options.special_members:
+                if membername == '__doc__':
+                    keep = False
+                elif is_filtered_inherited_member(membername, obj):
+                    keep = False
+                else:
+                    keep = has_doc or self.options.undoc_members
+            else:
+                keep = False
+        elif (namespace, membername) in attr_docs:
+            if want_all and isprivate:
+                if self.options.private_members is None:
+                    keep = False
+                else:
+                    keep = membername in self.options.private_members
+            else:
+                keep = True
+        elif want_all and isprivate:
+            if has_doc or self.options.undoc_members:
+                if self.options.private_members is None:
+                    keep = False
+                elif is_filtered_inherited_member(membername, obj):
+                    keep = False
+                else:
+                    keep = membername in self.options.private_members
+            else:
+                keep = False
+        elif self.options.members is ALL and is_filtered_inherited_member(membername, obj):
+            keep = False
+        else:
+            keep = has_doc or self.options.undoc_members
+        if isinstance(obj, ObjectMember) and obj.skipped:
+            keep = False
+        if self.env.app:
+            try:
+                skip_user = self.env.app.emit_firstresult('autodoc-skip-member', self.objtype, membername, member, not keep, self.options)
+                if skip_user is not None:
+                    keep = not skip_user
+            except Exception as exc:
+                logger.warning(__('autodoc: failed to determine %r to be documented, the following exception was raised:\n%s'), member, exc, type='autodoc')
+                keep = False
+        if keep:
+            ret.append((membername, member, isattr))
+    return ret","def determine_documentable_members(self, members: ObjectMembers, want_all: bool) -> List[Tuple[str, Any, bool]]:
+    """"""Filter the given member list.
+
+        Members are skipped if
+
+        - they are private (except if given explicitly or the private-members
+          option is set)
+        - they are special methods (except if given explicitly or the
+          special-members option is set)
+        - they are undocumented (except if the undoc-members option is set)
+
+        The user can override the skipping decision by connecting to the
+        ``autodoc-skip-member`` event.
+        """"""
+
+    def is_filtered_inherited_member(name: str, obj: Any) -> bool:
+        if inspect.isclass(self.object):
+            for cls in self.object.__mro__:
+                if cls.__name__ == self.options.inherited_members and cls != self.object:
+                    return True
+                elif name in cls.__dict__:
+                    return False
+                elif name in self.get_attr(cls, '__annotations__', {}):
+                    return False
+                elif isinstance(obj, ObjectMember) and obj.class_ is cls:
+                    return False
+        return False
+    ret = []
+    namespace = '.'.join(self.objpath)
+    if self.analyzer:
+        attr_docs = self.analyzer.find_attr_docs()
+    else:
+        attr_docs = {}
+    for obj in members:
+        membername, member = obj
+        if member is INSTANCEATTR:
+            isattr = True
+        elif (namespace, membername) in attr_docs:
+            isattr = True
+        else:
+            isattr = False
+        doc = getdoc(member, self.get_attr, self.config.autodoc_inherit_docstrings, self.parent, self.object_name)
+        if not isinstance(doc, str):
+            doc = None
+        cls = self.get_attr(member, '__class__', None)
+        if cls:
+            cls_doc = self.get_attr(cls, '__doc__', None)
+            if cls_doc == doc:
+                doc = None
+        if isinstance(obj, ObjectMember) and obj.docstring:
+            doc = obj.docstring
+        doc, metadata = separate_metadata(doc)
+        has_doc = bool(doc)
+        if 'private' in metadata:
+            isprivate = True
+        elif 'public' in metadata:
+            isprivate = False
+        else:
+            isprivate = membername.startswith('_')
+        keep = False
+        if ismock(member):
+            pass
+        elif self.options.exclude_members and membername in self.options.exclude_members:
+            keep = False
+        elif want_all and special_member_re.match(membername):
+            if self.options.special_members and membername in self.options.special_members:
+                if membername == '__doc__':
+                    keep = False
+                elif is_filtered_inherited_member(membername, obj):
+                    keep = False
+                else:
+                    keep = has_doc or self.options.undoc_members
+            else:
+                keep = False
+        elif (namespace, membername) in attr_docs:
+            if want_all and isprivate:
+                if self.options.private_members is None:
+                    keep = False
+                else:
+                    keep = membername in self.options.private_members
+            else:
+                keep = True
+        elif want_all and isprivate:
+            if has_doc or self.options.undoc_members:
+                if self.options.private_members is None:
+                    keep = False
+                elif is_filtered_inherited_member(membername, obj):
+                    keep = False
+                else:
+                    keep = membername in self.options.private_members
+            else:
+                keep = False
+        elif self.options.members is ALL and is_filtered_inherited_member(membername, obj):
+            keep = False
+        else:
+            keep = has_doc or self.options.undoc_members
+        if isinstance(obj, ObjectMember) and obj.skipped:
+            keep = False
+        if self.env.app:
+            try:
+                skip_user = self.env.app.emit_firstresult('autodoc-skip-member', self.objtype, membername, member, not keep, self.options)
+                if skip_user is not None:
+                    keep = not skip_user
+            except Exception as exc:
+                logger.warning(__('autodoc: failed to determine %r to be documented, the following exception was raised:\n%s'), member, exc, type='autodoc')
+                keep = False
+        if keep:
+            ret.append((membername, member, isattr))
+    return ret","[{""var"": ""keep"", ""rename"": ""should_document_member""}, {""var"": ""has_doc"", ""rename"": ""has_documentation""}, {""var"": ""membername"", ""rename"": ""member_identifier""}, {""var"": ""ret"", ""rename"": ""filtered_members""}, {""var"": ""isprivate"", ""rename"": ""is_member_private""}, {""var"": ""attr_docs"", ""rename"": ""attribute_documentation_map""}, {""var"": ""cls_doc"", ""rename"": ""class_documentation""}, {""var"": ""skip_user"", ""rename"": ""user_override_skip""}, {""var"": ""member"", ""rename"": ""filtered_member_records""}, {""var"": ""isattr"", ""rename"": ""is_attribute_documented""}, {""var"": ""doc"", ""rename"": ""member_documentation""}, {""var"": ""cls"", ""rename"": ""class_type""}, {""var"": ""namespace"", ""rename"": ""object_path_namespace""}, {""var"": ""metadata"", ""rename"": ""member_metadata_tags""}]"
+./sphinx/ext/autodoc/__init__.py,can_document_member,is_documentable_property_in_class_documenter,2662,2664,"@classmethod
+def can_document_member(cls, member: Any, membername: str, isattr: bool, parent: Any) -> bool:
+    return inspect.isproperty(member) and isinstance(parent, ClassDocumenter)","@classmethod
+def is_documentable_property_in_class_documenter(cls, member: Any, membername: str, isattr: bool, parent: Any) -> bool:
+    return inspect.isproperty(member) and isinstance(parent, ClassDocumenter)",[]
+./sphinx/ext/autodoc/__init__.py,document_members,generate_membership_documentation,2666,2667,"def document_members(self, all_members: bool=False) -> None:
+    pass","def generate_membership_documentation(self, all_members: bool=False) -> None:
+    pass",[]
+./sphinx/ext/autodoc/__init__.py,get_real_modname,determine_effective_module_name,2669,2671,"def get_real_modname(self) -> str:
+    real_modname = self.get_attr(self.parent or self.object, '__module__', None)
+    return real_modname or self.modname","def determine_effective_module_name(self) -> str:
+    real_modname = self.get_attr(self.parent or self.object, '__module__', None)
+    return real_modname or self.modname","[{""var"": ""real_modname"", ""rename"": ""resolved_module_name""}]"
+./sphinx/ext/autodoc/__init__.py,add_directive_header,document_method_directive_details,2673,2691,"def add_directive_header(self, sig: str) -> None:
+    super().add_directive_header(sig)
+    sourcename = self.get_sourcename()
+    if inspect.isabstractmethod(self.object):
+        self.add_line('   :abstractmethod:', sourcename)
+    if safe_getattr(self.object, 'fget', None) and self.config.autodoc_typehints != 'none':
+        try:
+            signature = inspect.signature(self.object.fget, type_aliases=self.config.autodoc_type_aliases)
+            if signature.return_annotation is not Parameter.empty:
+                objrepr = stringify_typehint(signature.return_annotation)
+                self.add_line('   :type: ' + objrepr, sourcename)
+        except TypeError as exc:
+            logger.warning(__('Failed to get a function signature for %s: %s'), self.fullname, exc)
+            return None
+        except ValueError:
+            return None","def document_method_directive_details(self, sig: str) -> None:
+    super().add_directive_header(sig)
+    sourcename = self.get_sourcename()
+    if inspect.isabstractmethod(self.object):
+        self.add_line('   :abstractmethod:', sourcename)
+    if safe_getattr(self.object, 'fget', None) and self.config.autodoc_typehints != 'none':
+        try:
+            signature = inspect.signature(self.object.fget, type_aliases=self.config.autodoc_type_aliases)
+            if signature.return_annotation is not Parameter.empty:
+                objrepr = stringify_typehint(signature.return_annotation)
+                self.add_line('   :type: ' + objrepr, sourcename)
+        except TypeError as exc:
+            logger.warning(__('Failed to get a function signature for %s: %s'), self.fullname, exc)
+            return None
+        except ValueError:
+            return None","[{""var"": ""sourcename"", ""rename"": ""logger_source""}, {""var"": ""signature"", ""rename"": ""function_signature""}, {""var"": ""objrepr"", ""rename"": ""returnAnnotationRepresentation""}]"
+./sphinx/util/inspect.py,isclassmethod,verify_if_classmethod,248,255,"def isclassmethod(obj: Any) -> bool:
+    """"""Check if the object is classmethod.""""""
+    if isinstance(obj, classmethod):
+        return True
+    elif inspect.ismethod(obj) and obj.__self__ is not None and isclass(obj.__self__):
+        return True
+    return False","def verify_if_classmethod(obj: Any) -> bool:
+    """"""Check if the object is classmethod.""""""
+    if isinstance(obj, classmethod):
+        return True
+    elif inspect.ismethod(obj) and obj.__self__ is not None and isclass(obj.__self__):
+        return True
+    return False",[]
+./sphinx/util/inspect.py,isstaticmethod,check_if_static_method_in_class_hierarchy,258,274,"def isstaticmethod(obj: Any, cls: Any=None, name: str=None) -> bool:
+    """"""Check if the object is staticmethod.""""""
+    if isinstance(obj, staticmethod):
+        return True
+    elif cls and name:
+        for basecls in getattr(cls, '__mro__', [cls]):
+            meth = basecls.__dict__.get(name)
+            if meth:
+                if isinstance(meth, staticmethod):
+                    return True
+                else:
+                    return False
+    return False","def check_if_static_method_in_class_hierarchy(obj: Any, cls: Any=None, name: str=None) -> bool:
+    """"""Check if the object is staticmethod.""""""
+    if isinstance(obj, staticmethod):
+        return True
+    elif cls and name:
+        for basecls in getattr(cls, '__mro__', [cls]):
+            meth = basecls.__dict__.get(name)
+            if meth:
+                if isinstance(meth, staticmethod):
+                    return True
+                else:
+                    return False
+    return False","[{""var"": ""meth"", ""rename"": ""method_definition""}, {""var"": ""basecls"", ""rename"": ""base_class_in_mro""}]"
+./sphinx/util/inspect.py,getdoc,retrieve_extended_docstring,830,865,"def getdoc(obj: Any, attrgetter: Callable=safe_getattr, allow_inherited: bool=False, cls: Any=None, name: str=None) -> str:
+    """"""Get the docstring for the object.
+
+    This tries to obtain the docstring for some kind of objects additionally:
+
+    * partial functions
+    * inherited docstring
+    * inherited decorated methods
+    """"""
+    doc = attrgetter(obj, '__doc__', None)
+    if ispartial(obj) and doc == obj.__class__.__doc__:
+        return getdoc(obj.func)
+    elif doc is None and allow_inherited:
+        if cls and name:
+            for basecls in getmro(cls):
+                meth = safe_getattr(basecls, name, None)
+                if meth is not None:
+                    doc = attrgetter(meth, '__doc__', None)
+                    if doc is not None:
+                        break
+            if doc is None:
+                for basecls in getmro(cls):
+                    meth = safe_getattr(basecls, name, None)
+                    if meth is not None:
+                        doc = inspect.getdoc(meth)
+                        if doc is not None:
+                            break
+        if doc is None:
+            doc = inspect.getdoc(obj)
+    return doc","def retrieve_extended_docstring(obj: Any, attrgetter: Callable=safe_getattr, allow_inherited: bool=False, cls: Any=None, name: str=None) -> str:
+    """"""Get the docstring for the object.
+
+    This tries to obtain the docstring for some kind of objects additionally:
+
+    * partial functions
+    * inherited docstring
+    * inherited decorated methods
+    """"""
+    doc = attrgetter(obj, '__doc__', None)
+    if ispartial(obj) and doc == obj.__class__.__doc__:
+        return getdoc(obj.func)
+    elif doc is None and allow_inherited:
+        if cls and name:
+            for basecls in getmro(cls):
+                meth = safe_getattr(basecls, name, None)
+                if meth is not None:
+                    doc = attrgetter(meth, '__doc__', None)
+                    if doc is not None:
+                        break
+            if doc is None:
+                for basecls in getmro(cls):
+                    meth = safe_getattr(basecls, name, None)
+                    if meth is not None:
+                        doc = inspect.getdoc(meth)
+                        if doc is not None:
+                            break
+        if doc is None:
+            doc = inspect.getdoc(obj)
+    return doc","[{""var"": ""doc"", ""rename"": ""object_docstring""}, {""var"": ""meth"", ""rename"": ""inherited_method""}, {""var"": ""basecls"", ""rename"": ""base_class""}]"

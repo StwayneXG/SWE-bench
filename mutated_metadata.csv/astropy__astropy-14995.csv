@@ -1,0 +1,76 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./astropy/nddata/mixins/ndarithmetic.py,_arithmetic_mask,calculate_combined_mask,485,527,"def _arithmetic_mask(self, operation, operand, handle_mask, axis=None, **kwds):
+    """"""
+        Calculate the resulting mask.
+
+        This is implemented as the piecewise ``or`` operation if both have a
+        mask.
+
+        Parameters
+        ----------
+        operation : callable
+            see :meth:`NDArithmeticMixin._arithmetic` parameter description.
+            By default, the ``operation`` will be ignored.
+
+        operand : `NDData`-like instance
+            The second operand wrapped in an instance of the same class as
+            self.
+
+        handle_mask : callable
+            see :meth:`NDArithmeticMixin.add`
+
+        kwds :
+            Additional parameters given to ``handle_mask``.
+
+        Returns
+        -------
+        result_mask : any type
+            If only one mask was present this mask is returned.
+            If neither had a mask ``None`` is returned. Otherwise
+            ``handle_mask`` must create (and copy) the returned mask.
+        """"""
+    if self.mask is None and operand is not None and (operand.mask is None) or handle_mask is None:
+        return None
+    elif self.mask is None and operand is not None:
+        return deepcopy(operand.mask)
+    elif operand is None:
+        return deepcopy(self.mask)
+    else:
+        return handle_mask(self.mask, operand.mask, **kwds)","def calculate_combined_mask(self, operation, operand, handle_mask, axis=None, **kwds):
+    """"""
+        Calculate the resulting mask.
+
+        This is implemented as the piecewise ``or`` operation if both have a
+        mask.
+
+        Parameters
+        ----------
+        operation : callable
+            see :meth:`NDArithmeticMixin._arithmetic` parameter description.
+            By default, the ``operation`` will be ignored.
+
+        operand : `NDData`-like instance
+            The second operand wrapped in an instance of the same class as
+            self.
+
+        handle_mask : callable
+            see :meth:`NDArithmeticMixin.add`
+
+        kwds :
+            Additional parameters given to ``handle_mask``.
+
+        Returns
+        -------
+        result_mask : any type
+            If only one mask was present this mask is returned.
+            If neither had a mask ``None`` is returned. Otherwise
+            ``handle_mask`` must create (and copy) the returned mask.
+        """"""
+    if self.mask is None and operand is not None and (operand.mask is None) or handle_mask is None:
+        return None
+    elif self.mask is None and operand is not None:
+        return deepcopy(operand.mask)
+    elif operand is None:
+        return deepcopy(self.mask)
+    else:
+        return handle_mask(self.mask, operand.mask, **kwds)",[]

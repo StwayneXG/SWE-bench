@@ -1,0 +1,4 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/utils/datastructures.py,__contains__,is_item_in_dictionary,28,29,"def __contains__(self, item):
+    return item in self.dict","def is_item_in_dictionary(self, item):
+    return item in self.dict",[]

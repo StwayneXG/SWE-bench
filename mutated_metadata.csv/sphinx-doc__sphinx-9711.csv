@@ -1,0 +1,27 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./sphinx/extension.py,verify_needs_extensions,validate_sphinx_extension_requirements,42,58,"def verify_needs_extensions(app: 'Sphinx', config: Config) -> None:
+    """"""Verify the required Sphinx extensions are loaded.""""""
+    if config.needs_extensions is None:
+        return
+    for extname, reqversion in config.needs_extensions.items():
+        extension = app.extensions.get(extname)
+        if extension is None:
+            logger.warning(__('The %s extension is required by needs_extensions settings, but it is not loaded.'), extname)
+            continue
+        if extension.version == 'unknown version' or reqversion > extension.version:
+            raise VersionRequirementError(__('This project needs the extension %s at least in version %s and therefore cannot be built with the loaded version (%s).') % (extname, reqversion, extension.version))","def validate_sphinx_extension_requirements(app: 'Sphinx', config: Config) -> None:
+    """"""Verify the required Sphinx extensions are loaded.""""""
+    if config.needs_extensions is None:
+        return
+    for extname, reqversion in config.needs_extensions.items():
+        extension = app.extensions.get(extname)
+        if extension is None:
+            logger.warning(__('The %s extension is required by needs_extensions settings, but it is not loaded.'), extname)
+            continue
+        if extension.version == 'unknown version' or reqversion > extension.version:
+            raise VersionRequirementError(__('This project needs the extension %s at least in version %s and therefore cannot be built with the loaded version (%s).') % (extname, reqversion, extension.version))","[{""var"": ""extname"", ""rename"": ""required_extension_name""}, {""var"": ""extension"", ""rename"": ""sphinx_extension""}, {""var"": ""reqversion"", ""rename"": ""required_extension_version""}]"
+./sphinx/extension.py,setup,configure_needs_extension_verification,61,68,"def setup(app: 'Sphinx') -> Dict[str, Any]:
+    app.connect('config-inited', verify_needs_extensions, priority=800)
+    return {'version': 'builtin', 'parallel_read_safe': True, 'parallel_write_safe': True}","def configure_needs_extension_verification(app: 'Sphinx') -> Dict[str, Any]:
+    app.connect('config-inited', verify_needs_extensions, priority=800)
+    return {'version': 'builtin', 'parallel_read_safe': True, 'parallel_write_safe': True}",[]

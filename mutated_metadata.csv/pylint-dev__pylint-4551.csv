@@ -1,0 +1,143 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./pylint/pyreverse/diagrams.py,class_names,extract_unique_class_names_for_diagram,118,132,"def class_names(self, nodes):
+    """"""return class names if needed in diagram""""""
+    names = []
+    for node in nodes:
+        if isinstance(node, astroid.Instance):
+            node = node._proxied
+        if isinstance(node, astroid.ClassDef) and hasattr(node, 'name') and (not self.has_node(node)):
+            if node.name not in names:
+                node_name = node.name
+                names.append(node_name)
+    return names","def extract_unique_class_names_for_diagram(self, nodes):
+    """"""return class names if needed in diagram""""""
+    names = []
+    for node in nodes:
+        if isinstance(node, astroid.Instance):
+            node = node._proxied
+        if isinstance(node, astroid.ClassDef) and hasattr(node, 'name') and (not self.has_node(node)):
+            if node.name not in names:
+                node_name = node.name
+                names.append(node_name)
+    return names","[{""var"": ""node"", ""rename"": ""diagram_class_node""}, {""var"": ""names"", ""rename"": ""class_names_list""}, {""var"": ""node_name"", ""rename"": ""class_identifier_name""}]"
+./pylint/pyreverse/inspector.py,visit_assignname,handle_assignname_type_inference,192,224,"def visit_assignname(self, node):
+    """"""visit an astroid.AssignName node
+
+        handle locals_type
+        """"""
+    if hasattr(node, '_handled'):
+        return
+    node._handled = True
+    if node.name in node.frame():
+        frame = node.frame()
+    else:
+        frame = node.root()
+    try:
+        if not hasattr(frame, 'locals_type'):
+            if isinstance(frame, astroid.ClassDef):
+                self.visit_classdef(frame)
+            elif isinstance(frame, astroid.FunctionDef):
+                self.visit_functiondef(frame)
+            else:
+                self.visit_module(frame)
+        current = frame.locals_type[node.name]
+        values = set(node.infer())
+        frame.locals_type[node.name] = list(set(current) | values)
+    except astroid.InferenceError:
+        pass","def handle_assignname_type_inference(self, node):
+    """"""visit an astroid.AssignName node
+
+        handle locals_type
+        """"""
+    if hasattr(node, '_handled'):
+        return
+    node._handled = True
+    if node.name in node.frame():
+        frame = node.frame()
+    else:
+        frame = node.root()
+    try:
+        if not hasattr(frame, 'locals_type'):
+            if isinstance(frame, astroid.ClassDef):
+                self.visit_classdef(frame)
+            elif isinstance(frame, astroid.FunctionDef):
+                self.visit_functiondef(frame)
+            else:
+                self.visit_module(frame)
+        current = frame.locals_type[node.name]
+        values = set(node.infer())
+        frame.locals_type[node.name] = list(set(current) | values)
+    except astroid.InferenceError:
+        pass","[{""var"": ""values"", ""rename"": ""inferred_values_set""}, {""var"": ""current"", ""rename"": ""existing_local_types""}, {""var"": ""frame"", ""rename"": ""context_frame""}]"
+./pylint/pyreverse/inspector.py,handle_assignattr_type,update_instance_attribute_type_inference,227,237,"@staticmethod
+def handle_assignattr_type(node, parent):
+    """"""handle an astroid.assignattr node
+
+        handle instance_attrs_type
+        """"""
+    try:
+        values = set(node.infer())
+        current = set(parent.instance_attrs_type[node.attrname])
+        parent.instance_attrs_type[node.attrname] = list(current | values)
+    except astroid.InferenceError:
+        pass","@staticmethod
+def update_instance_attribute_type_inference(node, parent):
+    """"""handle an astroid.assignattr node
+
+        handle instance_attrs_type
+        """"""
+    try:
+        values = set(node.infer())
+        current = set(parent.instance_attrs_type[node.attrname])
+        parent.instance_attrs_type[node.attrname] = list(current | values)
+    except astroid.InferenceError:
+        pass","[{""var"": ""values"", ""rename"": ""inferred_attribute_values""}, {""var"": ""current"", ""rename"": ""existing_attribute_types""}]"
+./pylint/pyreverse/writer.py,get_values,generate_class_label_and_shape,126,145,"def get_values(self, obj):
+    """"""get label and shape for classes.
+
+        The label contains all attributes and methods
+        """"""
+    label = obj.title
+    if obj.shape == 'interface':
+        label = '«interface»\\n%s' % label
+    if not self.config.only_classnames:
+        label = '{}|{}\\l|'.format(label, '\\l'.join(obj.attrs))
+        for func in obj.methods:
+            if func.args.args:
+                args = [arg.name for arg in func.args.args if arg.name != 'self']
+            else:
+                args = []
+            label = '{}{}({})\\l'.format(label, func.name, ', '.join(args))
+        label = '{%s}' % label
+    if is_exception(obj.node):
+        return dict(fontcolor='red', label=label, shape='record')
+    return dict(label=label, shape='record')","def generate_class_label_and_shape(self, obj):
+    """"""get label and shape for classes.
+
+        The label contains all attributes and methods
+        """"""
+    label = obj.title
+    if obj.shape == 'interface':
+        label = '«interface»\\n%s' % label
+    if not self.config.only_classnames:
+        label = '{}|{}\\l|'.format(label, '\\l'.join(obj.attrs))
+        for func in obj.methods:
+            if func.args.args:
+                args = [arg.name for arg in func.args.args if arg.name != 'self']
+            else:
+                args = []
+            label = '{}{}({})\\l'.format(label, func.name, ', '.join(args))
+        label = '{%s}' % label
+    if is_exception(obj.node):
+        return dict(fontcolor='red', label=label, shape='record')
+    return dict(label=label, shape='record')","[{""var"": ""func"", ""rename"": ""method_detail""}, {""var"": ""label"", ""rename"": ""formatted_label""}, {""var"": ""arg"", ""rename"": ""argument""}, {""var"": ""args"", ""rename"": ""argument_names""}]"
+./pylint/pyreverse/writer.py,close_graph,export_dot_graph_to_file,147,149,"def close_graph(self):
+    """"""print the dot graph into <file_name>""""""
+    self.printer.generate(self.file_name)","def export_dot_graph_to_file(self):
+    """"""print the dot graph into <file_name>""""""
+    self.printer.generate(self.file_name)",[]
+./pylint/pyreverse/writer.py,__init__,initialize_diagram_writer_with_styles,155,167,"def __init__(self, config):
+    styles = [dict(arrowstyle='solid', backarrowstyle='none', backarrowsize=0), dict(arrowstyle='solid', backarrowstyle='none', backarrowsize=10), dict(arrowstyle='solid', backarrowstyle='none', linestyle='dotted', backarrowsize=10), dict(arrowstyle='solid', backarrowstyle='none', textcolor='green')]
+    DiagramWriter.__init__(self, config, styles)","def initialize_diagram_writer_with_styles(self, config):
+    styles = [dict(arrowstyle='solid', backarrowstyle='none', backarrowsize=0), dict(arrowstyle='solid', backarrowstyle='none', backarrowsize=10), dict(arrowstyle='solid', backarrowstyle='none', linestyle='dotted', backarrowsize=10), dict(arrowstyle='solid', backarrowstyle='none', textcolor='green')]
+    DiagramWriter.__init__(self, config, styles)","[{""var"": ""styles"", ""rename"": ""arrowStyleConfigurations""}]"

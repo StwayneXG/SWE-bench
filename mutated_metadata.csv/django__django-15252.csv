@@ -1,0 +1,52 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/db/migrations/executor.py,migrate,execute_database_migration,91,134,"def migrate(self, targets, plan=None, state=None, fake=False, fake_initial=False):
+    """"""
+        Migrate the database up to the given targets.
+
+        Django first needs to create all project states before a migration is
+        (un)applied and in a second step run all the database operations.
+        """"""
+    self.recorder.ensure_schema()
+    if plan is None:
+        plan = self.migration_plan(targets)
+    full_plan = self.migration_plan(self.loader.graph.leaf_nodes(), clean_start=True)
+    all_forwards = all((not backwards for mig, backwards in plan))
+    all_backwards = all((backwards for mig, backwards in plan))
+    if not plan:
+        if state is None:
+            state = self._create_project_state(with_applied_migrations=True)
+    elif all_forwards == all_backwards:
+        raise InvalidMigrationPlan('Migration plans with both forwards and backwards migrations are not supported. Please split your migration process into separate plans of only forwards OR backwards migrations.', plan)
+    elif all_forwards:
+        if state is None:
+            state = self._create_project_state(with_applied_migrations=True)
+        state = self._migrate_all_forwards(state, plan, full_plan, fake=fake, fake_initial=fake_initial)
+    else:
+        state = self._migrate_all_backwards(plan, full_plan, fake=fake)
+    self.check_replacements()
+    return state","def execute_database_migration(self, targets, plan=None, state=None, fake=False, fake_initial=False):
+    """"""
+        Migrate the database up to the given targets.
+
+        Django first needs to create all project states before a migration is
+        (un)applied and in a second step run all the database operations.
+        """"""
+    self.recorder.ensure_schema()
+    if plan is None:
+        plan = self.migration_plan(targets)
+    full_plan = self.migration_plan(self.loader.graph.leaf_nodes(), clean_start=True)
+    all_forwards = all((not backwards for mig, backwards in plan))
+    all_backwards = all((backwards for mig, backwards in plan))
+    if not plan:
+        if state is None:
+            state = self._create_project_state(with_applied_migrations=True)
+    elif all_forwards == all_backwards:
+        raise InvalidMigrationPlan('Migration plans with both forwards and backwards migrations are not supported. Please split your migration process into separate plans of only forwards OR backwards migrations.', plan)
+    elif all_forwards:
+        if state is None:
+            state = self._create_project_state(with_applied_migrations=True)
+        state = self._migrate_all_forwards(state, plan, full_plan, fake=fake, fake_initial=fake_initial)
+    else:
+        state = self._migrate_all_backwards(plan, full_plan, fake=fake)
+    self.check_replacements()
+    return state","[{""var"": ""backwards"", ""rename"": ""is_migration_backwards""}, {""var"": ""full_plan"", ""rename"": ""comprehensive_migration_plan""}, {""var"": ""all_forwards"", ""rename"": ""all_migrations_forwards""}, {""var"": ""mig"", ""rename"": ""migration_operation""}, {""var"": ""all_backwards"", ""rename"": ""all_migrations_backward""}]"

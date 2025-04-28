@@ -1,0 +1,30 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/db/models/fields/related_lookups.py,get_prep_lookup,prepare_lookup_values_for_queryset,76,109,"def get_prep_lookup(self):
+    if not isinstance(self.lhs, MultiColSource):
+        if self.rhs_is_direct_value():
+            self.rhs = [get_normalized_value(val, self.lhs)[0] for val in self.rhs]
+            if hasattr(self.lhs.output_field, 'path_infos'):
+                target_field = self.lhs.output_field.path_infos[-1].target_fields[-1]
+                self.rhs = [target_field.get_prep_value(v) for v in self.rhs]
+        elif not getattr(self.rhs, 'has_select_fields', True) and (not getattr(self.lhs.field.target_field, 'primary_key', False)):
+            self.rhs.clear_select_clause()
+            if getattr(self.lhs.output_field, 'primary_key', False) and self.lhs.output_field.model == self.rhs.model:
+                target_field = self.lhs.field.name
+            else:
+                target_field = self.lhs.field.target_field.name
+            self.rhs.add_fields([target_field], True)
+    return super().get_prep_lookup()","def prepare_lookup_values_for_queryset(self):
+    if not isinstance(self.lhs, MultiColSource):
+        if self.rhs_is_direct_value():
+            self.rhs = [get_normalized_value(val, self.lhs)[0] for val in self.rhs]
+            if hasattr(self.lhs.output_field, 'path_infos'):
+                target_field = self.lhs.output_field.path_infos[-1].target_fields[-1]
+                self.rhs = [target_field.get_prep_value(v) for v in self.rhs]
+        elif not getattr(self.rhs, 'has_select_fields', True) and (not getattr(self.lhs.field.target_field, 'primary_key', False)):
+            self.rhs.clear_select_clause()
+            if getattr(self.lhs.output_field, 'primary_key', False) and self.lhs.output_field.model == self.rhs.model:
+                target_field = self.lhs.field.name
+            else:
+                target_field = self.lhs.field.target_field.name
+            self.rhs.add_fields([target_field], True)
+    return super().get_prep_lookup()","[{""var"": ""val"", ""rename"": ""normalized_value""}, {""var"": ""target_field"", ""rename"": ""resolved_target_field_name""}, {""var"": ""v"", ""rename"": ""current_value""}]"

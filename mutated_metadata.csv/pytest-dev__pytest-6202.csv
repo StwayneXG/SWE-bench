@@ -1,0 +1,38 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./src/_pytest/python.py,getmodpath,get_relative_python_path,271,289,"def getmodpath(self, stopatmodule=True, includemodule=False):
+    """""" return python path relative to the containing module. """"""
+    chain = self.listchain()
+    chain.reverse()
+    parts = []
+    for node in chain:
+        if isinstance(node, Instance):
+            continue
+        name = node.name
+        if isinstance(node, Module):
+            name = os.path.splitext(name)[0]
+            if stopatmodule:
+                if includemodule:
+                    parts.append(name)
+                break
+        parts.append(name)
+    parts.reverse()
+    s = '.'.join(parts)
+    return s.replace('.[', '[')","def get_relative_python_path(self, stopatmodule=True, includemodule=False):
+    """""" return python path relative to the containing module. """"""
+    chain = self.listchain()
+    chain.reverse()
+    parts = []
+    for node in chain:
+        if isinstance(node, Instance):
+            continue
+        name = node.name
+        if isinstance(node, Module):
+            name = os.path.splitext(name)[0]
+            if stopatmodule:
+                if includemodule:
+                    parts.append(name)
+                break
+        parts.append(name)
+    parts.reverse()
+    s = '.'.join(parts)
+    return s.replace('.[', '[')","[{""var"": ""s"", ""rename"": ""module_path""}, {""var"": ""name"", ""rename"": ""node_identifier""}, {""var"": ""node"", ""rename"": ""moduleElement""}, {""var"": ""chain"", ""rename"": ""module_hierarchy_chain""}, {""var"": ""parts"", ""rename"": ""module_path_segments""}]"

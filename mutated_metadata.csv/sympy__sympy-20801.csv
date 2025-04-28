@@ -1,0 +1,44 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./sympy/core/numbers.py,__eq__,compare_with_numeric_representations,1383,1411,"def __eq__(self, other):
+    from sympy.logic.boolalg import Boolean
+    try:
+        other = _sympify(other)
+    except SympifyError:
+        return NotImplemented
+    if not self:
+        return not other
+    if isinstance(other, Boolean):
+        return False
+    if other.is_NumberSymbol:
+        if other.is_irrational:
+            return False
+        return other.__eq__(self)
+    if other.is_Float:
+        return self._mpf_ == other._mpf_
+    if other.is_Rational:
+        return other.__eq__(self)
+    if other.is_Number:
+        ompf = other._as_mpf_val(self._prec)
+        return bool(mlib.mpf_eq(self._mpf_, ompf))
+    return False","def compare_with_numeric_representations(self, other):
+    from sympy.logic.boolalg import Boolean
+    try:
+        other = _sympify(other)
+    except SympifyError:
+        return NotImplemented
+    if not self:
+        return not other
+    if isinstance(other, Boolean):
+        return False
+    if other.is_NumberSymbol:
+        if other.is_irrational:
+            return False
+        return other.__eq__(self)
+    if other.is_Float:
+        return self._mpf_ == other._mpf_
+    if other.is_Rational:
+        return other.__eq__(self)
+    if other.is_Number:
+        ompf = other._as_mpf_val(self._prec)
+        return bool(mlib.mpf_eq(self._mpf_, ompf))
+    return False","[{""var"": ""ompf"", ""rename"": ""mpf_value_representation""}]"

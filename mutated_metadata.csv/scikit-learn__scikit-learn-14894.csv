@@ -1,0 +1,65 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./sklearn/svm/base.py,_sparse_fit,train_sparse_svm_model,261,294,"def _sparse_fit(self, X, y, sample_weight, solver_type, kernel, random_seed):
+    X.data = np.asarray(X.data, dtype=np.float64, order='C')
+    X.sort_indices()
+    kernel_type = self._sparse_kernels.index(kernel)
+    libsvm_sparse.set_verbosity_wrap(self.verbose)
+    self.support_, self.support_vectors_, dual_coef_data, self.intercept_, self._n_support, self.probA_, self.probB_, self.fit_status_ = libsvm_sparse.libsvm_sparse_train(X.shape[1], X.data, X.indices, X.indptr, y, solver_type, kernel_type, self.degree, self._gamma, self.coef0, self.tol, self.C, self.class_weight_, sample_weight, self.nu, self.cache_size, self.epsilon, int(self.shrinking), int(self.probability), self.max_iter, random_seed)
+    self._warn_from_fit_status()
+    if hasattr(self, 'classes_'):
+        n_class = len(self.classes_) - 1
+    else:
+        n_class = 1
+    n_SV = self.support_vectors_.shape[0]
+    dual_coef_indices = np.tile(np.arange(n_SV), n_class)
+    dual_coef_indptr = np.arange(0, dual_coef_indices.size + 1, dual_coef_indices.size / n_class)
+    self.dual_coef_ = sp.csr_matrix((dual_coef_data, dual_coef_indices, dual_coef_indptr), (n_class, n_SV))","def train_sparse_svm_model(self, X, y, sample_weight, solver_type, kernel, random_seed):
+    X.data = np.asarray(X.data, dtype=np.float64, order='C')
+    X.sort_indices()
+    kernel_type = self._sparse_kernels.index(kernel)
+    libsvm_sparse.set_verbosity_wrap(self.verbose)
+    self.support_, self.support_vectors_, dual_coef_data, self.intercept_, self._n_support, self.probA_, self.probB_, self.fit_status_ = libsvm_sparse.libsvm_sparse_train(X.shape[1], X.data, X.indices, X.indptr, y, solver_type, kernel_type, self.degree, self._gamma, self.coef0, self.tol, self.C, self.class_weight_, sample_weight, self.nu, self.cache_size, self.epsilon, int(self.shrinking), int(self.probability), self.max_iter, random_seed)
+    self._warn_from_fit_status()
+    if hasattr(self, 'classes_'):
+        n_class = len(self.classes_) - 1
+    else:
+        n_class = 1
+    n_SV = self.support_vectors_.shape[0]
+    dual_coef_indices = np.tile(np.arange(n_SV), n_class)
+    dual_coef_indptr = np.arange(0, dual_coef_indices.size + 1, dual_coef_indices.size / n_class)
+    self.dual_coef_ = sp.csr_matrix((dual_coef_data, dual_coef_indices, dual_coef_indptr), (n_class, n_SV))","[{""var"": ""n_class"", ""rename"": ""number_of_classes""}, {""var"": ""kernel_type"", ""rename"": ""kernel_index_in_sparse_kernels""}, {""var"": ""dual_coef_indptr"", ""rename"": ""dual_coefficient_partition_indices""}, {""var"": ""n_SV"", ""rename"": ""num_support_vectors""}, {""var"": ""dual_coef_data"", ""rename"": ""sparse_dual_coefficients""}, {""var"": ""dual_coef_indices"", ""rename"": ""support_vector_repeat_indices""}]"
+./sklearn/svm/base.py,predict,classify_inliers_outliers,296,313,"def predict(self, X):
+    """"""Perform regression on samples in X.
+
+        For an one-class model, +1 (inlier) or -1 (outlier) is returned.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+            For kernel=""precomputed"", the expected shape of X is
+            (n_samples_test, n_samples_train).
+
+        Returns
+        -------
+        y_pred : array, shape (n_samples,)
+        """"""
+    X = self._validate_for_predict(X)
+    predict = self._sparse_predict if self._sparse else self._dense_predict
+    return predict(X)","def classify_inliers_outliers(self, X):
+    """"""Perform regression on samples in X.
+
+        For an one-class model, +1 (inlier) or -1 (outlier) is returned.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+            For kernel=""precomputed"", the expected shape of X is
+            (n_samples_test, n_samples_train).
+
+        Returns
+        -------
+        y_pred : array, shape (n_samples,)
+        """"""
+    X = self._validate_for_predict(X)
+    predict = self._sparse_predict if self._sparse else self._dense_predict
+    return predict(X)","[{""var"": ""predict"", ""rename"": ""regressionOutcomePredictor""}]"

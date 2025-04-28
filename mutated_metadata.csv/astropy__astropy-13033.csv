@@ -1,0 +1,41 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./astropy/timeseries/core.py,_check_required_columns,_validate_column_requirements,57,85,"def _check_required_columns(self):
+    if not self._required_columns_enabled:
+        return
+    if self._required_columns is not None:
+        if self._required_columns_relax:
+            required_columns = self._required_columns[:len(self.colnames)]
+        else:
+            required_columns = self._required_columns
+        plural = 's' if len(required_columns) > 1 else ''
+        if not self._required_columns_relax and len(self.colnames) == 0:
+            raise ValueError(""{} object is invalid - expected '{}' as the first column{} but time series has no columns"".format(self.__class__.__name__, required_columns[0], plural))
+        elif self.colnames[:len(required_columns)] != required_columns:
+            raise ValueError(""{} object is invalid - expected '{}' as the first column{} but found '{}'"".format(self.__class__.__name__, required_columns[0], plural, self.colnames[0]))
+        if self._required_columns_relax and self._required_columns == self.colnames[:len(self._required_columns)]:
+            self._required_columns_relax = False","def _validate_column_requirements(self):
+    if not self._required_columns_enabled:
+        return
+    if self._required_columns is not None:
+        if self._required_columns_relax:
+            required_columns = self._required_columns[:len(self.colnames)]
+        else:
+            required_columns = self._required_columns
+        plural = 's' if len(required_columns) > 1 else ''
+        if not self._required_columns_relax and len(self.colnames) == 0:
+            raise ValueError(""{} object is invalid - expected '{}' as the first column{} but time series has no columns"".format(self.__class__.__name__, required_columns[0], plural))
+        elif self.colnames[:len(required_columns)] != required_columns:
+            raise ValueError(""{} object is invalid - expected '{}' as the first column{} but found '{}'"".format(self.__class__.__name__, required_columns[0], plural, self.colnames[0]))
+        if self._required_columns_relax and self._required_columns == self.colnames[:len(self._required_columns)]:
+            self._required_columns_relax = False","[{""var"": ""required_columns"", ""rename"": ""validated_columns""}, {""var"": ""plural"", ""rename"": ""plural_suffix""}]"
+./astropy/timeseries/core.py,_delay_required_column_checks,temporarily_suspend_and_enforce_required_column_checks,88,92,"@contextmanager
+def _delay_required_column_checks(self):
+    self._required_columns_enabled = False
+    yield
+    self._required_columns_enabled = True
+    self._check_required_columns()","@contextmanager
+def temporarily_suspend_and_enforce_required_column_checks(self):
+    self._required_columns_enabled = False
+    yield
+    self._required_columns_enabled = True
+    self._check_required_columns()",[]

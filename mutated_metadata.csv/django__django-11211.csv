@@ -1,0 +1,16 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/db/models/fields/__init__.py,get_db_prep_value,prepare_uuid_for_database_storage,2328,2336,"def get_db_prep_value(self, value, connection, prepared=False):
+    if value is None:
+        return None
+    if not isinstance(value, uuid.UUID):
+        value = self.to_python(value)
+    if connection.features.has_native_uuid_field:
+        return value
+    return value.hex","def prepare_uuid_for_database_storage(self, value, connection, prepared=False):
+    if value is None:
+        return None
+    if not isinstance(value, uuid.UUID):
+        value = self.to_python(value)
+    if connection.features.has_native_uuid_field:
+        return value
+    return value.hex",[]

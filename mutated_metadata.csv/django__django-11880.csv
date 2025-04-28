@@ -1,0 +1,12 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/forms/fields.py,__deepcopy__,clone_with_deep_widget,198,203,"def __deepcopy__(self, memo):
+    result = copy.copy(self)
+    memo[id(self)] = result
+    result.widget = copy.deepcopy(self.widget, memo)
+    result.validators = self.validators[:]
+    return result","def clone_with_deep_widget(self, memo):
+    result = copy.copy(self)
+    memo[id(self)] = result
+    result.widget = copy.deepcopy(self.widget, memo)
+    result.validators = self.validators[:]
+    return result","[{""var"": ""result"", ""rename"": ""deepcopy_result_instance""}]"

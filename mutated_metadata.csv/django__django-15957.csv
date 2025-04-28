@@ -1,0 +1,952 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/db/models/fields/related_descriptors.py,create_reverse_many_to_one_manager,generate_reverse_relation_manager,612,875,"def create_reverse_many_to_one_manager(superclass, rel):
+    """"""
+    Create a manager for the reverse side of a many-to-one relation.
+
+    This manager subclasses another manager, generally the default manager of
+    the related model, and adds behaviors specific to many-to-one relations.
+    """"""
+
+    class RelatedManager(superclass):
+
+        def __init__(self, instance):
+            super().__init__()
+            self.instance = instance
+            self.model = rel.related_model
+            self.field = rel.field
+            self.core_filters = {self.field.name: instance}
+            if self.instance.pk is None:
+                raise ValueError(f'{instance.__class__.__name__!r} instance needs to have a primary key value before this relationship can be used.')
+
+        def __call__(self, *, manager):
+            manager = getattr(self.model, manager)
+            manager_class = create_reverse_many_to_one_manager(manager.__class__, rel)
+            return manager_class(self.instance)
+        do_not_call_in_templates = True
+
+        def _check_fk_val(self):
+            for field in self.field.foreign_related_fields:
+                if getattr(self.instance, field.attname) is None:
+                    raise ValueError(f'""{self.instance!r}"" needs to have a value for field ""{field.attname}"" before this relationship can be used.')
+
+        def _apply_rel_filters(self, queryset):
+            """"""
+            Filter the queryset for the instance this manager is bound to.
+            """"""
+            db = self._db or router.db_for_read(self.model, instance=self.instance)
+            empty_strings_as_null = connections[db].features.interprets_empty_strings_as_nulls
+            queryset._add_hints(instance=self.instance)
+            if self._db:
+                queryset = queryset.using(self._db)
+            queryset._defer_next_filter = True
+            queryset = queryset.filter(**self.core_filters)
+            for field in self.field.foreign_related_fields:
+                val = getattr(self.instance, field.attname)
+                if val is None or (val == '' and empty_strings_as_null):
+                    return queryset.none()
+            if self.field.many_to_one:
+                try:
+                    target_field = self.field.target_field
+                except FieldError:
+                    rel_obj_id = tuple([getattr(self.instance, target_field.attname) for target_field in self.field.path_infos[-1].target_fields])
+                else:
+                    rel_obj_id = getattr(self.instance, target_field.attname)
+                queryset._known_related_objects = {self.field: {rel_obj_id: self.instance}}
+            return queryset
+
+        def _remove_prefetched_objects(self):
+            try:
+                self.instance._prefetched_objects_cache.pop(self.field.remote_field.get_cache_name())
+            except (AttributeError, KeyError):
+                pass
+
+        def get_queryset(self):
+            try:
+                return self.instance._prefetched_objects_cache[self.field.remote_field.get_cache_name()]
+            except (AttributeError, KeyError):
+                queryset = super().get_queryset()
+                return self._apply_rel_filters(queryset)
+
+        def get_prefetch_queryset(self, instances, queryset=None):
+            if queryset is None:
+                queryset = super().get_queryset()
+            queryset._add_hints(instance=instances[0])
+            queryset = queryset.using(queryset._db or self._db)
+            rel_obj_attr = self.field.get_local_related_value
+            instance_attr = self.field.get_foreign_related_value
+            instances_dict = {instance_attr(inst): inst for inst in instances}
+            query = {'%s__in' % self.field.name: instances}
+            queryset = queryset.filter(**query)
+            for rel_obj in queryset:
+                if not self.field.is_cached(rel_obj):
+                    instance = instances_dict[rel_obj_attr(rel_obj)]
+                    setattr(rel_obj, self.field.name, instance)
+            cache_name = self.field.remote_field.get_cache_name()
+            return (queryset, rel_obj_attr, instance_attr, False, cache_name, False)
+
+        def add(self, *objs, bulk=True):
+            self._check_fk_val()
+            self._remove_prefetched_objects()
+            db = router.db_for_write(self.model, instance=self.instance)
+
+            def check_and_update_obj(obj):
+                if not isinstance(obj, self.model):
+                    raise TypeError(""'%s' instance expected, got %r"" % (self.model._meta.object_name, obj))
+                setattr(obj, self.field.name, self.instance)
+            if bulk:
+                pks = []
+                for obj in objs:
+                    check_and_update_obj(obj)
+                    if obj._state.adding or obj._state.db != db:
+                        raise ValueError(""%r instance isn't saved. Use bulk=False or save the object first."" % obj)
+                    pks.append(obj.pk)
+                self.model._base_manager.using(db).filter(pk__in=pks).update(**{self.field.name: self.instance})
+            else:
+                with transaction.atomic(using=db, savepoint=False):
+                    for obj in objs:
+                        check_and_update_obj(obj)
+                        obj.save()
+        add.alters_data = True
+
+        def create(self, **kwargs):
+            self._check_fk_val()
+            kwargs[self.field.name] = self.instance
+            db = router.db_for_write(self.model, instance=self.instance)
+            return super(RelatedManager, self.db_manager(db)).create(**kwargs)
+        create.alters_data = True
+
+        def get_or_create(self, **kwargs):
+            self._check_fk_val()
+            kwargs[self.field.name] = self.instance
+            db = router.db_for_write(self.model, instance=self.instance)
+            return super(RelatedManager, self.db_manager(db)).get_or_create(**kwargs)
+        get_or_create.alters_data = True
+
+        def update_or_create(self, **kwargs):
+            self._check_fk_val()
+            kwargs[self.field.name] = self.instance
+            db = router.db_for_write(self.model, instance=self.instance)
+            return super(RelatedManager, self.db_manager(db)).update_or_create(**kwargs)
+        update_or_create.alters_data = True
+        if rel.field.null:
+
+            def remove(self, *objs, bulk=True):
+                if not objs:
+                    return
+                self._check_fk_val()
+                val = self.field.get_foreign_related_value(self.instance)
+                old_ids = set()
+                for obj in objs:
+                    if not isinstance(obj, self.model):
+                        raise TypeError(""'%s' instance expected, got %r"" % (self.model._meta.object_name, obj))
+                    if self.field.get_local_related_value(obj) == val:
+                        old_ids.add(obj.pk)
+                    else:
+                        raise self.field.remote_field.model.DoesNotExist('%r is not related to %r.' % (obj, self.instance))
+                self._clear(self.filter(pk__in=old_ids), bulk)
+            remove.alters_data = True
+
+            def clear(self, *, bulk=True):
+                self._check_fk_val()
+                self._clear(self, bulk)
+            clear.alters_data = True
+
+            def _clear(self, queryset, bulk):
+                self._remove_prefetched_objects()
+                db = router.db_for_write(self.model, instance=self.instance)
+                queryset = queryset.using(db)
+                if bulk:
+                    queryset.update(**{self.field.name: None})
+                else:
+                    with transaction.atomic(using=db, savepoint=False):
+                        for obj in queryset:
+                            setattr(obj, self.field.name, None)
+                            obj.save(update_fields=[self.field.name])
+            _clear.alters_data = True
+
+        def set(self, objs, *, bulk=True, clear=False):
+            self._check_fk_val()
+            objs = tuple(objs)
+            if self.field.null:
+                db = router.db_for_write(self.model, instance=self.instance)
+                with transaction.atomic(using=db, savepoint=False):
+                    if clear:
+                        self.clear(bulk=bulk)
+                        self.add(*objs, bulk=bulk)
+                    else:
+                        old_objs = set(self.using(db).all())
+                        new_objs = []
+                        for obj in objs:
+                            if obj in old_objs:
+                                old_objs.remove(obj)
+                            else:
+                                new_objs.append(obj)
+                        self.remove(*old_objs, bulk=bulk)
+                        self.add(*new_objs, bulk=bulk)
+            else:
+                self.add(*objs, bulk=bulk)
+        set.alters_data = True
+    return RelatedManager","def generate_reverse_relation_manager(superclass, rel):
+    """"""
+    Create a manager for the reverse side of a many-to-one relation.
+
+    This manager subclasses another manager, generally the default manager of
+    the related model, and adds behaviors specific to many-to-one relations.
+    """"""
+
+    class RelatedManager(superclass):
+
+        def __init__(self, instance):
+            super().__init__()
+            self.instance = instance
+            self.model = rel.related_model
+            self.field = rel.field
+            self.core_filters = {self.field.name: instance}
+            if self.instance.pk is None:
+                raise ValueError(f'{instance.__class__.__name__!r} instance needs to have a primary key value before this relationship can be used.')
+
+        def __call__(self, *, manager):
+            manager = getattr(self.model, manager)
+            manager_class = create_reverse_many_to_one_manager(manager.__class__, rel)
+            return manager_class(self.instance)
+        do_not_call_in_templates = True
+
+        def _check_fk_val(self):
+            for field in self.field.foreign_related_fields:
+                if getattr(self.instance, field.attname) is None:
+                    raise ValueError(f'""{self.instance!r}"" needs to have a value for field ""{field.attname}"" before this relationship can be used.')
+
+        def _apply_rel_filters(self, queryset):
+            """"""
+            Filter the queryset for the instance this manager is bound to.
+            """"""
+            db = self._db or router.db_for_read(self.model, instance=self.instance)
+            empty_strings_as_null = connections[db].features.interprets_empty_strings_as_nulls
+            queryset._add_hints(instance=self.instance)
+            if self._db:
+                queryset = queryset.using(self._db)
+            queryset._defer_next_filter = True
+            queryset = queryset.filter(**self.core_filters)
+            for field in self.field.foreign_related_fields:
+                val = getattr(self.instance, field.attname)
+                if val is None or (val == '' and empty_strings_as_null):
+                    return queryset.none()
+            if self.field.many_to_one:
+                try:
+                    target_field = self.field.target_field
+                except FieldError:
+                    rel_obj_id = tuple([getattr(self.instance, target_field.attname) for target_field in self.field.path_infos[-1].target_fields])
+                else:
+                    rel_obj_id = getattr(self.instance, target_field.attname)
+                queryset._known_related_objects = {self.field: {rel_obj_id: self.instance}}
+            return queryset
+
+        def _remove_prefetched_objects(self):
+            try:
+                self.instance._prefetched_objects_cache.pop(self.field.remote_field.get_cache_name())
+            except (AttributeError, KeyError):
+                pass
+
+        def get_queryset(self):
+            try:
+                return self.instance._prefetched_objects_cache[self.field.remote_field.get_cache_name()]
+            except (AttributeError, KeyError):
+                queryset = super().get_queryset()
+                return self._apply_rel_filters(queryset)
+
+        def get_prefetch_queryset(self, instances, queryset=None):
+            if queryset is None:
+                queryset = super().get_queryset()
+            queryset._add_hints(instance=instances[0])
+            queryset = queryset.using(queryset._db or self._db)
+            rel_obj_attr = self.field.get_local_related_value
+            instance_attr = self.field.get_foreign_related_value
+            instances_dict = {instance_attr(inst): inst for inst in instances}
+            query = {'%s__in' % self.field.name: instances}
+            queryset = queryset.filter(**query)
+            for rel_obj in queryset:
+                if not self.field.is_cached(rel_obj):
+                    instance = instances_dict[rel_obj_attr(rel_obj)]
+                    setattr(rel_obj, self.field.name, instance)
+            cache_name = self.field.remote_field.get_cache_name()
+            return (queryset, rel_obj_attr, instance_attr, False, cache_name, False)
+
+        def add(self, *objs, bulk=True):
+            self._check_fk_val()
+            self._remove_prefetched_objects()
+            db = router.db_for_write(self.model, instance=self.instance)
+
+            def check_and_update_obj(obj):
+                if not isinstance(obj, self.model):
+                    raise TypeError(""'%s' instance expected, got %r"" % (self.model._meta.object_name, obj))
+                setattr(obj, self.field.name, self.instance)
+            if bulk:
+                pks = []
+                for obj in objs:
+                    check_and_update_obj(obj)
+                    if obj._state.adding or obj._state.db != db:
+                        raise ValueError(""%r instance isn't saved. Use bulk=False or save the object first."" % obj)
+                    pks.append(obj.pk)
+                self.model._base_manager.using(db).filter(pk__in=pks).update(**{self.field.name: self.instance})
+            else:
+                with transaction.atomic(using=db, savepoint=False):
+                    for obj in objs:
+                        check_and_update_obj(obj)
+                        obj.save()
+        add.alters_data = True
+
+        def create(self, **kwargs):
+            self._check_fk_val()
+            kwargs[self.field.name] = self.instance
+            db = router.db_for_write(self.model, instance=self.instance)
+            return super(RelatedManager, self.db_manager(db)).create(**kwargs)
+        create.alters_data = True
+
+        def get_or_create(self, **kwargs):
+            self._check_fk_val()
+            kwargs[self.field.name] = self.instance
+            db = router.db_for_write(self.model, instance=self.instance)
+            return super(RelatedManager, self.db_manager(db)).get_or_create(**kwargs)
+        get_or_create.alters_data = True
+
+        def update_or_create(self, **kwargs):
+            self._check_fk_val()
+            kwargs[self.field.name] = self.instance
+            db = router.db_for_write(self.model, instance=self.instance)
+            return super(RelatedManager, self.db_manager(db)).update_or_create(**kwargs)
+        update_or_create.alters_data = True
+        if rel.field.null:
+
+            def remove(self, *objs, bulk=True):
+                if not objs:
+                    return
+                self._check_fk_val()
+                val = self.field.get_foreign_related_value(self.instance)
+                old_ids = set()
+                for obj in objs:
+                    if not isinstance(obj, self.model):
+                        raise TypeError(""'%s' instance expected, got %r"" % (self.model._meta.object_name, obj))
+                    if self.field.get_local_related_value(obj) == val:
+                        old_ids.add(obj.pk)
+                    else:
+                        raise self.field.remote_field.model.DoesNotExist('%r is not related to %r.' % (obj, self.instance))
+                self._clear(self.filter(pk__in=old_ids), bulk)
+            remove.alters_data = True
+
+            def clear(self, *, bulk=True):
+                self._check_fk_val()
+                self._clear(self, bulk)
+            clear.alters_data = True
+
+            def _clear(self, queryset, bulk):
+                self._remove_prefetched_objects()
+                db = router.db_for_write(self.model, instance=self.instance)
+                queryset = queryset.using(db)
+                if bulk:
+                    queryset.update(**{self.field.name: None})
+                else:
+                    with transaction.atomic(using=db, savepoint=False):
+                        for obj in queryset:
+                            setattr(obj, self.field.name, None)
+                            obj.save(update_fields=[self.field.name])
+            _clear.alters_data = True
+
+        def set(self, objs, *, bulk=True, clear=False):
+            self._check_fk_val()
+            objs = tuple(objs)
+            if self.field.null:
+                db = router.db_for_write(self.model, instance=self.instance)
+                with transaction.atomic(using=db, savepoint=False):
+                    if clear:
+                        self.clear(bulk=bulk)
+                        self.add(*objs, bulk=bulk)
+                    else:
+                        old_objs = set(self.using(db).all())
+                        new_objs = []
+                        for obj in objs:
+                            if obj in old_objs:
+                                old_objs.remove(obj)
+                            else:
+                                new_objs.append(obj)
+                        self.remove(*old_objs, bulk=bulk)
+                        self.add(*new_objs, bulk=bulk)
+            else:
+                self.add(*objs, bulk=bulk)
+        set.alters_data = True
+    return RelatedManager","[{""var"": ""val"", ""rename"": ""The original variable `val` is used to retrieve the value of a related field's attribute in the context of a reverse many-to-one relation. A more meaningful name for this variable should reflect its role in holding the instance's related attribute value. Here's""}, {""var"": ""cache_name"", ""rename"": ""reverse_relationship_cache_name""}, {""var"": ""instance_attr"", ""rename"": ""foreign_related_instance_attr""}, {""var"": ""query"", ""rename"": ""related_queryset_manager""}, {""var"": ""do_not_call_in_templates"", ""rename"": ""skip_template_invocation""}, {""var"": ""db"", ""rename"": ""database_router""}, {""var"": ""rel_obj_attr"", ""rename"": ""related_object_attributes""}, {""var"": ""empty_strings_as_null"", ""rename"": ""interpret_empty_strings_as_null""}, {""var"": ""new_objs"", ""rename"": ""new_related_objects""}, {""var"": ""inst"", ""rename"": ""related_instance""}, {""var"": ""target_field"", ""rename"": ""related_target_field""}, {""var"": ""manager_class"", ""rename"": ""ReverseRelationshipManager""}, {""var"": ""field"", ""rename"": ""The variable `field` in the provided context represents a specific field in the relationship object that is central to the manager's operations, particularly with the reverse side of a many-to-one relation in a Django model context. A more descriptive, meaningful name could""}, {""var"": ""pks"", ""rename"": ""primary_keys""}, {""var"": ""rel_obj"", ""rename"": ""related_object""}, {""var"": ""instances_dict"", ""rename"": ""relation_to_instance_map""}, {""var"": ""old_ids"", ""rename"": ""related_object_ids_to_remove""}, {""var"": ""old_objs"", ""rename"": ""existing_related_objects""}, {""var"": ""rel_obj_id"", ""rename"": ""related_object_id""}]"
+./django/db/models/fields/related_descriptors.py,create_forward_many_to_many_manager,generate_many_to_many_relation_manager,936,1419,"def create_forward_many_to_many_manager(superclass, rel, reverse):
+    """"""
+    Create a manager for the either side of a many-to-many relation.
+
+    This manager subclasses another manager, generally the default manager of
+    the related model, and adds behaviors specific to many-to-many relations.
+    """"""
+
+    class ManyRelatedManager(superclass):
+
+        def __init__(self, instance=None):
+            super().__init__()
+            self.instance = instance
+            if not reverse:
+                self.model = rel.model
+                self.query_field_name = rel.field.related_query_name()
+                self.prefetch_cache_name = rel.field.name
+                self.source_field_name = rel.field.m2m_field_name()
+                self.target_field_name = rel.field.m2m_reverse_field_name()
+                self.symmetrical = rel.symmetrical
+            else:
+                self.model = rel.related_model
+                self.query_field_name = rel.field.name
+                self.prefetch_cache_name = rel.field.related_query_name()
+                self.source_field_name = rel.field.m2m_reverse_field_name()
+                self.target_field_name = rel.field.m2m_field_name()
+                self.symmetrical = False
+            self.through = rel.through
+            self.reverse = reverse
+            self.source_field = self.through._meta.get_field(self.source_field_name)
+            self.target_field = self.through._meta.get_field(self.target_field_name)
+            self.core_filters = {}
+            self.pk_field_names = {}
+            for lh_field, rh_field in self.source_field.related_fields:
+                core_filter_key = '%s__%s' % (self.query_field_name, rh_field.name)
+                self.core_filters[core_filter_key] = getattr(instance, rh_field.attname)
+                self.pk_field_names[lh_field.name] = rh_field.name
+            self.related_val = self.source_field.get_foreign_related_value(instance)
+            if None in self.related_val:
+                raise ValueError('""%r"" needs to have a value for field ""%s"" before this many-to-many relationship can be used.' % (instance, self.pk_field_names[self.source_field_name]))
+            if instance.pk is None:
+                raise ValueError('%r instance needs to have a primary key value before a many-to-many relationship can be used.' % instance.__class__.__name__)
+
+        def __call__(self, *, manager):
+            manager = getattr(self.model, manager)
+            manager_class = create_forward_many_to_many_manager(manager.__class__, rel, reverse)
+            return manager_class(instance=self.instance)
+        do_not_call_in_templates = True
+
+        def _build_remove_filters(self, removed_vals):
+            filters = Q.create([(self.source_field_name, self.related_val)])
+            removed_vals_filters = not isinstance(removed_vals, QuerySet) or removed_vals._has_filters()
+            if removed_vals_filters:
+                filters &= Q.create([(f'{self.target_field_name}__in', removed_vals)])
+            if self.symmetrical:
+                symmetrical_filters = Q.create([(self.target_field_name, self.related_val)])
+                if removed_vals_filters:
+                    symmetrical_filters &= Q.create([(f'{self.source_field_name}__in', removed_vals)])
+                filters |= symmetrical_filters
+            return filters
+
+        def _apply_rel_filters(self, queryset):
+            """"""
+            Filter the queryset for the instance this manager is bound to.
+            """"""
+            queryset._add_hints(instance=self.instance)
+            if self._db:
+                queryset = queryset.using(self._db)
+            queryset._defer_next_filter = True
+            return queryset._next_is_sticky().filter(**self.core_filters)
+
+        def _remove_prefetched_objects(self):
+            try:
+                self.instance._prefetched_objects_cache.pop(self.prefetch_cache_name)
+            except (AttributeError, KeyError):
+                pass
+
+        def get_queryset(self):
+            try:
+                return self.instance._prefetched_objects_cache[self.prefetch_cache_name]
+            except (AttributeError, KeyError):
+                queryset = super().get_queryset()
+                return self._apply_rel_filters(queryset)
+
+        def get_prefetch_queryset(self, instances, queryset=None):
+            if queryset is None:
+                queryset = super().get_queryset()
+            queryset._add_hints(instance=instances[0])
+            queryset = queryset.using(queryset._db or self._db)
+            query = {'%s__in' % self.query_field_name: instances}
+            queryset = queryset._next_is_sticky().filter(**query)
+            fk = self.through._meta.get_field(self.source_field_name)
+            join_table = fk.model._meta.db_table
+            connection = connections[queryset.db]
+            qn = connection.ops.quote_name
+            queryset = queryset.extra(select={'_prefetch_related_val_%s' % f.attname: '%s.%s' % (qn(join_table), qn(f.column)) for f in fk.local_related_fields})
+            return (queryset, lambda result: tuple((getattr(result, '_prefetch_related_val_%s' % f.attname) for f in fk.local_related_fields)), lambda inst: tuple((f.get_db_prep_value(getattr(inst, f.attname), connection) for f in fk.foreign_related_fields)), False, self.prefetch_cache_name, False)
+
+        def add(self, *objs, through_defaults=None):
+            self._remove_prefetched_objects()
+            db = router.db_for_write(self.through, instance=self.instance)
+            with transaction.atomic(using=db, savepoint=False):
+                self._add_items(self.source_field_name, self.target_field_name, *objs, through_defaults=through_defaults)
+                if self.symmetrical:
+                    self._add_items(self.target_field_name, self.source_field_name, *objs, through_defaults=through_defaults)
+        add.alters_data = True
+
+        def remove(self, *objs):
+            self._remove_prefetched_objects()
+            self._remove_items(self.source_field_name, self.target_field_name, *objs)
+        remove.alters_data = True
+
+        def clear(self):
+            db = router.db_for_write(self.through, instance=self.instance)
+            with transaction.atomic(using=db, savepoint=False):
+                signals.m2m_changed.send(sender=self.through, action='pre_clear', instance=self.instance, reverse=self.reverse, model=self.model, pk_set=None, using=db)
+                self._remove_prefetched_objects()
+                filters = self._build_remove_filters(super().get_queryset().using(db))
+                self.through._default_manager.using(db).filter(filters).delete()
+                signals.m2m_changed.send(sender=self.through, action='post_clear', instance=self.instance, reverse=self.reverse, model=self.model, pk_set=None, using=db)
+        clear.alters_data = True
+
+        def set(self, objs, *, clear=False, through_defaults=None):
+            objs = tuple(objs)
+            db = router.db_for_write(self.through, instance=self.instance)
+            with transaction.atomic(using=db, savepoint=False):
+                if clear:
+                    self.clear()
+                    self.add(*objs, through_defaults=through_defaults)
+                else:
+                    old_ids = set(self.using(db).values_list(self.target_field.target_field.attname, flat=True))
+                    new_objs = []
+                    for obj in objs:
+                        fk_val = self.target_field.get_foreign_related_value(obj)[0] if isinstance(obj, self.model) else self.target_field.get_prep_value(obj)
+                        if fk_val in old_ids:
+                            old_ids.remove(fk_val)
+                        else:
+                            new_objs.append(obj)
+                    self.remove(*old_ids)
+                    self.add(*new_objs, through_defaults=through_defaults)
+        set.alters_data = True
+
+        def create(self, *, through_defaults=None, **kwargs):
+            db = router.db_for_write(self.instance.__class__, instance=self.instance)
+            new_obj = super(ManyRelatedManager, self.db_manager(db)).create(**kwargs)
+            self.add(new_obj, through_defaults=through_defaults)
+            return new_obj
+        create.alters_data = True
+
+        def get_or_create(self, *, through_defaults=None, **kwargs):
+            db = router.db_for_write(self.instance.__class__, instance=self.instance)
+            obj, created = super(ManyRelatedManager, self.db_manager(db)).get_or_create(**kwargs)
+            if created:
+                self.add(obj, through_defaults=through_defaults)
+            return (obj, created)
+        get_or_create.alters_data = True
+
+        def update_or_create(self, *, through_defaults=None, **kwargs):
+            db = router.db_for_write(self.instance.__class__, instance=self.instance)
+            obj, created = super(ManyRelatedManager, self.db_manager(db)).update_or_create(**kwargs)
+            if created:
+                self.add(obj, through_defaults=through_defaults)
+            return (obj, created)
+        update_or_create.alters_data = True
+
+        def _get_target_ids(self, target_field_name, objs):
+            """"""
+            Return the set of ids of `objs` that the target field references.
+            """"""
+            from django.db.models import Model
+            target_ids = set()
+            target_field = self.through._meta.get_field(target_field_name)
+            for obj in objs:
+                if isinstance(obj, self.model):
+                    if not router.allow_relation(obj, self.instance):
+                        raise ValueError('Cannot add ""%r"": instance is on database ""%s"", value is on database ""%s""' % (obj, self.instance._state.db, obj._state.db))
+                    target_id = target_field.get_foreign_related_value(obj)[0]
+                    if target_id is None:
+                        raise ValueError('Cannot add ""%r"": the value for field ""%s"" is None' % (obj, target_field_name))
+                    target_ids.add(target_id)
+                elif isinstance(obj, Model):
+                    raise TypeError(""'%s' instance expected, got %r"" % (self.model._meta.object_name, obj))
+                else:
+                    target_ids.add(target_field.get_prep_value(obj))
+            return target_ids
+
+        def _get_missing_target_ids(self, source_field_name, target_field_name, db, target_ids):
+            """"""
+            Return the subset of ids of `objs` that aren't already assigned to
+            this relationship.
+            """"""
+            vals = self.through._default_manager.using(db).values_list(target_field_name, flat=True).filter(**{source_field_name: self.related_val[0], '%s__in' % target_field_name: target_ids})
+            return target_ids.difference(vals)
+
+        def _get_add_plan(self, db, source_field_name):
+            """"""
+            Return a boolean triple of the way the add should be performed.
+
+            The first element is whether or not bulk_create(ignore_conflicts)
+            can be used, the second whether or not signals must be sent, and
+            the third element is whether or not the immediate bulk insertion
+            with conflicts ignored can be performed.
+            """"""
+            can_ignore_conflicts = self.through._meta.auto_created is not False and connections[db].features.supports_ignore_conflicts
+            must_send_signals = (self.reverse or source_field_name == self.source_field_name) and signals.m2m_changed.has_listeners(self.through)
+            return (can_ignore_conflicts, must_send_signals, can_ignore_conflicts and (not must_send_signals))
+
+        def _add_items(self, source_field_name, target_field_name, *objs, through_defaults=None):
+            if not objs:
+                return
+            through_defaults = dict(resolve_callables(through_defaults or {}))
+            target_ids = self._get_target_ids(target_field_name, objs)
+            db = router.db_for_write(self.through, instance=self.instance)
+            can_ignore_conflicts, must_send_signals, can_fast_add = self._get_add_plan(db, source_field_name)
+            if can_fast_add:
+                self.through._default_manager.using(db).bulk_create([self.through(**{'%s_id' % source_field_name: self.related_val[0], '%s_id' % target_field_name: target_id}) for target_id in target_ids], ignore_conflicts=True)
+                return
+            missing_target_ids = self._get_missing_target_ids(source_field_name, target_field_name, db, target_ids)
+            with transaction.atomic(using=db, savepoint=False):
+                if must_send_signals:
+                    signals.m2m_changed.send(sender=self.through, action='pre_add', instance=self.instance, reverse=self.reverse, model=self.model, pk_set=missing_target_ids, using=db)
+                self.through._default_manager.using(db).bulk_create([self.through(**through_defaults, **{'%s_id' % source_field_name: self.related_val[0], '%s_id' % target_field_name: target_id}) for target_id in missing_target_ids], ignore_conflicts=can_ignore_conflicts)
+                if must_send_signals:
+                    signals.m2m_changed.send(sender=self.through, action='post_add', instance=self.instance, reverse=self.reverse, model=self.model, pk_set=missing_target_ids, using=db)
+
+        def _remove_items(self, source_field_name, target_field_name, *objs):
+            if not objs:
+                return
+            old_ids = set()
+            for obj in objs:
+                if isinstance(obj, self.model):
+                    fk_val = self.target_field.get_foreign_related_value(obj)[0]
+                    old_ids.add(fk_val)
+                else:
+                    old_ids.add(obj)
+            db = router.db_for_write(self.through, instance=self.instance)
+            with transaction.atomic(using=db, savepoint=False):
+                signals.m2m_changed.send(sender=self.through, action='pre_remove', instance=self.instance, reverse=self.reverse, model=self.model, pk_set=old_ids, using=db)
+                target_model_qs = super().get_queryset()
+                if target_model_qs._has_filters():
+                    old_vals = target_model_qs.using(db).filter(**{'%s__in' % self.target_field.target_field.attname: old_ids})
+                else:
+                    old_vals = old_ids
+                filters = self._build_remove_filters(old_vals)
+                self.through._default_manager.using(db).filter(filters).delete()
+                signals.m2m_changed.send(sender=self.through, action='post_remove', instance=self.instance, reverse=self.reverse, model=self.model, pk_set=old_ids, using=db)
+    return ManyRelatedManager","def generate_many_to_many_relation_manager(superclass, rel, reverse):
+    """"""
+    Create a manager for the either side of a many-to-many relation.
+
+    This manager subclasses another manager, generally the default manager of
+    the related model, and adds behaviors specific to many-to-many relations.
+    """"""
+
+    class ManyRelatedManager(superclass):
+
+        def __init__(self, instance=None):
+            super().__init__()
+            self.instance = instance
+            if not reverse:
+                self.model = rel.model
+                self.query_field_name = rel.field.related_query_name()
+                self.prefetch_cache_name = rel.field.name
+                self.source_field_name = rel.field.m2m_field_name()
+                self.target_field_name = rel.field.m2m_reverse_field_name()
+                self.symmetrical = rel.symmetrical
+            else:
+                self.model = rel.related_model
+                self.query_field_name = rel.field.name
+                self.prefetch_cache_name = rel.field.related_query_name()
+                self.source_field_name = rel.field.m2m_reverse_field_name()
+                self.target_field_name = rel.field.m2m_field_name()
+                self.symmetrical = False
+            self.through = rel.through
+            self.reverse = reverse
+            self.source_field = self.through._meta.get_field(self.source_field_name)
+            self.target_field = self.through._meta.get_field(self.target_field_name)
+            self.core_filters = {}
+            self.pk_field_names = {}
+            for lh_field, rh_field in self.source_field.related_fields:
+                core_filter_key = '%s__%s' % (self.query_field_name, rh_field.name)
+                self.core_filters[core_filter_key] = getattr(instance, rh_field.attname)
+                self.pk_field_names[lh_field.name] = rh_field.name
+            self.related_val = self.source_field.get_foreign_related_value(instance)
+            if None in self.related_val:
+                raise ValueError('""%r"" needs to have a value for field ""%s"" before this many-to-many relationship can be used.' % (instance, self.pk_field_names[self.source_field_name]))
+            if instance.pk is None:
+                raise ValueError('%r instance needs to have a primary key value before a many-to-many relationship can be used.' % instance.__class__.__name__)
+
+        def __call__(self, *, manager):
+            manager = getattr(self.model, manager)
+            manager_class = create_forward_many_to_many_manager(manager.__class__, rel, reverse)
+            return manager_class(instance=self.instance)
+        do_not_call_in_templates = True
+
+        def _build_remove_filters(self, removed_vals):
+            filters = Q.create([(self.source_field_name, self.related_val)])
+            removed_vals_filters = not isinstance(removed_vals, QuerySet) or removed_vals._has_filters()
+            if removed_vals_filters:
+                filters &= Q.create([(f'{self.target_field_name}__in', removed_vals)])
+            if self.symmetrical:
+                symmetrical_filters = Q.create([(self.target_field_name, self.related_val)])
+                if removed_vals_filters:
+                    symmetrical_filters &= Q.create([(f'{self.source_field_name}__in', removed_vals)])
+                filters |= symmetrical_filters
+            return filters
+
+        def _apply_rel_filters(self, queryset):
+            """"""
+            Filter the queryset for the instance this manager is bound to.
+            """"""
+            queryset._add_hints(instance=self.instance)
+            if self._db:
+                queryset = queryset.using(self._db)
+            queryset._defer_next_filter = True
+            return queryset._next_is_sticky().filter(**self.core_filters)
+
+        def _remove_prefetched_objects(self):
+            try:
+                self.instance._prefetched_objects_cache.pop(self.prefetch_cache_name)
+            except (AttributeError, KeyError):
+                pass
+
+        def get_queryset(self):
+            try:
+                return self.instance._prefetched_objects_cache[self.prefetch_cache_name]
+            except (AttributeError, KeyError):
+                queryset = super().get_queryset()
+                return self._apply_rel_filters(queryset)
+
+        def get_prefetch_queryset(self, instances, queryset=None):
+            if queryset is None:
+                queryset = super().get_queryset()
+            queryset._add_hints(instance=instances[0])
+            queryset = queryset.using(queryset._db or self._db)
+            query = {'%s__in' % self.query_field_name: instances}
+            queryset = queryset._next_is_sticky().filter(**query)
+            fk = self.through._meta.get_field(self.source_field_name)
+            join_table = fk.model._meta.db_table
+            connection = connections[queryset.db]
+            qn = connection.ops.quote_name
+            queryset = queryset.extra(select={'_prefetch_related_val_%s' % f.attname: '%s.%s' % (qn(join_table), qn(f.column)) for f in fk.local_related_fields})
+            return (queryset, lambda result: tuple((getattr(result, '_prefetch_related_val_%s' % f.attname) for f in fk.local_related_fields)), lambda inst: tuple((f.get_db_prep_value(getattr(inst, f.attname), connection) for f in fk.foreign_related_fields)), False, self.prefetch_cache_name, False)
+
+        def add(self, *objs, through_defaults=None):
+            self._remove_prefetched_objects()
+            db = router.db_for_write(self.through, instance=self.instance)
+            with transaction.atomic(using=db, savepoint=False):
+                self._add_items(self.source_field_name, self.target_field_name, *objs, through_defaults=through_defaults)
+                if self.symmetrical:
+                    self._add_items(self.target_field_name, self.source_field_name, *objs, through_defaults=through_defaults)
+        add.alters_data = True
+
+        def remove(self, *objs):
+            self._remove_prefetched_objects()
+            self._remove_items(self.source_field_name, self.target_field_name, *objs)
+        remove.alters_data = True
+
+        def clear(self):
+            db = router.db_for_write(self.through, instance=self.instance)
+            with transaction.atomic(using=db, savepoint=False):
+                signals.m2m_changed.send(sender=self.through, action='pre_clear', instance=self.instance, reverse=self.reverse, model=self.model, pk_set=None, using=db)
+                self._remove_prefetched_objects()
+                filters = self._build_remove_filters(super().get_queryset().using(db))
+                self.through._default_manager.using(db).filter(filters).delete()
+                signals.m2m_changed.send(sender=self.through, action='post_clear', instance=self.instance, reverse=self.reverse, model=self.model, pk_set=None, using=db)
+        clear.alters_data = True
+
+        def set(self, objs, *, clear=False, through_defaults=None):
+            objs = tuple(objs)
+            db = router.db_for_write(self.through, instance=self.instance)
+            with transaction.atomic(using=db, savepoint=False):
+                if clear:
+                    self.clear()
+                    self.add(*objs, through_defaults=through_defaults)
+                else:
+                    old_ids = set(self.using(db).values_list(self.target_field.target_field.attname, flat=True))
+                    new_objs = []
+                    for obj in objs:
+                        fk_val = self.target_field.get_foreign_related_value(obj)[0] if isinstance(obj, self.model) else self.target_field.get_prep_value(obj)
+                        if fk_val in old_ids:
+                            old_ids.remove(fk_val)
+                        else:
+                            new_objs.append(obj)
+                    self.remove(*old_ids)
+                    self.add(*new_objs, through_defaults=through_defaults)
+        set.alters_data = True
+
+        def create(self, *, through_defaults=None, **kwargs):
+            db = router.db_for_write(self.instance.__class__, instance=self.instance)
+            new_obj = super(ManyRelatedManager, self.db_manager(db)).create(**kwargs)
+            self.add(new_obj, through_defaults=through_defaults)
+            return new_obj
+        create.alters_data = True
+
+        def get_or_create(self, *, through_defaults=None, **kwargs):
+            db = router.db_for_write(self.instance.__class__, instance=self.instance)
+            obj, created = super(ManyRelatedManager, self.db_manager(db)).get_or_create(**kwargs)
+            if created:
+                self.add(obj, through_defaults=through_defaults)
+            return (obj, created)
+        get_or_create.alters_data = True
+
+        def update_or_create(self, *, through_defaults=None, **kwargs):
+            db = router.db_for_write(self.instance.__class__, instance=self.instance)
+            obj, created = super(ManyRelatedManager, self.db_manager(db)).update_or_create(**kwargs)
+            if created:
+                self.add(obj, through_defaults=through_defaults)
+            return (obj, created)
+        update_or_create.alters_data = True
+
+        def _get_target_ids(self, target_field_name, objs):
+            """"""
+            Return the set of ids of `objs` that the target field references.
+            """"""
+            from django.db.models import Model
+            target_ids = set()
+            target_field = self.through._meta.get_field(target_field_name)
+            for obj in objs:
+                if isinstance(obj, self.model):
+                    if not router.allow_relation(obj, self.instance):
+                        raise ValueError('Cannot add ""%r"": instance is on database ""%s"", value is on database ""%s""' % (obj, self.instance._state.db, obj._state.db))
+                    target_id = target_field.get_foreign_related_value(obj)[0]
+                    if target_id is None:
+                        raise ValueError('Cannot add ""%r"": the value for field ""%s"" is None' % (obj, target_field_name))
+                    target_ids.add(target_id)
+                elif isinstance(obj, Model):
+                    raise TypeError(""'%s' instance expected, got %r"" % (self.model._meta.object_name, obj))
+                else:
+                    target_ids.add(target_field.get_prep_value(obj))
+            return target_ids
+
+        def _get_missing_target_ids(self, source_field_name, target_field_name, db, target_ids):
+            """"""
+            Return the subset of ids of `objs` that aren't already assigned to
+            this relationship.
+            """"""
+            vals = self.through._default_manager.using(db).values_list(target_field_name, flat=True).filter(**{source_field_name: self.related_val[0], '%s__in' % target_field_name: target_ids})
+            return target_ids.difference(vals)
+
+        def _get_add_plan(self, db, source_field_name):
+            """"""
+            Return a boolean triple of the way the add should be performed.
+
+            The first element is whether or not bulk_create(ignore_conflicts)
+            can be used, the second whether or not signals must be sent, and
+            the third element is whether or not the immediate bulk insertion
+            with conflicts ignored can be performed.
+            """"""
+            can_ignore_conflicts = self.through._meta.auto_created is not False and connections[db].features.supports_ignore_conflicts
+            must_send_signals = (self.reverse or source_field_name == self.source_field_name) and signals.m2m_changed.has_listeners(self.through)
+            return (can_ignore_conflicts, must_send_signals, can_ignore_conflicts and (not must_send_signals))
+
+        def _add_items(self, source_field_name, target_field_name, *objs, through_defaults=None):
+            if not objs:
+                return
+            through_defaults = dict(resolve_callables(through_defaults or {}))
+            target_ids = self._get_target_ids(target_field_name, objs)
+            db = router.db_for_write(self.through, instance=self.instance)
+            can_ignore_conflicts, must_send_signals, can_fast_add = self._get_add_plan(db, source_field_name)
+            if can_fast_add:
+                self.through._default_manager.using(db).bulk_create([self.through(**{'%s_id' % source_field_name: self.related_val[0], '%s_id' % target_field_name: target_id}) for target_id in target_ids], ignore_conflicts=True)
+                return
+            missing_target_ids = self._get_missing_target_ids(source_field_name, target_field_name, db, target_ids)
+            with transaction.atomic(using=db, savepoint=False):
+                if must_send_signals:
+                    signals.m2m_changed.send(sender=self.through, action='pre_add', instance=self.instance, reverse=self.reverse, model=self.model, pk_set=missing_target_ids, using=db)
+                self.through._default_manager.using(db).bulk_create([self.through(**through_defaults, **{'%s_id' % source_field_name: self.related_val[0], '%s_id' % target_field_name: target_id}) for target_id in missing_target_ids], ignore_conflicts=can_ignore_conflicts)
+                if must_send_signals:
+                    signals.m2m_changed.send(sender=self.through, action='post_add', instance=self.instance, reverse=self.reverse, model=self.model, pk_set=missing_target_ids, using=db)
+
+        def _remove_items(self, source_field_name, target_field_name, *objs):
+            if not objs:
+                return
+            old_ids = set()
+            for obj in objs:
+                if isinstance(obj, self.model):
+                    fk_val = self.target_field.get_foreign_related_value(obj)[0]
+                    old_ids.add(fk_val)
+                else:
+                    old_ids.add(obj)
+            db = router.db_for_write(self.through, instance=self.instance)
+            with transaction.atomic(using=db, savepoint=False):
+                signals.m2m_changed.send(sender=self.through, action='pre_remove', instance=self.instance, reverse=self.reverse, model=self.model, pk_set=old_ids, using=db)
+                target_model_qs = super().get_queryset()
+                if target_model_qs._has_filters():
+                    old_vals = target_model_qs.using(db).filter(**{'%s__in' % self.target_field.target_field.attname: old_ids})
+                else:
+                    old_vals = old_ids
+                filters = self._build_remove_filters(old_vals)
+                self.through._default_manager.using(db).filter(filters).delete()
+                signals.m2m_changed.send(sender=self.through, action='post_remove', instance=self.instance, reverse=self.reverse, model=self.model, pk_set=old_ids, using=db)
+    return ManyRelatedManager","[{""var"": ""filters"", ""rename"": ""relation_delete_filters""}, {""var"": ""target_model_qs"", ""rename"": ""related_model_queryset""}, {""var"": ""fk_val"", ""rename"": ""foreign_key_value""}, {""var"": ""new_obj"", ""rename"": ""generated_manager_instance""}, {""var"": ""obj"", ""rename"": ""related_manager_instance""}, {""var"": ""can_fast_add"", ""rename"": ""can_use_fast_addition""}, {""var"": ""must_send_signals"", ""rename"": ""requires_signal_emission""}, {""var"": ""missing_target_ids"", ""rename"": ""unlinked_target_ids""}, {""var"": ""query"", ""rename"": ""relationship_manager_initializer""}, {""var"": ""do_not_call_in_templates"", ""rename"": ""manager_callable_override""}, {""var"": ""db"", ""rename"": ""database_connection""}, {""var"": ""removed_vals_filters"", ""rename"": ""has_removed_values_filters""}, {""var"": ""fk"", ""rename"": ""sourceForeignKey""}, {""var"": ""target_id"", ""rename"": ""related_target_identifier""}, {""var"": ""new_objs"", ""rename"": ""new_related_objects_to_add""}, {""var"": ""join_table"", ""rename"": ""relationship_manager_join_table""}, {""var"": ""vals"", ""rename"": ""existing_relation_ids""}, {""var"": ""target_ids"", ""rename"": ""related_instance_ids""}, {""var"": ""symmetrical_filters"", ""rename"": ""bidirectional_relation_filters""}, {""var"": ""core_filter_key"", ""rename"": ""relation_core_filter_key""}, {""var"": ""target_field"", ""rename"": ""related_entity_field_name""}, {""var"": ""manager_class"", ""rename"": ""ManyToManyRelationManager""}, {""var"": ""rh_field"", ""rename"": ""right_hand_field""}, {""var"": ""qn"", ""rename"": ""quoted_name""}, {""var"": ""can_ignore_conflicts"", ""rename"": ""supports_conflict_ignoring""}, {""var"": ""created"", ""rename"": ""many_to_many_manager_created_flag""}, {""var"": ""connection"", ""rename"": ""database_connection""}, {""var"": ""f"", ""rename"": ""forward_m2m_manager_creator""}, {""var"": ""old_ids"", ""rename"": ""existing_target_ids""}, {""var"": ""old_vals"", ""rename"": ""previous_related_values""}, {""var"": ""lh_field"", ""rename"": ""python\nleft_hand_field""}]"
+./django/db/models/fields/related_descriptors.py,__init__,initialize_field_with_relationship,97,98,"def __init__(self, field_with_rel):
+    self.field = field_with_rel","def initialize_field_with_relationship(self, field_with_rel):
+    self.field = field_with_rel",[]
+./django/db/models/fields/related_descriptors.py,RelatedObjectDoesNotExist,GenerateRelatedObjectMissingException,101,116,"@cached_property
+def RelatedObjectDoesNotExist(self):
+    return type('RelatedObjectDoesNotExist', (self.field.remote_field.model.DoesNotExist, AttributeError), {'__module__': self.field.model.__module__, '__qualname__': '%s.%s.RelatedObjectDoesNotExist' % (self.field.model.__qualname__, self.field.name)})","@cached_property
+def GenerateRelatedObjectMissingException(self):
+    return type('RelatedObjectDoesNotExist', (self.field.remote_field.model.DoesNotExist, AttributeError), {'__module__': self.field.model.__module__, '__qualname__': '%s.%s.RelatedObjectDoesNotExist' % (self.field.model.__qualname__, self.field.name)})",[]
+./django/db/models/fields/related_descriptors.py,add,associate_and_save_objects,733,768,"def add(self, *objs, bulk=True):
+    self._check_fk_val()
+    self._remove_prefetched_objects()
+    db = router.db_for_write(self.model, instance=self.instance)
+
+    def check_and_update_obj(obj):
+        if not isinstance(obj, self.model):
+            raise TypeError(""'%s' instance expected, got %r"" % (self.model._meta.object_name, obj))
+        setattr(obj, self.field.name, self.instance)
+    if bulk:
+        pks = []
+        for obj in objs:
+            check_and_update_obj(obj)
+            if obj._state.adding or obj._state.db != db:
+                raise ValueError(""%r instance isn't saved. Use bulk=False or save the object first."" % obj)
+            pks.append(obj.pk)
+        self.model._base_manager.using(db).filter(pk__in=pks).update(**{self.field.name: self.instance})
+    else:
+        with transaction.atomic(using=db, savepoint=False):
+            for obj in objs:
+                check_and_update_obj(obj)
+                obj.save()","def associate_and_save_objects(self, *objs, bulk=True):
+    self._check_fk_val()
+    self._remove_prefetched_objects()
+    db = router.db_for_write(self.model, instance=self.instance)
+
+    def check_and_update_obj(obj):
+        if not isinstance(obj, self.model):
+            raise TypeError(""'%s' instance expected, got %r"" % (self.model._meta.object_name, obj))
+        setattr(obj, self.field.name, self.instance)
+    if bulk:
+        pks = []
+        for obj in objs:
+            check_and_update_obj(obj)
+            if obj._state.adding or obj._state.db != db:
+                raise ValueError(""%r instance isn't saved. Use bulk=False or save the object first."" % obj)
+            pks.append(obj.pk)
+        self.model._base_manager.using(db).filter(pk__in=pks).update(**{self.field.name: self.instance})
+    else:
+        with transaction.atomic(using=db, savepoint=False):
+            for obj in objs:
+                check_and_update_obj(obj)
+                obj.save()","[{""var"": ""db"", ""rename"": ""target_database""}, {""var"": ""pks"", ""rename"": ""primary_keys_to_update""}]"
+./django/db/models/fields/related_descriptors.py,get_prefetch_queryset,generate_prefetch_related_queryset,1047,1089,"def get_prefetch_queryset(self, instances, queryset=None):
+    if queryset is None:
+        queryset = super().get_queryset()
+    queryset._add_hints(instance=instances[0])
+    queryset = queryset.using(queryset._db or self._db)
+    query = {'%s__in' % self.query_field_name: instances}
+    queryset = queryset._next_is_sticky().filter(**query)
+    fk = self.through._meta.get_field(self.source_field_name)
+    join_table = fk.model._meta.db_table
+    connection = connections[queryset.db]
+    qn = connection.ops.quote_name
+    queryset = queryset.extra(select={'_prefetch_related_val_%s' % f.attname: '%s.%s' % (qn(join_table), qn(f.column)) for f in fk.local_related_fields})
+    return (queryset, lambda result: tuple((getattr(result, '_prefetch_related_val_%s' % f.attname) for f in fk.local_related_fields)), lambda inst: tuple((f.get_db_prep_value(getattr(inst, f.attname), connection) for f in fk.foreign_related_fields)), False, self.prefetch_cache_name, False)","def generate_prefetch_related_queryset(self, instances, queryset=None):
+    if queryset is None:
+        queryset = super().get_queryset()
+    queryset._add_hints(instance=instances[0])
+    queryset = queryset.using(queryset._db or self._db)
+    query = {'%s__in' % self.query_field_name: instances}
+    queryset = queryset._next_is_sticky().filter(**query)
+    fk = self.through._meta.get_field(self.source_field_name)
+    join_table = fk.model._meta.db_table
+    connection = connections[queryset.db]
+    qn = connection.ops.quote_name
+    queryset = queryset.extra(select={'_prefetch_related_val_%s' % f.attname: '%s.%s' % (qn(join_table), qn(f.column)) for f in fk.local_related_fields})
+    return (queryset, lambda result: tuple((getattr(result, '_prefetch_related_val_%s' % f.attname) for f in fk.local_related_fields)), lambda inst: tuple((f.get_db_prep_value(getattr(inst, f.attname), connection) for f in fk.foreign_related_fields)), False, self.prefetch_cache_name, False)","[{""var"": ""connection"", ""rename"": ""database_connection""}, {""var"": ""query"", ""rename"": ""instance_filter_criteria""}, {""var"": ""join_table"", ""rename"": ""foreign_key_join_table""}, {""var"": ""f"", ""rename"": ""foreign_key_field""}, {""var"": ""qn"", ""rename"": ""quote_name_function""}, {""var"": ""fk"", ""rename"": ""foreign_key_field""}]"
+./django/db/models/fields/related_descriptors.py,check_and_update_obj,validate_and_assign_model_field,738,747,"def check_and_update_obj(obj):
+    if not isinstance(obj, self.model):
+        raise TypeError(""'%s' instance expected, got %r"" % (self.model._meta.object_name, obj))
+    setattr(obj, self.field.name, self.instance)","def validate_and_assign_model_field(obj):
+    if not isinstance(obj, self.model):
+        raise TypeError(""'%s' instance expected, got %r"" % (self.model._meta.object_name, obj))
+    setattr(obj, self.field.name, self.instance)",[]

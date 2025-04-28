@@ -1,0 +1,206 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./lib/matplotlib/mlab.py,_spectral_helper,_compute_spectral_analysis,291,446,"def _spectral_helper(x, y=None, NFFT=None, Fs=None, detrend_func=None, window=None, noverlap=None, pad_to=None, sides=None, scale_by_freq=None, mode=None):
+    """"""
+    Private helper implementing the common parts between the psd, csd,
+    spectrogram and complex, magnitude, angle, and phase spectrums.
+    """"""
+    if y is None:
+        same_data = True
+    else:
+        same_data = y is x
+    if Fs is None:
+        Fs = 2
+    if noverlap is None:
+        noverlap = 0
+    if detrend_func is None:
+        detrend_func = detrend_none
+    if window is None:
+        window = window_hanning
+    if NFFT is None:
+        NFFT = 256
+    if mode is None or mode == 'default':
+        mode = 'psd'
+    _api.check_in_list(['default', 'psd', 'complex', 'magnitude', 'angle', 'phase'], mode=mode)
+    if not same_data and mode != 'psd':
+        raise ValueError(""x and y must be equal if mode is not 'psd'"")
+    x = np.asarray(x)
+    if not same_data:
+        y = np.asarray(y)
+    if sides is None or sides == 'default':
+        if np.iscomplexobj(x):
+            sides = 'twosided'
+        else:
+            sides = 'onesided'
+    _api.check_in_list(['default', 'onesided', 'twosided'], sides=sides)
+    if len(x) < NFFT:
+        n = len(x)
+        x = np.resize(x, NFFT)
+        x[n:] = 0
+    if not same_data and len(y) < NFFT:
+        n = len(y)
+        y = np.resize(y, NFFT)
+        y[n:] = 0
+    if pad_to is None:
+        pad_to = NFFT
+    if mode != 'psd':
+        scale_by_freq = False
+    elif scale_by_freq is None:
+        scale_by_freq = True
+    if sides == 'twosided':
+        numFreqs = pad_to
+        if pad_to % 2:
+            freqcenter = (pad_to - 1) // 2 + 1
+        else:
+            freqcenter = pad_to // 2
+        scaling_factor = 1.0
+    elif sides == 'onesided':
+        if pad_to % 2:
+            numFreqs = (pad_to + 1) // 2
+        else:
+            numFreqs = pad_to // 2 + 1
+        scaling_factor = 2.0
+    if not np.iterable(window):
+        window = window(np.ones(NFFT, x.dtype))
+    if len(window) != NFFT:
+        raise ValueError(""The window length must match the data's first dimension"")
+    result = _stride_windows(x, NFFT, noverlap)
+    result = detrend(result, detrend_func, axis=0)
+    result = result * window.reshape((-1, 1))
+    result = np.fft.fft(result, n=pad_to, axis=0)[:numFreqs, :]
+    freqs = np.fft.fftfreq(pad_to, 1 / Fs)[:numFreqs]
+    if not same_data:
+        resultY = _stride_windows(y, NFFT, noverlap)
+        resultY = detrend(resultY, detrend_func, axis=0)
+        resultY = resultY * window.reshape((-1, 1))
+        resultY = np.fft.fft(resultY, n=pad_to, axis=0)[:numFreqs, :]
+        result = np.conj(result) * resultY
+    elif mode == 'psd':
+        result = np.conj(result) * result
+    elif mode == 'magnitude':
+        result = np.abs(result) / np.abs(window).sum()
+    elif mode == 'angle' or mode == 'phase':
+        result = np.angle(result)
+    elif mode == 'complex':
+        result /= np.abs(window).sum()
+    if mode == 'psd':
+        if not NFFT % 2:
+            slc = slice(1, -1, None)
+        else:
+            slc = slice(1, None, None)
+        result[slc] *= scaling_factor
+        if scale_by_freq:
+            result /= Fs
+            result /= (np.abs(window) ** 2).sum()
+        else:
+            result /= np.abs(window).sum() ** 2
+    t = np.arange(NFFT / 2, len(x) - NFFT / 2 + 1, NFFT - noverlap) / Fs
+    if sides == 'twosided':
+        freqs = np.roll(freqs, -freqcenter, axis=0)
+        result = np.roll(result, -freqcenter, axis=0)
+    elif not pad_to % 2:
+        freqs[-1] *= -1
+    if mode == 'phase':
+        result = np.unwrap(result, axis=0)
+    return (result, freqs, t)","def _compute_spectral_analysis(x, y=None, NFFT=None, Fs=None, detrend_func=None, window=None, noverlap=None, pad_to=None, sides=None, scale_by_freq=None, mode=None):
+    """"""
+    Private helper implementing the common parts between the psd, csd,
+    spectrogram and complex, magnitude, angle, and phase spectrums.
+    """"""
+    if y is None:
+        same_data = True
+    else:
+        same_data = y is x
+    if Fs is None:
+        Fs = 2
+    if noverlap is None:
+        noverlap = 0
+    if detrend_func is None:
+        detrend_func = detrend_none
+    if window is None:
+        window = window_hanning
+    if NFFT is None:
+        NFFT = 256
+    if mode is None or mode == 'default':
+        mode = 'psd'
+    _api.check_in_list(['default', 'psd', 'complex', 'magnitude', 'angle', 'phase'], mode=mode)
+    if not same_data and mode != 'psd':
+        raise ValueError(""x and y must be equal if mode is not 'psd'"")
+    x = np.asarray(x)
+    if not same_data:
+        y = np.asarray(y)
+    if sides is None or sides == 'default':
+        if np.iscomplexobj(x):
+            sides = 'twosided'
+        else:
+            sides = 'onesided'
+    _api.check_in_list(['default', 'onesided', 'twosided'], sides=sides)
+    if len(x) < NFFT:
+        n = len(x)
+        x = np.resize(x, NFFT)
+        x[n:] = 0
+    if not same_data and len(y) < NFFT:
+        n = len(y)
+        y = np.resize(y, NFFT)
+        y[n:] = 0
+    if pad_to is None:
+        pad_to = NFFT
+    if mode != 'psd':
+        scale_by_freq = False
+    elif scale_by_freq is None:
+        scale_by_freq = True
+    if sides == 'twosided':
+        numFreqs = pad_to
+        if pad_to % 2:
+            freqcenter = (pad_to - 1) // 2 + 1
+        else:
+            freqcenter = pad_to // 2
+        scaling_factor = 1.0
+    elif sides == 'onesided':
+        if pad_to % 2:
+            numFreqs = (pad_to + 1) // 2
+        else:
+            numFreqs = pad_to // 2 + 1
+        scaling_factor = 2.0
+    if not np.iterable(window):
+        window = window(np.ones(NFFT, x.dtype))
+    if len(window) != NFFT:
+        raise ValueError(""The window length must match the data's first dimension"")
+    result = _stride_windows(x, NFFT, noverlap)
+    result = detrend(result, detrend_func, axis=0)
+    result = result * window.reshape((-1, 1))
+    result = np.fft.fft(result, n=pad_to, axis=0)[:numFreqs, :]
+    freqs = np.fft.fftfreq(pad_to, 1 / Fs)[:numFreqs]
+    if not same_data:
+        resultY = _stride_windows(y, NFFT, noverlap)
+        resultY = detrend(resultY, detrend_func, axis=0)
+        resultY = resultY * window.reshape((-1, 1))
+        resultY = np.fft.fft(resultY, n=pad_to, axis=0)[:numFreqs, :]
+        result = np.conj(result) * resultY
+    elif mode == 'psd':
+        result = np.conj(result) * result
+    elif mode == 'magnitude':
+        result = np.abs(result) / np.abs(window).sum()
+    elif mode == 'angle' or mode == 'phase':
+        result = np.angle(result)
+    elif mode == 'complex':
+        result /= np.abs(window).sum()
+    if mode == 'psd':
+        if not NFFT % 2:
+            slc = slice(1, -1, None)
+        else:
+            slc = slice(1, None, None)
+        result[slc] *= scaling_factor
+        if scale_by_freq:
+            result /= Fs
+            result /= (np.abs(window) ** 2).sum()
+        else:
+            result /= np.abs(window).sum() ** 2
+    t = np.arange(NFFT / 2, len(x) - NFFT / 2 + 1, NFFT - noverlap) / Fs
+    if sides == 'twosided':
+        freqs = np.roll(freqs, -freqcenter, axis=0)
+        result = np.roll(result, -freqcenter, axis=0)
+    elif not pad_to % 2:
+        freqs[-1] *= -1
+    if mode == 'phase':
+        result = np.unwrap(result, axis=0)
+    return (result, freqs, t)","[{""var"": ""freqs"", ""rename"": ""frequency_bins""}, {""var"": ""numFreqs"", ""rename"": ""frequencyCount""}, {""var"": ""n"", ""rename"": ""signal_length""}, {""var"": ""slc"", ""rename"": ""scaling_slice""}, {""var"": ""result"", ""rename"": ""frequency_spectral_transform""}, {""var"": ""resultY"", ""rename"": ""fft_result_y""}, {""var"": ""freqcenter"", ""rename"": ""frequency_center_index""}, {""var"": ""t"", ""rename"": ""time_segments""}, {""var"": ""same_data"", ""rename"": ""is_same_data_array""}, {""var"": ""scaling_factor"", ""rename"": ""frequency_scaling_multiplier""}]"

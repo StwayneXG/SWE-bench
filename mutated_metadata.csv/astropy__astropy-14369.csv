@@ -1,0 +1,273 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./astropy/units/format/cds.py,_make_parser,create_astronomical_units_parser,135,263,"@classmethod
+def _make_parser(cls):
+    """"""
+        The grammar here is based on the description in the `Standards
+        for Astronomical Catalogues 2.0
+        <http://vizier.u-strasbg.fr/vizier/doc/catstd-3.2.htx>`_, which is not
+        terribly precise.  The exact grammar is here is based on the
+        YACC grammar in the `unity library
+        <https://bitbucket.org/nxg/unity/>`_.
+        """"""
+    tokens = cls._tokens
+
+    def p_main(p):
+        """"""
+            main : factor combined_units
+                 | combined_units
+                 | DIMENSIONLESS
+                 | OPEN_BRACKET combined_units CLOSE_BRACKET
+                 | OPEN_BRACKET DIMENSIONLESS CLOSE_BRACKET
+                 | factor
+            """"""
+        from astropy.units import dex
+        from astropy.units.core import Unit
+        if len(p) == 3:
+            p[0] = Unit(p[1] * p[2])
+        elif len(p) == 4:
+            p[0] = dex(p[2])
+        else:
+            p[0] = Unit(p[1])
+
+    def p_combined_units(p):
+        """"""
+            combined_units : product_of_units
+                           | division_of_units
+            """"""
+        p[0] = p[1]
+
+    def p_product_of_units(p):
+        """"""
+            product_of_units : unit_expression PRODUCT combined_units
+                             | unit_expression
+            """"""
+        if len(p) == 4:
+            p[0] = p[1] * p[3]
+        else:
+            p[0] = p[1]
+
+    def p_division_of_units(p):
+        """"""
+            division_of_units : DIVISION unit_expression
+                              | unit_expression DIVISION combined_units
+            """"""
+        if len(p) == 3:
+            p[0] = p[2] ** (-1)
+        else:
+            p[0] = p[1] / p[3]
+
+    def p_unit_expression(p):
+        """"""
+            unit_expression : unit_with_power
+                            | OPEN_PAREN combined_units CLOSE_PAREN
+            """"""
+        if len(p) == 2:
+            p[0] = p[1]
+        else:
+            p[0] = p[2]
+
+    def p_factor(p):
+        """"""
+            factor : signed_float X UINT signed_int
+                   | UINT X UINT signed_int
+                   | UINT signed_int
+                   | UINT
+                   | signed_float
+            """"""
+        if len(p) == 5:
+            if p[3] != 10:
+                raise ValueError('Only base ten exponents are allowed in CDS')
+            p[0] = p[1] * 10.0 ** p[4]
+        elif len(p) == 3:
+            if p[1] != 10:
+                raise ValueError('Only base ten exponents are allowed in CDS')
+            p[0] = 10.0 ** p[2]
+        elif len(p) == 2:
+            p[0] = p[1]
+
+    def p_unit_with_power(p):
+        """"""
+            unit_with_power : UNIT numeric_power
+                            | UNIT
+            """"""
+        if len(p) == 2:
+            p[0] = p[1]
+        else:
+            p[0] = p[1] ** p[2]
+
+    def p_numeric_power(p):
+        """"""
+            numeric_power : sign UINT
+            """"""
+        p[0] = p[1] * p[2]
+
+    def p_sign(p):
+        """"""
+            sign : SIGN
+                 |
+            """"""
+        if len(p) == 2:
+            p[0] = p[1]
+        else:
+            p[0] = 1.0
+
+    def p_signed_int(p):
+        """"""
+            signed_int : SIGN UINT
+            """"""
+        p[0] = p[1] * p[2]
+
+    def p_signed_float(p):
+        """"""
+            signed_float : sign UINT
+                         | sign UFLOAT
+            """"""
+        p[0] = p[1] * p[2]
+
+    def p_error(p):
+        raise ValueError()
+    return parsing.yacc(tabmodule='cds_parsetab', package='astropy/units')","@classmethod
+def create_astronomical_units_parser(cls):
+    """"""
+        The grammar here is based on the description in the `Standards
+        for Astronomical Catalogues 2.0
+        <http://vizier.u-strasbg.fr/vizier/doc/catstd-3.2.htx>`_, which is not
+        terribly precise.  The exact grammar is here is based on the
+        YACC grammar in the `unity library
+        <https://bitbucket.org/nxg/unity/>`_.
+        """"""
+    tokens = cls._tokens
+
+    def p_main(p):
+        """"""
+            main : factor combined_units
+                 | combined_units
+                 | DIMENSIONLESS
+                 | OPEN_BRACKET combined_units CLOSE_BRACKET
+                 | OPEN_BRACKET DIMENSIONLESS CLOSE_BRACKET
+                 | factor
+            """"""
+        from astropy.units import dex
+        from astropy.units.core import Unit
+        if len(p) == 3:
+            p[0] = Unit(p[1] * p[2])
+        elif len(p) == 4:
+            p[0] = dex(p[2])
+        else:
+            p[0] = Unit(p[1])
+
+    def p_combined_units(p):
+        """"""
+            combined_units : product_of_units
+                           | division_of_units
+            """"""
+        p[0] = p[1]
+
+    def p_product_of_units(p):
+        """"""
+            product_of_units : unit_expression PRODUCT combined_units
+                             | unit_expression
+            """"""
+        if len(p) == 4:
+            p[0] = p[1] * p[3]
+        else:
+            p[0] = p[1]
+
+    def p_division_of_units(p):
+        """"""
+            division_of_units : DIVISION unit_expression
+                              | unit_expression DIVISION combined_units
+            """"""
+        if len(p) == 3:
+            p[0] = p[2] ** (-1)
+        else:
+            p[0] = p[1] / p[3]
+
+    def p_unit_expression(p):
+        """"""
+            unit_expression : unit_with_power
+                            | OPEN_PAREN combined_units CLOSE_PAREN
+            """"""
+        if len(p) == 2:
+            p[0] = p[1]
+        else:
+            p[0] = p[2]
+
+    def p_factor(p):
+        """"""
+            factor : signed_float X UINT signed_int
+                   | UINT X UINT signed_int
+                   | UINT signed_int
+                   | UINT
+                   | signed_float
+            """"""
+        if len(p) == 5:
+            if p[3] != 10:
+                raise ValueError('Only base ten exponents are allowed in CDS')
+            p[0] = p[1] * 10.0 ** p[4]
+        elif len(p) == 3:
+            if p[1] != 10:
+                raise ValueError('Only base ten exponents are allowed in CDS')
+            p[0] = 10.0 ** p[2]
+        elif len(p) == 2:
+            p[0] = p[1]
+
+    def p_unit_with_power(p):
+        """"""
+            unit_with_power : UNIT numeric_power
+                            | UNIT
+            """"""
+        if len(p) == 2:
+            p[0] = p[1]
+        else:
+            p[0] = p[1] ** p[2]
+
+    def p_numeric_power(p):
+        """"""
+            numeric_power : sign UINT
+            """"""
+        p[0] = p[1] * p[2]
+
+    def p_sign(p):
+        """"""
+            sign : SIGN
+                 |
+            """"""
+        if len(p) == 2:
+            p[0] = p[1]
+        else:
+            p[0] = 1.0
+
+    def p_signed_int(p):
+        """"""
+            signed_int : SIGN UINT
+            """"""
+        p[0] = p[1] * p[2]
+
+    def p_signed_float(p):
+        """"""
+            signed_float : sign UINT
+                         | sign UFLOAT
+            """"""
+        p[0] = p[1] * p[2]
+
+    def p_error(p):
+        raise ValueError()
+    return parsing.yacc(tabmodule='cds_parsetab', package='astropy/units')","[{""var"": ""tokens"", ""rename"": ""parsing_grammar_tokens""}]"
+./astropy/units/format/cds.py,p_division_of_units,inverse_or_divide_units,182,190,"def p_division_of_units(p):
+    """"""
+            division_of_units : DIVISION unit_expression
+                              | unit_expression DIVISION combined_units
+            """"""
+    if len(p) == 3:
+        p[0] = p[2] ** (-1)
+    else:
+        p[0] = p[1] / p[3]","def inverse_or_divide_units(p):
+    """"""
+            division_of_units : DIVISION unit_expression
+                              | unit_expression DIVISION combined_units
+            """"""
+    if len(p) == 3:
+        p[0] = p[2] ** (-1)
+    else:
+        p[0] = p[1] / p[3]",[]

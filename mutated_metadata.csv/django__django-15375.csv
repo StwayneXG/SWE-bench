@@ -1,0 +1,32 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/db/models/aggregates.py,resolve_expression,process_and_validate_aggregate_expression,50,68,"def resolve_expression(self, query=None, allow_joins=True, reuse=None, summarize=False, for_save=False):
+    c = super().resolve_expression(query, allow_joins, reuse, summarize)
+    c.filter = c.filter and c.filter.resolve_expression(query, allow_joins, reuse, summarize)
+    if not summarize:
+        expressions = super(Aggregate, c).get_source_expressions()
+        for index, expr in enumerate(expressions):
+            if expr.contains_aggregate:
+                before_resolved = self.get_source_expressions()[index]
+                name = before_resolved.name if hasattr(before_resolved, 'name') else repr(before_resolved)
+                raise FieldError(""Cannot compute %s('%s'): '%s' is an aggregate"" % (c.name, name, name))
+    if (default := c.default) is None:
+        return c
+    if hasattr(default, 'resolve_expression'):
+        default = default.resolve_expression(query, allow_joins, reuse, summarize)
+    c.default = None
+    return Coalesce(c, default, output_field=c._output_field_or_none)","def process_and_validate_aggregate_expression(self, query=None, allow_joins=True, reuse=None, summarize=False, for_save=False):
+    c = super().resolve_expression(query, allow_joins, reuse, summarize)
+    c.filter = c.filter and c.filter.resolve_expression(query, allow_joins, reuse, summarize)
+    if not summarize:
+        expressions = super(Aggregate, c).get_source_expressions()
+        for index, expr in enumerate(expressions):
+            if expr.contains_aggregate:
+                before_resolved = self.get_source_expressions()[index]
+                name = before_resolved.name if hasattr(before_resolved, 'name') else repr(before_resolved)
+                raise FieldError(""Cannot compute %s('%s'): '%s' is an aggregate"" % (c.name, name, name))
+    if (default := c.default) is None:
+        return c
+    if hasattr(default, 'resolve_expression'):
+        default = default.resolve_expression(query, allow_joins, reuse, summarize)
+    c.default = None
+    return Coalesce(c, default, output_field=c._output_field_or_none)","[{""var"": ""c"", ""rename"": ""resolved_expr""}, {""var"": ""expressions"", ""rename"": ""aggregate_source_expressions""}, {""var"": ""name"", ""rename"": ""before_resolved_expression_name""}, {""var"": ""index"", ""rename"": ""expression_index""}, {""var"": ""before_resolved"", ""rename"": ""pre_aggregate_expression""}, {""var"": ""expr"", ""rename"": ""expression_element""}, {""var"": ""default"", ""rename"": ""default_value_expression""}]"

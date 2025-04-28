@@ -1,0 +1,144 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./astropy/io/fits/diff.py,_diff,compare_and_record_differences,1344,1488,"def _diff(self):
+    colsa = self.a.columns
+    colsb = self.b.columns
+    if len(colsa) != len(colsb):
+        self.diff_column_count = (len(colsa), len(colsb))
+    colsa = {c.name.lower(): c for c in colsa}
+    colsb = {c.name.lower(): c for c in colsb}
+    if '*' in self.ignore_fields:
+        return
+    ignore_fields = {f.lower() for f in self.ignore_fields}
+    for fieldname in ignore_fields:
+        fieldname = fieldname.lower()
+        if fieldname in colsa:
+            del colsa[fieldname]
+        if fieldname in colsb:
+            del colsb[fieldname]
+    colsa_set = set(colsa.values())
+    colsb_set = set(colsb.values())
+    self.common_columns = sorted(colsa_set.intersection(colsb_set), key=operator.attrgetter('name'))
+    self.common_column_names = {col.name.lower() for col in self.common_columns}
+    left_only_columns = {col.name.lower(): col for col in colsa_set.difference(colsb_set)}
+    right_only_columns = {col.name.lower(): col for col in colsb_set.difference(colsa_set)}
+    if left_only_columns or right_only_columns:
+        self.diff_columns = (left_only_columns, right_only_columns)
+        self.diff_column_names = ([], [])
+    if left_only_columns:
+        for col in self.a.columns:
+            if col.name.lower() in left_only_columns:
+                self.diff_column_names[0].append(col.name)
+    if right_only_columns:
+        for col in self.b.columns:
+            if col.name.lower() in right_only_columns:
+                self.diff_column_names[1].append(col.name)
+    if len(self.a) != len(self.b):
+        self.diff_rows = (len(self.a), len(self.b))
+        return
+    if len(self.a) == len(self.b) == 0:
+        return
+    for col in self.common_columns:
+        name_lower = col.name.lower()
+        if name_lower in ignore_fields:
+            continue
+        cola = colsa[name_lower]
+        colb = colsb[name_lower]
+        for attr, _ in _COL_ATTRS:
+            vala = getattr(cola, attr, None)
+            valb = getattr(colb, attr, None)
+            if diff_values(vala, valb):
+                self.diff_column_attributes.append(((col.name.upper(), attr), (vala, valb)))
+        arra = self.a[col.name]
+        arrb = self.b[col.name]
+        if np.issubdtype(arra.dtype, np.floating) and np.issubdtype(arrb.dtype, np.floating):
+            diffs = where_not_allclose(arra, arrb, rtol=self.rtol, atol=self.atol)
+        elif 'P' in col.format:
+            diffs = ([idx for idx in range(len(arra)) if not np.allclose(arra[idx], arrb[idx], rtol=self.rtol, atol=self.atol)],)
+        else:
+            diffs = np.where(arra != arrb)
+        self.diff_total += len(set(diffs[0]))
+        if self.numdiffs >= 0:
+            if len(self.diff_values) >= self.numdiffs:
+                continue
+            max_diffs = self.numdiffs - len(self.diff_values)
+        else:
+            max_diffs = len(diffs[0])
+        last_seen_idx = None
+        for idx in islice(diffs[0], 0, max_diffs):
+            if idx == last_seen_idx:
+                continue
+            last_seen_idx = idx
+            self.diff_values.append(((col.name, idx), (arra[idx], arrb[idx])))
+    total_values = len(self.a) * len(self.a.dtype.fields)
+    self.diff_ratio = float(self.diff_total) / float(total_values)","def compare_and_record_differences(self):
+    colsa = self.a.columns
+    colsb = self.b.columns
+    if len(colsa) != len(colsb):
+        self.diff_column_count = (len(colsa), len(colsb))
+    colsa = {c.name.lower(): c for c in colsa}
+    colsb = {c.name.lower(): c for c in colsb}
+    if '*' in self.ignore_fields:
+        return
+    ignore_fields = {f.lower() for f in self.ignore_fields}
+    for fieldname in ignore_fields:
+        fieldname = fieldname.lower()
+        if fieldname in colsa:
+            del colsa[fieldname]
+        if fieldname in colsb:
+            del colsb[fieldname]
+    colsa_set = set(colsa.values())
+    colsb_set = set(colsb.values())
+    self.common_columns = sorted(colsa_set.intersection(colsb_set), key=operator.attrgetter('name'))
+    self.common_column_names = {col.name.lower() for col in self.common_columns}
+    left_only_columns = {col.name.lower(): col for col in colsa_set.difference(colsb_set)}
+    right_only_columns = {col.name.lower(): col for col in colsb_set.difference(colsa_set)}
+    if left_only_columns or right_only_columns:
+        self.diff_columns = (left_only_columns, right_only_columns)
+        self.diff_column_names = ([], [])
+    if left_only_columns:
+        for col in self.a.columns:
+            if col.name.lower() in left_only_columns:
+                self.diff_column_names[0].append(col.name)
+    if right_only_columns:
+        for col in self.b.columns:
+            if col.name.lower() in right_only_columns:
+                self.diff_column_names[1].append(col.name)
+    if len(self.a) != len(self.b):
+        self.diff_rows = (len(self.a), len(self.b))
+        return
+    if len(self.a) == len(self.b) == 0:
+        return
+    for col in self.common_columns:
+        name_lower = col.name.lower()
+        if name_lower in ignore_fields:
+            continue
+        cola = colsa[name_lower]
+        colb = colsb[name_lower]
+        for attr, _ in _COL_ATTRS:
+            vala = getattr(cola, attr, None)
+            valb = getattr(colb, attr, None)
+            if diff_values(vala, valb):
+                self.diff_column_attributes.append(((col.name.upper(), attr), (vala, valb)))
+        arra = self.a[col.name]
+        arrb = self.b[col.name]
+        if np.issubdtype(arra.dtype, np.floating) and np.issubdtype(arrb.dtype, np.floating):
+            diffs = where_not_allclose(arra, arrb, rtol=self.rtol, atol=self.atol)
+        elif 'P' in col.format:
+            diffs = ([idx for idx in range(len(arra)) if not np.allclose(arra[idx], arrb[idx], rtol=self.rtol, atol=self.atol)],)
+        else:
+            diffs = np.where(arra != arrb)
+        self.diff_total += len(set(diffs[0]))
+        if self.numdiffs >= 0:
+            if len(self.diff_values) >= self.numdiffs:
+                continue
+            max_diffs = self.numdiffs - len(self.diff_values)
+        else:
+            max_diffs = len(diffs[0])
+        last_seen_idx = None
+        for idx in islice(diffs[0], 0, max_diffs):
+            if idx == last_seen_idx:
+                continue
+            last_seen_idx = idx
+            self.diff_values.append(((col.name, idx), (arra[idx], arrb[idx])))
+    total_values = len(self.a) * len(self.a.dtype.fields)
+    self.diff_ratio = float(self.diff_total) / float(total_values)","[{""var"": ""vala"", ""rename"": ""column_attribute_value_a""}, {""var"": ""arrb"", ""rename"": ""column_values_b""}, {""var"": ""colsb"", ""rename"": ""columns_in_b""}, {""var"": ""c"", ""rename"": ""column_names_lowercase_dict""}, {""var"": ""attr"", ""rename"": ""attribute_name""}, {""var"": ""left_only_columns"", ""rename"": ""unique_left_columns""}, {""var"": ""arra"", ""rename"": ""left_data_column_values""}, {""var"": ""total_values"", ""rename"": ""total_possible_comparisons""}, {""var"": ""colsa_set"", ""rename"": ""set_of_columns_a""}, {""var"": ""colsa"", ""rename"": ""column_set_a""}, {""var"": ""colb"", ""rename"": ""colb_mapped""}, {""var"": ""diffs"", ""rename"": ""row_differences_indices""}, {""var"": ""col"", ""rename"": ""column_name""}, {""var"": ""last_seen_idx"", ""rename"": ""previous_index""}, {""var"": ""right_only_columns"", ""rename"": ""exclusive_right_columns""}, {""var"": ""idx"", ""rename"": ""difference_index""}, {""var"": ""name_lower"", ""rename"": ""column_name_lower""}, {""var"": ""cola"", ""rename"": ""column_a_structure""}, {""var"": ""valb"", ""rename"": ""column_value_b""}, {""var"": ""f"", ""rename"": ""column_difference_details""}, {""var"": ""_"", ""rename"": ""column_comparison_diff""}, {""var"": ""ignore_fields"", ""rename"": ""fields_to_ignore_lowered""}, {""var"": ""fieldname"", ""rename"": ""ignored_field_name""}, {""var"": ""max_diffs"", ""rename"": ""remaining_diff_capacity""}, {""var"": ""colsb_set"", ""rename"": ""columns_set_b""}]"

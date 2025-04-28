@@ -1,0 +1,14 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/contrib/admin/helpers.py,get_admin_url,generate_admin_object_link,206,215,"def get_admin_url(self, remote_field, remote_obj):
+    url_name = 'admin:%s_%s_change' % (remote_field.model._meta.app_label, remote_field.model._meta.model_name)
+    try:
+        url = reverse(url_name, args=[quote(remote_obj.pk)])
+        return format_html('<a href=""{}"">{}</a>', url, remote_obj)
+    except NoReverseMatch:
+        return str(remote_obj)","def generate_admin_object_link(self, remote_field, remote_obj):
+    url_name = 'admin:%s_%s_change' % (remote_field.model._meta.app_label, remote_field.model._meta.model_name)
+    try:
+        url = reverse(url_name, args=[quote(remote_obj.pk)])
+        return format_html('<a href=""{}"">{}</a>', url, remote_obj)
+    except NoReverseMatch:
+        return str(remote_obj)","[{""var"": ""url_name"", ""rename"": ""admin_change_url_name""}, {""var"": ""url"", ""rename"": ""admin_object_url""}]"

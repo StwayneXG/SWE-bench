@@ -1,0 +1,62 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/http/response.py,set_headers,configure_response_headers_from_filelike,575,625,"def set_headers(self, filelike):
+    """"""
+        Set some common response headers (Content-Length, Content-Type, and
+        Content-Disposition) based on the `filelike` response content.
+        """"""
+    filename = getattr(filelike, 'name', '')
+    filename = filename if isinstance(filename, str) else ''
+    seekable = hasattr(filelike, 'seek') and (not hasattr(filelike, 'seekable') or filelike.seekable())
+    if hasattr(filelike, 'tell'):
+        if seekable:
+            initial_position = filelike.tell()
+            filelike.seek(0, io.SEEK_END)
+            self.headers['Content-Length'] = filelike.tell() - initial_position
+            filelike.seek(initial_position)
+        elif hasattr(filelike, 'getbuffer'):
+            self.headers['Content-Length'] = filelike.getbuffer().nbytes - filelike.tell()
+        elif os.path.exists(filename):
+            self.headers['Content-Length'] = os.path.getsize(filename) - filelike.tell()
+    elif seekable:
+        self.headers['Content-Length'] = sum(iter(lambda: len(filelike.read(self.block_size)), 0))
+        filelike.seek(-int(self.headers['Content-Length']), io.SEEK_END)
+    filename = os.path.basename(self.filename or filename)
+    if self._no_explicit_content_type:
+        if filename:
+            content_type, encoding = mimetypes.guess_type(filename)
+            content_type = {'bzip2': 'application/x-bzip', 'gzip': 'application/gzip', 'xz': 'application/x-xz'}.get(encoding, content_type)
+            self.headers['Content-Type'] = content_type or 'application/octet-stream'
+        else:
+            self.headers['Content-Type'] = 'application/octet-stream'
+    if (content_disposition := content_disposition_header(self.as_attachment, filename)):
+        self.headers['Content-Disposition'] = content_disposition","def configure_response_headers_from_filelike(self, filelike):
+    """"""
+        Set some common response headers (Content-Length, Content-Type, and
+        Content-Disposition) based on the `filelike` response content.
+        """"""
+    filename = getattr(filelike, 'name', '')
+    filename = filename if isinstance(filename, str) else ''
+    seekable = hasattr(filelike, 'seek') and (not hasattr(filelike, 'seekable') or filelike.seekable())
+    if hasattr(filelike, 'tell'):
+        if seekable:
+            initial_position = filelike.tell()
+            filelike.seek(0, io.SEEK_END)
+            self.headers['Content-Length'] = filelike.tell() - initial_position
+            filelike.seek(initial_position)
+        elif hasattr(filelike, 'getbuffer'):
+            self.headers['Content-Length'] = filelike.getbuffer().nbytes - filelike.tell()
+        elif os.path.exists(filename):
+            self.headers['Content-Length'] = os.path.getsize(filename) - filelike.tell()
+    elif seekable:
+        self.headers['Content-Length'] = sum(iter(lambda: len(filelike.read(self.block_size)), 0))
+        filelike.seek(-int(self.headers['Content-Length']), io.SEEK_END)
+    filename = os.path.basename(self.filename or filename)
+    if self._no_explicit_content_type:
+        if filename:
+            content_type, encoding = mimetypes.guess_type(filename)
+            content_type = {'bzip2': 'application/x-bzip', 'gzip': 'application/gzip', 'xz': 'application/x-xz'}.get(encoding, content_type)
+            self.headers['Content-Type'] = content_type or 'application/octet-stream'
+        else:
+            self.headers['Content-Type'] = 'application/octet-stream'
+    if (content_disposition := content_disposition_header(self.as_attachment, filename)):
+        self.headers['Content-Disposition'] = content_disposition","[{""var"": ""filename"", ""rename"": ""response_filename""}, {""var"": ""content_type"", ""rename"": ""mime_type""}, {""var"": ""encoding"", ""rename"": ""filename_encoding""}, {""var"": ""content_disposition"", ""rename"": ""file_disposition_header""}, {""var"": ""seekable"", ""rename"": ""file_like_is_seekable""}, {""var"": ""initial_position"", ""rename"": ""file_initial_offset""}]"

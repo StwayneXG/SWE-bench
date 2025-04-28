@@ -1,0 +1,86 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/db/models/expressions.py,as_sql,generate_sql_expression,445,474,"def as_sql(self, compiler, connection):
+    try:
+        lhs_type = self.lhs.output_field.get_internal_type()
+    except FieldError:
+        lhs_type = None
+    try:
+        rhs_type = self.rhs.output_field.get_internal_type()
+    except FieldError:
+        rhs_type = None
+    if not connection.features.has_native_duration_field and 'DurationField' in {lhs_type, rhs_type} and (lhs_type != rhs_type):
+        return DurationExpression(self.lhs, self.connector, self.rhs).as_sql(compiler, connection)
+    datetime_fields = {'DateField', 'DateTimeField', 'TimeField'}
+    if self.connector == self.SUB and lhs_type in datetime_fields and (lhs_type == rhs_type):
+        return TemporalSubtraction(self.lhs, self.rhs).as_sql(compiler, connection)
+    expressions = []
+    expression_params = []
+    sql, params = compiler.compile(self.lhs)
+    expressions.append(sql)
+    expression_params.extend(params)
+    sql, params = compiler.compile(self.rhs)
+    expressions.append(sql)
+    expression_params.extend(params)
+    expression_wrapper = '(%s)'
+    sql = connection.ops.combine_expression(self.connector, expressions)
+    return (expression_wrapper % sql, expression_params)","def generate_sql_expression(self, compiler, connection):
+    try:
+        lhs_type = self.lhs.output_field.get_internal_type()
+    except FieldError:
+        lhs_type = None
+    try:
+        rhs_type = self.rhs.output_field.get_internal_type()
+    except FieldError:
+        rhs_type = None
+    if not connection.features.has_native_duration_field and 'DurationField' in {lhs_type, rhs_type} and (lhs_type != rhs_type):
+        return DurationExpression(self.lhs, self.connector, self.rhs).as_sql(compiler, connection)
+    datetime_fields = {'DateField', 'DateTimeField', 'TimeField'}
+    if self.connector == self.SUB and lhs_type in datetime_fields and (lhs_type == rhs_type):
+        return TemporalSubtraction(self.lhs, self.rhs).as_sql(compiler, connection)
+    expressions = []
+    expression_params = []
+    sql, params = compiler.compile(self.lhs)
+    expressions.append(sql)
+    expression_params.extend(params)
+    sql, params = compiler.compile(self.rhs)
+    expressions.append(sql)
+    expression_params.extend(params)
+    expression_wrapper = '(%s)'
+    sql = connection.ops.combine_expression(self.connector, expressions)
+    return (expression_wrapper % sql, expression_params)","[{""var"": ""expressions"", ""rename"": ""compiled_sql_expressions""}, {""var"": ""rhs_type"", ""rename"": ""right_hand_side_type""}, {""var"": ""datetime_fields"", ""rename"": ""temporal_field_types""}, {""var"": ""params"", ""rename"": ""compiled_expression_parameters""}, {""var"": ""expression_wrapper"", ""rename"": ""sql_expression_template""}, {""var"": ""expression_params"", ""rename"": ""compiled_expression_parameters""}, {""var"": ""sql"", ""rename"": ""compiled_sql_expression""}, {""var"": ""lhs_type"", ""rename"": ""lhs_output_field_type""}]"
+./django/db/models/expressions.py,resolve_expression,expand_and_resolve_sub_expressions,476,481,"def resolve_expression(self, query=None, allow_joins=True, reuse=None, summarize=False, for_save=False):
+    c = self.copy()
+    c.is_summary = summarize
+    c.lhs = c.lhs.resolve_expression(query, allow_joins, reuse, summarize, for_save)
+    c.rhs = c.rhs.resolve_expression(query, allow_joins, reuse, summarize, for_save)
+    return c","def expand_and_resolve_sub_expressions(self, query=None, allow_joins=True, reuse=None, summarize=False, for_save=False):
+    c = self.copy()
+    c.is_summary = summarize
+    c.lhs = c.lhs.resolve_expression(query, allow_joins, reuse, summarize, for_save)
+    c.rhs = c.rhs.resolve_expression(query, allow_joins, reuse, summarize, for_save)
+    return c","[{""var"": ""c"", ""rename"": ""resolved_expression_copy""}]"
+./django/db/models/expressions.py,as_sql,compile_duration_expression_sql,496,509,"def as_sql(self, compiler, connection):
+    connection.ops.check_expression_support(self)
+    expressions = []
+    expression_params = []
+    sql, params = self.compile(self.lhs, compiler, connection)
+    expressions.append(sql)
+    expression_params.extend(params)
+    sql, params = self.compile(self.rhs, compiler, connection)
+    expressions.append(sql)
+    expression_params.extend(params)
+    expression_wrapper = '(%s)'
+    sql = connection.ops.combine_duration_expression(self.connector, expressions)
+    return (expression_wrapper % sql, expression_params)","def compile_duration_expression_sql(self, compiler, connection):
+    connection.ops.check_expression_support(self)
+    expressions = []
+    expression_params = []
+    sql, params = self.compile(self.lhs, compiler, connection)
+    expressions.append(sql)
+    expression_params.extend(params)
+    sql, params = self.compile(self.rhs, compiler, connection)
+    expressions.append(sql)
+    expression_params.extend(params)
+    expression_wrapper = '(%s)'
+    sql = connection.ops.combine_duration_expression(self.connector, expressions)
+    return (expression_wrapper % sql, expression_params)","[{""var"": ""expressions"", ""rename"": ""compiled_expressions""}, {""var"": ""params"", ""rename"": ""compiled_params_list""}, {""var"": ""expression_wrapper"", ""rename"": ""sql_expression_template""}, {""var"": ""expression_params"", ""rename"": ""compiled_parameters""}, {""var"": ""sql"", ""rename"": ""duration_combined_sql""}]"

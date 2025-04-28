@@ -1,0 +1,8 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./sympy/physics/vector/vector.py,__add__,combine_with_vector,58,61,"def __add__(self, other):
+    """"""The add operator for Vector. """"""
+    other = _check_vector(other)
+    return Vector(self.args + other.args)","def combine_with_vector(self, other):
+    """"""The add operator for Vector. """"""
+    other = _check_vector(other)
+    return Vector(self.args + other.args)",[]

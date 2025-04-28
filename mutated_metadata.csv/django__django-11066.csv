@@ -1,0 +1,36 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/contrib/contenttypes/management/__init__.py,_rename,update_content_type_model_name,13,36,"def _rename(self, apps, schema_editor, old_model, new_model):
+    ContentType = apps.get_model('contenttypes', 'ContentType')
+    db = schema_editor.connection.alias
+    if not router.allow_migrate_model(db, ContentType):
+        return
+    try:
+        content_type = ContentType.objects.db_manager(db).get_by_natural_key(self.app_label, old_model)
+    except ContentType.DoesNotExist:
+        pass
+    else:
+        content_type.model = new_model
+        try:
+            with transaction.atomic(using=db):
+                content_type.save(update_fields={'model'})
+        except IntegrityError:
+            content_type.model = old_model
+        else:
+            ContentType.objects.clear_cache()","def update_content_type_model_name(self, apps, schema_editor, old_model, new_model):
+    ContentType = apps.get_model('contenttypes', 'ContentType')
+    db = schema_editor.connection.alias
+    if not router.allow_migrate_model(db, ContentType):
+        return
+    try:
+        content_type = ContentType.objects.db_manager(db).get_by_natural_key(self.app_label, old_model)
+    except ContentType.DoesNotExist:
+        pass
+    else:
+        content_type.model = new_model
+        try:
+            with transaction.atomic(using=db):
+                content_type.save(update_fields={'model'})
+        except IntegrityError:
+            content_type.model = old_model
+        else:
+            ContentType.objects.clear_cache()","[{""var"": ""db"", ""rename"": ""database_alias""}, {""var"": ""ContentType"", ""rename"": ""ContentTypeModel""}, {""var"": ""content_type"", ""rename"": ""old_model_content_type""}]"

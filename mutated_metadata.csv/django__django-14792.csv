@@ -1,0 +1,6 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/utils/timezone.py,_get_timezone_name,convert_timezone_to_string,74,76,"def _get_timezone_name(timezone):
+    """"""Return the name of ``timezone``.""""""
+    return str(timezone)","def convert_timezone_to_string(timezone):
+    """"""Return the name of ``timezone``.""""""
+    return str(timezone)",[]

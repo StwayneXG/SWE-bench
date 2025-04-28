@@ -1,0 +1,12 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/db/migrations/serializer.py,serialize,generate_serialized_enum_representation,120,125,"def serialize(self):
+    enum_class = self.value.__class__
+    module = enum_class.__module__
+    v_string, v_imports = serializer_factory(self.value.value).serialize()
+    imports = {'import %s' % module, *v_imports}
+    return ('%s.%s(%s)' % (module, enum_class.__name__, v_string), imports)","def generate_serialized_enum_representation(self):
+    enum_class = self.value.__class__
+    module = enum_class.__module__
+    v_string, v_imports = serializer_factory(self.value.value).serialize()
+    imports = {'import %s' % module, *v_imports}
+    return ('%s.%s(%s)' % (module, enum_class.__name__, v_string), imports)","[{""var"": ""enum_class"", ""rename"": ""enum_value_class""}, {""var"": ""v_imports"", ""rename"": ""enum_related_imports""}, {""var"": ""v_string"", ""rename"": ""serialized_value_representation""}, {""var"": ""module"", ""rename"": ""enum_module_path""}, {""var"": ""imports"", ""rename"": ""module_imports_set""}]"

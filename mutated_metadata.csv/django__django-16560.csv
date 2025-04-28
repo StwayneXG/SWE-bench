@@ -1,0 +1,415 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/contrib/postgres/constraints.py,__init__,initialize_exclusion_constraint,26,63,"def __init__(self, *, name, expressions, index_type=None, condition=None, deferrable=None, include=None, violation_error_message=None):
+    if index_type and index_type.lower() not in {'gist', 'spgist'}:
+        raise ValueError('Exclusion constraints only support GiST or SP-GiST indexes.')
+    if not expressions:
+        raise ValueError('At least one expression is required to define an exclusion constraint.')
+    if not all((isinstance(expr, (list, tuple)) and len(expr) == 2 for expr in expressions)):
+        raise ValueError('The expressions must be a list of 2-tuples.')
+    if not isinstance(condition, (NoneType, Q)):
+        raise ValueError('ExclusionConstraint.condition must be a Q instance.')
+    if not isinstance(deferrable, (NoneType, Deferrable)):
+        raise ValueError('ExclusionConstraint.deferrable must be a Deferrable instance.')
+    if not isinstance(include, (NoneType, list, tuple)):
+        raise ValueError('ExclusionConstraint.include must be a list or tuple.')
+    self.expressions = expressions
+    self.index_type = index_type or 'GIST'
+    self.condition = condition
+    self.deferrable = deferrable
+    self.include = tuple(include) if include else ()
+    super().__init__(name=name, violation_error_message=violation_error_message)","def initialize_exclusion_constraint(self, *, name, expressions, index_type=None, condition=None, deferrable=None, include=None, violation_error_message=None):
+    if index_type and index_type.lower() not in {'gist', 'spgist'}:
+        raise ValueError('Exclusion constraints only support GiST or SP-GiST indexes.')
+    if not expressions:
+        raise ValueError('At least one expression is required to define an exclusion constraint.')
+    if not all((isinstance(expr, (list, tuple)) and len(expr) == 2 for expr in expressions)):
+        raise ValueError('The expressions must be a list of 2-tuples.')
+    if not isinstance(condition, (NoneType, Q)):
+        raise ValueError('ExclusionConstraint.condition must be a Q instance.')
+    if not isinstance(deferrable, (NoneType, Deferrable)):
+        raise ValueError('ExclusionConstraint.deferrable must be a Deferrable instance.')
+    if not isinstance(include, (NoneType, list, tuple)):
+        raise ValueError('ExclusionConstraint.include must be a list or tuple.')
+    self.expressions = expressions
+    self.index_type = index_type or 'GIST'
+    self.condition = condition
+    self.deferrable = deferrable
+    self.include = tuple(include) if include else ()
+    super().__init__(name=name, violation_error_message=violation_error_message)","[{""var"": ""expr"", ""rename"": ""expression_pair""}]"
+./django/contrib/postgres/constraints.py,_get_expressions,generate_exclusion_constraint_expressions,65,73,"def _get_expressions(self, schema_editor, query):
+    expressions = []
+    for idx, (expression, operator) in enumerate(self.expressions):
+        if isinstance(expression, str):
+            expression = F(expression)
+        expression = ExclusionConstraintExpression(expression, operator=operator)
+        expression.set_wrapper_classes(schema_editor.connection)
+        expressions.append(expression)
+    return ExpressionList(*expressions).resolve_expression(query)","def generate_exclusion_constraint_expressions(self, schema_editor, query):
+    expressions = []
+    for idx, (expression, operator) in enumerate(self.expressions):
+        if isinstance(expression, str):
+            expression = F(expression)
+        expression = ExclusionConstraintExpression(expression, operator=operator)
+        expression.set_wrapper_classes(schema_editor.connection)
+        expressions.append(expression)
+    return ExpressionList(*expressions).resolve_expression(query)","[{""var"": ""idx"", ""rename"": ""expression_index""}, {""var"": ""expressions"", ""rename"": ""compiled_expression_constraints""}, {""var"": ""expression"", ""rename"": ""sql_expression_component""}, {""var"": ""operator"", ""rename"": ""constraint_operator""}]"
+./django/contrib/postgres/constraints.py,__repr__,detailed_representation_summary,156,171,"def __repr__(self):
+    return '<%s: index_type=%s expressions=%s name=%s%s%s%s%s>' % (self.__class__.__qualname__, repr(self.index_type), repr(self.expressions), repr(self.name), '' if self.condition is None else ' condition=%s' % self.condition, '' if self.deferrable is None else ' deferrable=%r' % self.deferrable, '' if not self.include else ' include=%s' % repr(self.include), '' if self.violation_error_message is None or self.violation_error_message == self.default_violation_error_message else ' violation_error_message=%r' % self.violation_error_message)","def detailed_representation_summary(self):
+    return '<%s: index_type=%s expressions=%s name=%s%s%s%s%s>' % (self.__class__.__qualname__, repr(self.index_type), repr(self.expressions), repr(self.name), '' if self.condition is None else ' condition=%s' % self.condition, '' if self.deferrable is None else ' deferrable=%r' % self.deferrable, '' if not self.include else ' include=%s' % repr(self.include), '' if self.violation_error_message is None or self.violation_error_message == self.default_violation_error_message else ' violation_error_message=%r' % self.violation_error_message)",[]
+./django/contrib/postgres/constraints.py,validate,ensure_unique_constraints_with_conditions,173,212,"def validate(self, model, instance, exclude=None, using=DEFAULT_DB_ALIAS):
+    queryset = model._default_manager.using(using)
+    replacement_map = instance._get_field_value_map(meta=model._meta, exclude=exclude)
+    replacements = {F(field): value for field, value in replacement_map.items()}
+    lookups = []
+    for idx, (expression, operator) in enumerate(self.expressions):
+        if isinstance(expression, str):
+            expression = F(expression)
+        if exclude:
+            if isinstance(expression, F):
+                if expression.name in exclude:
+                    return
+            else:
+                for expr in expression.flatten():
+                    if isinstance(expr, F) and expr.name in exclude:
+                        return
+        rhs_expression = expression.replace_expressions(replacements)
+        if isinstance(expression, OpClass):
+            expression = expression.get_source_expressions()[0]
+        if isinstance(rhs_expression, OpClass):
+            rhs_expression = rhs_expression.get_source_expressions()[0]
+        lookup = PostgresOperatorLookup(lhs=expression, rhs=rhs_expression)
+        lookup.postgres_operator = operator
+        lookups.append(lookup)
+    queryset = queryset.filter(*lookups)
+    model_class_pk = instance._get_pk_val(model._meta)
+    if not instance._state.adding and model_class_pk is not None:
+        queryset = queryset.exclude(pk=model_class_pk)
+    if not self.condition:
+        if queryset.exists():
+            raise ValidationError(self.get_violation_error_message())
+    elif (self.condition & Exists(queryset.filter(self.condition))).check(replacement_map, using=using):
+        raise ValidationError(self.get_violation_error_message())","def ensure_unique_constraints_with_conditions(self, model, instance, exclude=None, using=DEFAULT_DB_ALIAS):
+    queryset = model._default_manager.using(using)
+    replacement_map = instance._get_field_value_map(meta=model._meta, exclude=exclude)
+    replacements = {F(field): value for field, value in replacement_map.items()}
+    lookups = []
+    for idx, (expression, operator) in enumerate(self.expressions):
+        if isinstance(expression, str):
+            expression = F(expression)
+        if exclude:
+            if isinstance(expression, F):
+                if expression.name in exclude:
+                    return
+            else:
+                for expr in expression.flatten():
+                    if isinstance(expr, F) and expr.name in exclude:
+                        return
+        rhs_expression = expression.replace_expressions(replacements)
+        if isinstance(expression, OpClass):
+            expression = expression.get_source_expressions()[0]
+        if isinstance(rhs_expression, OpClass):
+            rhs_expression = rhs_expression.get_source_expressions()[0]
+        lookup = PostgresOperatorLookup(lhs=expression, rhs=rhs_expression)
+        lookup.postgres_operator = operator
+        lookups.append(lookup)
+    queryset = queryset.filter(*lookups)
+    model_class_pk = instance._get_pk_val(model._meta)
+    if not instance._state.adding and model_class_pk is not None:
+        queryset = queryset.exclude(pk=model_class_pk)
+    if not self.condition:
+        if queryset.exists():
+            raise ValidationError(self.get_violation_error_message())
+    elif (self.condition & Exists(queryset.filter(self.condition))).check(replacement_map, using=using):
+        raise ValidationError(self.get_violation_error_message())","[{""var"": ""replacements"", ""rename"": ""field_value_replacement_dict""}, {""var"": ""replacement_map"", ""rename"": ""field_value_replacement_mapping""}, {""var"": ""field"", ""rename"": ""field_replacement""}, {""var"": ""lookup"", ""rename"": ""operator_lookup_instance""}, {""var"": ""operator"", ""rename"": ""postgres_operator_symbol""}, {""var"": ""rhs_expression"", ""rename"": ""transformed_rhs_expression""}, {""var"": ""queryset"", ""rename"": ""filtered_queryset_for_validation""}, {""var"": ""idx"", ""rename"": ""expression_index""}, {""var"": ""lookups"", ""rename"": ""postgres_operator_lookups""}, {""var"": ""expr"", ""rename"": ""field_or_expression""}, {""var"": ""model_class_pk"", ""rename"": ""instance_primary_key_value""}, {""var"": ""value"", ""rename"": ""field_value_replacement""}, {""var"": ""expression"", ""rename"": ""field_expression""}]"
+./django/db/models/constraints.py,__init__,initialize_with_optional_violation_message,25,47,"def __init__(self, *args, name=None, violation_error_message=None):
+    if name is None and (not args):
+        raise TypeError(f""{self.__class__.__name__}.__init__() missing 1 required keyword-only argument: 'name'"")
+    self.name = name
+    if violation_error_message is not None:
+        self.violation_error_message = violation_error_message
+    else:
+        self.violation_error_message = self.default_violation_error_message
+    if args:
+        warnings.warn(f'Passing positional arguments to {self.__class__.__name__} is deprecated.', RemovedInDjango60Warning, stacklevel=2)
+        for arg, attr in zip(args, ['name', 'violation_error_message']):
+            if arg:
+                setattr(self, attr, arg)","def initialize_with_optional_violation_message(self, *args, name=None, violation_error_message=None):
+    if name is None and (not args):
+        raise TypeError(f""{self.__class__.__name__}.__init__() missing 1 required keyword-only argument: 'name'"")
+    self.name = name
+    if violation_error_message is not None:
+        self.violation_error_message = violation_error_message
+    else:
+        self.violation_error_message = self.default_violation_error_message
+    if args:
+        warnings.warn(f'Passing positional arguments to {self.__class__.__name__} is deprecated.', RemovedInDjango60Warning, stacklevel=2)
+        for arg, attr in zip(args, ['name', 'violation_error_message']):
+            if arg:
+                setattr(self, attr, arg)","[{""var"": ""attr"", ""rename"": ""attribute_key""}, {""var"": ""arg"", ""rename"": ""positional_arguments""}]"
+./django/db/models/constraints.py,__init__,initialize_check_constraint,85,91,"def __init__(self, *, check, name, violation_error_message=None):
+    self.check = check
+    if not getattr(check, 'conditional', False):
+        raise TypeError('CheckConstraint.check must be a Q instance or boolean expression.')
+    super().__init__(name=name, violation_error_message=violation_error_message)","def initialize_check_constraint(self, *, check, name, violation_error_message=None):
+    self.check = check
+    if not getattr(check, 'conditional', False):
+        raise TypeError('CheckConstraint.check must be a Q instance or boolean expression.')
+    super().__init__(name=name, violation_error_message=violation_error_message)",[]
+./django/db/models/constraints.py,_get_check_sql,generate_constraint_check_sql,93,98,"def _get_check_sql(self, model, schema_editor):
+    query = Query(model=model, alias_cols=False)
+    where = query.build_where(self.check)
+    compiler = query.get_compiler(connection=schema_editor.connection)
+    sql, params = where.as_sql(compiler, schema_editor.connection)
+    return sql % tuple((schema_editor.quote_value(p) for p in params))","def generate_constraint_check_sql(self, model, schema_editor):
+    query = Query(model=model, alias_cols=False)
+    where = query.build_where(self.check)
+    compiler = query.get_compiler(connection=schema_editor.connection)
+    sql, params = where.as_sql(compiler, schema_editor.connection)
+    return sql % tuple((schema_editor.quote_value(p) for p in params))","[{""var"": ""query"", ""rename"": ""model_query_builder""}, {""var"": ""params"", ""rename"": ""sql_value_placeholders""}, {""var"": ""p"", ""rename"": ""param_value""}, {""var"": ""compiler"", ""rename"": ""query_compiler_instance""}, {""var"": ""where"", ""rename"": ""condition_expression""}, {""var"": ""sql"", ""rename"": ""constructed_sql_query""}]"
+./django/db/models/constraints.py,constraint_sql,generate_and_apply_check_constraint_sql,100,102,"def constraint_sql(self, model, schema_editor):
+    check = self._get_check_sql(model, schema_editor)
+    return schema_editor._check_sql(self.name, check)","def generate_and_apply_check_constraint_sql(self, model, schema_editor):
+    check = self._get_check_sql(model, schema_editor)
+    return schema_editor._check_sql(self.name, check)","[{""var"": ""check"", ""rename"": ""constraint_check_statement""}]"
+./django/db/models/constraints.py,create_sql,generate_model_constraint_sql,104,106,"def create_sql(self, model, schema_editor):
+    check = self._get_check_sql(model, schema_editor)
+    return schema_editor._create_check_sql(model, self.name, check)","def generate_model_constraint_sql(self, model, schema_editor):
+    check = self._get_check_sql(model, schema_editor)
+    return schema_editor._create_check_sql(model, self.name, check)","[{""var"": ""check"", ""rename"": ""check_constraint_sql""}]"
+./django/db/models/constraints.py,__repr__,formatted_object_summary,119,130,"def __repr__(self):
+    return '<%s: check=%s name=%s%s>' % (self.__class__.__qualname__, self.check, repr(self.name), '' if self.violation_error_message is None or self.violation_error_message == self.default_violation_error_message else ' violation_error_message=%r' % self.violation_error_message)","def formatted_object_summary(self):
+    return '<%s: check=%s name=%s%s>' % (self.__class__.__qualname__, self.check, repr(self.name), '' if self.violation_error_message is None or self.violation_error_message == self.default_violation_error_message else ' violation_error_message=%r' % self.violation_error_message)",[]
+./django/db/models/constraints.py,__eq__,equals_check_constraint,132,139,"def __eq__(self, other):
+    if isinstance(other, CheckConstraint):
+        return self.name == other.name and self.check == other.check and (self.violation_error_message == other.violation_error_message)
+    return super().__eq__(other)","def equals_check_constraint(self, other):
+    if isinstance(other, CheckConstraint):
+        return self.name == other.name and self.check == other.check and (self.violation_error_message == other.violation_error_message)
+    return super().__eq__(other)",[]
+./django/db/models/constraints.py,deconstruct,add_check_to_kwargs_and_deconstruct,141,144,"def deconstruct(self):
+    path, args, kwargs = super().deconstruct()
+    kwargs['check'] = self.check
+    return (path, args, kwargs)","def add_check_to_kwargs_and_deconstruct(self):
+    path, args, kwargs = super().deconstruct()
+    kwargs['check'] = self.check
+    return (path, args, kwargs)","[{""var"": ""path"", ""rename"": ""deconstructed_path""}, {""var"": ""kwargs"", ""rename"": ""deconstruction_parameters""}, {""var"": ""args"", ""rename"": ""constructor_arguments""}]"
+./django/db/models/constraints.py,__init__,initialize_unique_constraint,157,216,"def __init__(self, *expressions, fields=(), name=None, condition=None, deferrable=None, include=None, opclasses=(), violation_error_message=None):
+    if not name:
+        raise ValueError('A unique constraint must be named.')
+    if not expressions and (not fields):
+        raise ValueError('At least one field or expression is required to define a unique constraint.')
+    if expressions and fields:
+        raise ValueError('UniqueConstraint.fields and expressions are mutually exclusive.')
+    if not isinstance(condition, (NoneType, Q)):
+        raise ValueError('UniqueConstraint.condition must be a Q instance.')
+    if condition and deferrable:
+        raise ValueError('UniqueConstraint with conditions cannot be deferred.')
+    if include and deferrable:
+        raise ValueError('UniqueConstraint with include fields cannot be deferred.')
+    if opclasses and deferrable:
+        raise ValueError('UniqueConstraint with opclasses cannot be deferred.')
+    if expressions and deferrable:
+        raise ValueError('UniqueConstraint with expressions cannot be deferred.')
+    if expressions and opclasses:
+        raise ValueError('UniqueConstraint.opclasses cannot be used with expressions. Use django.contrib.postgres.indexes.OpClass() instead.')
+    if not isinstance(deferrable, (NoneType, Deferrable)):
+        raise ValueError('UniqueConstraint.deferrable must be a Deferrable instance.')
+    if not isinstance(include, (NoneType, list, tuple)):
+        raise ValueError('UniqueConstraint.include must be a list or tuple.')
+    if not isinstance(opclasses, (list, tuple)):
+        raise ValueError('UniqueConstraint.opclasses must be a list or tuple.')
+    if opclasses and len(fields) != len(opclasses):
+        raise ValueError('UniqueConstraint.fields and UniqueConstraint.opclasses must have the same number of elements.')
+    self.fields = tuple(fields)
+    self.condition = condition
+    self.deferrable = deferrable
+    self.include = tuple(include) if include else ()
+    self.opclasses = opclasses
+    self.expressions = tuple((F(expression) if isinstance(expression, str) else expression for expression in expressions))
+    super().__init__(name=name, violation_error_message=violation_error_message)","def initialize_unique_constraint(self, *expressions, fields=(), name=None, condition=None, deferrable=None, include=None, opclasses=(), violation_error_message=None):
+    if not name:
+        raise ValueError('A unique constraint must be named.')
+    if not expressions and (not fields):
+        raise ValueError('At least one field or expression is required to define a unique constraint.')
+    if expressions and fields:
+        raise ValueError('UniqueConstraint.fields and expressions are mutually exclusive.')
+    if not isinstance(condition, (NoneType, Q)):
+        raise ValueError('UniqueConstraint.condition must be a Q instance.')
+    if condition and deferrable:
+        raise ValueError('UniqueConstraint with conditions cannot be deferred.')
+    if include and deferrable:
+        raise ValueError('UniqueConstraint with include fields cannot be deferred.')
+    if opclasses and deferrable:
+        raise ValueError('UniqueConstraint with opclasses cannot be deferred.')
+    if expressions and deferrable:
+        raise ValueError('UniqueConstraint with expressions cannot be deferred.')
+    if expressions and opclasses:
+        raise ValueError('UniqueConstraint.opclasses cannot be used with expressions. Use django.contrib.postgres.indexes.OpClass() instead.')
+    if not isinstance(deferrable, (NoneType, Deferrable)):
+        raise ValueError('UniqueConstraint.deferrable must be a Deferrable instance.')
+    if not isinstance(include, (NoneType, list, tuple)):
+        raise ValueError('UniqueConstraint.include must be a list or tuple.')
+    if not isinstance(opclasses, (list, tuple)):
+        raise ValueError('UniqueConstraint.opclasses must be a list or tuple.')
+    if opclasses and len(fields) != len(opclasses):
+        raise ValueError('UniqueConstraint.fields and UniqueConstraint.opclasses must have the same number of elements.')
+    self.fields = tuple(fields)
+    self.condition = condition
+    self.deferrable = deferrable
+    self.include = tuple(include) if include else ()
+    self.opclasses = opclasses
+    self.expressions = tuple((F(expression) if isinstance(expression, str) else expression for expression in expressions))
+    super().__init__(name=name, violation_error_message=violation_error_message)","[{""var"": ""expression"", ""rename"": ""unique_constraints_expressions""}]"
+./django/db/models/constraints.py,_get_index_expressions,generate_resolved_index_expressions,231,241,"def _get_index_expressions(self, model, schema_editor):
+    if not self.expressions:
+        return None
+    index_expressions = []
+    for expression in self.expressions:
+        index_expression = IndexExpression(expression)
+        index_expression.set_wrapper_classes(schema_editor.connection)
+        index_expressions.append(index_expression)
+    return ExpressionList(*index_expressions).resolve_expression(Query(model, alias_cols=False))","def generate_resolved_index_expressions(self, model, schema_editor):
+    if not self.expressions:
+        return None
+    index_expressions = []
+    for expression in self.expressions:
+        index_expression = IndexExpression(expression)
+        index_expression.set_wrapper_classes(schema_editor.connection)
+        index_expressions.append(index_expression)
+    return ExpressionList(*index_expressions).resolve_expression(Query(model, alias_cols=False))","[{""var"": ""index_expressions"", ""rename"": ""composite_index_expressions""}, {""var"": ""expression"", ""rename"": ""indexed_expression_component""}, {""var"": ""index_expression"", ""rename"": ""computed_index_expressions""}]"
+./django/db/models/constraints.py,constraint_sql,generate_constraint_sql_with_conditions,243,259,"def constraint_sql(self, model, schema_editor):
+    fields = [model._meta.get_field(field_name) for field_name in self.fields]
+    include = [model._meta.get_field(field_name).column for field_name in self.include]
+    condition = self._get_condition_sql(model, schema_editor)
+    expressions = self._get_index_expressions(model, schema_editor)
+    return schema_editor._unique_sql(model, fields, self.name, condition=condition, deferrable=self.deferrable, include=include, opclasses=self.opclasses, expressions=expressions)","def generate_constraint_sql_with_conditions(self, model, schema_editor):
+    fields = [model._meta.get_field(field_name) for field_name in self.fields]
+    include = [model._meta.get_field(field_name).column for field_name in self.include]
+    condition = self._get_condition_sql(model, schema_editor)
+    expressions = self._get_index_expressions(model, schema_editor)
+    return schema_editor._unique_sql(model, fields, self.name, condition=condition, deferrable=self.deferrable, include=include, opclasses=self.opclasses, expressions=expressions)","[{""var"": ""condition"", ""rename"": ""sql_condition_clause""}, {""var"": ""expressions"", ""rename"": ""index_expressions_list""}, {""var"": ""include"", ""rename"": ""include_columns""}, {""var"": ""field_name"", ""rename"": ""current_field_name""}, {""var"": ""fields"", ""rename"": ""field_definitions""}]"
+./django/db/models/constraints.py,__eq__,is_identical_unique_constraint,313,325,"def __eq__(self, other):
+    if isinstance(other, UniqueConstraint):
+        return self.name == other.name and self.fields == other.fields and (self.condition == other.condition) and (self.deferrable == other.deferrable) and (self.include == other.include) and (self.opclasses == other.opclasses) and (self.expressions == other.expressions) and (self.violation_error_message == other.violation_error_message)
+    return super().__eq__(other)","def is_identical_unique_constraint(self, other):
+    if isinstance(other, UniqueConstraint):
+        return self.name == other.name and self.fields == other.fields and (self.condition == other.condition) and (self.deferrable == other.deferrable) and (self.include == other.include) and (self.opclasses == other.opclasses) and (self.expressions == other.expressions) and (self.violation_error_message == other.violation_error_message)
+    return super().__eq__(other)",[]
+./django/db/models/constraints.py,deconstruct,serialize_attributes_with_conditions,327,339,"def deconstruct(self):
+    path, args, kwargs = super().deconstruct()
+    if self.fields:
+        kwargs['fields'] = self.fields
+    if self.condition:
+        kwargs['condition'] = self.condition
+    if self.deferrable:
+        kwargs['deferrable'] = self.deferrable
+    if self.include:
+        kwargs['include'] = self.include
+    if self.opclasses:
+        kwargs['opclasses'] = self.opclasses
+    return (path, self.expressions, kwargs)","def serialize_attributes_with_conditions(self):
+    path, args, kwargs = super().deconstruct()
+    if self.fields:
+        kwargs['fields'] = self.fields
+    if self.condition:
+        kwargs['condition'] = self.condition
+    if self.deferrable:
+        kwargs['deferrable'] = self.deferrable
+    if self.include:
+        kwargs['include'] = self.include
+    if self.opclasses:
+        kwargs['opclasses'] = self.opclasses
+    return (path, self.expressions, kwargs)","[{""var"": ""path"", ""rename"": ""module_import_path""}, {""var"": ""kwargs"", ""rename"": ""attributes_dict""}, {""var"": ""args"", ""rename"": ""derived_arguments""}]"
+./django/db/models/constraints.py,validate,check_uniqueness_constraints,341,405,"def validate(self, model, instance, exclude=None, using=DEFAULT_DB_ALIAS):
+    queryset = model._default_manager.using(using)
+    if self.fields:
+        lookup_kwargs = {}
+        for field_name in self.fields:
+            if exclude and field_name in exclude:
+                return
+            field = model._meta.get_field(field_name)
+            lookup_value = getattr(instance, field.attname)
+            if lookup_value is None or (lookup_value == '' and connections[using].features.interprets_empty_strings_as_nulls):
+                return
+            lookup_kwargs[field.name] = lookup_value
+        queryset = queryset.filter(**lookup_kwargs)
+    else:
+        if exclude:
+            for expression in self.expressions:
+                if hasattr(expression, 'flatten'):
+                    for expr in expression.flatten():
+                        if isinstance(expr, F) and expr.name in exclude:
+                            return
+                elif isinstance(expression, F) and expression.name in exclude:
+                    return
+        replacements = {F(field): value for field, value in instance._get_field_value_map(meta=model._meta, exclude=exclude).items()}
+        expressions = []
+        for expr in self.expressions:
+            if isinstance(expr, OrderBy):
+                expr = expr.expression
+            expressions.append(Exact(expr, expr.replace_expressions(replacements)))
+        queryset = queryset.filter(*expressions)
+    model_class_pk = instance._get_pk_val(model._meta)
+    if not instance._state.adding and model_class_pk is not None:
+        queryset = queryset.exclude(pk=model_class_pk)
+    if not self.condition:
+        if queryset.exists():
+            if self.expressions:
+                raise ValidationError(self.get_violation_error_message())
+            for model, constraints in instance.get_constraints():
+                for constraint in constraints:
+                    if constraint is self:
+                        raise ValidationError(instance.unique_error_message(model, self.fields))
+    else:
+        against = instance._get_field_value_map(meta=model._meta, exclude=exclude)
+        try:
+            if (self.condition & Exists(queryset.filter(self.condition))).check(against, using=using):
+                raise ValidationError(self.get_violation_error_message())
+        except FieldError:
+            pass","def check_uniqueness_constraints(self, model, instance, exclude=None, using=DEFAULT_DB_ALIAS):
+    queryset = model._default_manager.using(using)
+    if self.fields:
+        lookup_kwargs = {}
+        for field_name in self.fields:
+            if exclude and field_name in exclude:
+                return
+            field = model._meta.get_field(field_name)
+            lookup_value = getattr(instance, field.attname)
+            if lookup_value is None or (lookup_value == '' and connections[using].features.interprets_empty_strings_as_nulls):
+                return
+            lookup_kwargs[field.name] = lookup_value
+        queryset = queryset.filter(**lookup_kwargs)
+    else:
+        if exclude:
+            for expression in self.expressions:
+                if hasattr(expression, 'flatten'):
+                    for expr in expression.flatten():
+                        if isinstance(expr, F) and expr.name in exclude:
+                            return
+                elif isinstance(expression, F) and expression.name in exclude:
+                    return
+        replacements = {F(field): value for field, value in instance._get_field_value_map(meta=model._meta, exclude=exclude).items()}
+        expressions = []
+        for expr in self.expressions:
+            if isinstance(expr, OrderBy):
+                expr = expr.expression
+            expressions.append(Exact(expr, expr.replace_expressions(replacements)))
+        queryset = queryset.filter(*expressions)
+    model_class_pk = instance._get_pk_val(model._meta)
+    if not instance._state.adding and model_class_pk is not None:
+        queryset = queryset.exclude(pk=model_class_pk)
+    if not self.condition:
+        if queryset.exists():
+            if self.expressions:
+                raise ValidationError(self.get_violation_error_message())
+            for model, constraints in instance.get_constraints():
+                for constraint in constraints:
+                    if constraint is self:
+                        raise ValidationError(instance.unique_error_message(model, self.fields))
+    else:
+        against = instance._get_field_value_map(meta=model._meta, exclude=exclude)
+        try:
+            if (self.condition & Exists(queryset.filter(self.condition))).check(against, using=using):
+                raise ValidationError(self.get_violation_error_message())
+        except FieldError:
+            pass","[{""var"": ""against"", ""rename"": ""against_values""}, {""var"": ""expressions"", ""rename"": ""filterable_expressions""}, {""var"": ""field"", ""rename"": ""field_metadata""}, {""var"": ""replacements"", ""rename"": ""field_replacement_map""}, {""var"": ""constraints"", ""rename"": ""validationConstraints""}, {""var"": ""lookup_value"", ""rename"": ""instance_field_value""}, {""var"": ""constraint"", ""rename"": ""validation_constraint""}, {""var"": ""queryset"", ""rename"": ""filtered_instance_set""}, {""var"": ""field_name"", ""rename"": ""model_field_name""}, {""var"": ""model_class_pk"", ""rename"": ""instance_primary_key_value""}, {""var"": ""expr"", ""rename"": ""expression_component""}, {""var"": ""lookup_kwargs"", ""rename"": ""field_value_lookups""}, {""var"": ""value"", ""rename"": ""exclusive_value_constraint""}, {""var"": ""expression"", ""rename"": ""validation_expression""}]"

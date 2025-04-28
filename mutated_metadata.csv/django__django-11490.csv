@@ -1,0 +1,74 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/db/models/sql/compiler.py,get_combinator_sql,generate_combined_query_sql,410,462,"def get_combinator_sql(self, combinator, all):
+    features = self.connection.features
+    compilers = [query.get_compiler(self.using, self.connection) for query in self.query.combined_queries if not query.is_empty()]
+    if not features.supports_slicing_ordering_in_compound:
+        for query, compiler in zip(self.query.combined_queries, compilers):
+            if query.low_mark or query.high_mark:
+                raise DatabaseError('LIMIT/OFFSET not allowed in subqueries of compound statements.')
+            if compiler.get_order_by():
+                raise DatabaseError('ORDER BY not allowed in subqueries of compound statements.')
+    parts = ()
+    for compiler in compilers:
+        try:
+            if not compiler.query.values_select and self.query.values_select:
+                compiler.query.set_values((*self.query.extra_select, *self.query.values_select, *self.query.annotation_select))
+            part_sql, part_args = compiler.as_sql()
+            if compiler.query.combinator:
+                if not features.supports_parentheses_in_compound:
+                    part_sql = 'SELECT * FROM ({})'.format(part_sql)
+                elif not features.supports_slicing_ordering_in_compound:
+                    part_sql = '({})'.format(part_sql)
+            parts += ((part_sql, part_args),)
+        except EmptyResultSet:
+            if combinator == 'union' or (combinator == 'difference' and parts):
+                continue
+            raise
+    if not parts:
+        raise EmptyResultSet
+    combinator_sql = self.connection.ops.set_operators[combinator]
+    if all and combinator == 'union':
+        combinator_sql += ' ALL'
+    braces = '({})' if features.supports_slicing_ordering_in_compound else '{}'
+    sql_parts, args_parts = zip(*((braces.format(sql), args) for sql, args in parts))
+    result = [' {} '.format(combinator_sql).join(sql_parts)]
+    params = []
+    for part in args_parts:
+        params.extend(part)
+    return (result, params)","def generate_combined_query_sql(self, combinator, all):
+    features = self.connection.features
+    compilers = [query.get_compiler(self.using, self.connection) for query in self.query.combined_queries if not query.is_empty()]
+    if not features.supports_slicing_ordering_in_compound:
+        for query, compiler in zip(self.query.combined_queries, compilers):
+            if query.low_mark or query.high_mark:
+                raise DatabaseError('LIMIT/OFFSET not allowed in subqueries of compound statements.')
+            if compiler.get_order_by():
+                raise DatabaseError('ORDER BY not allowed in subqueries of compound statements.')
+    parts = ()
+    for compiler in compilers:
+        try:
+            if not compiler.query.values_select and self.query.values_select:
+                compiler.query.set_values((*self.query.extra_select, *self.query.values_select, *self.query.annotation_select))
+            part_sql, part_args = compiler.as_sql()
+            if compiler.query.combinator:
+                if not features.supports_parentheses_in_compound:
+                    part_sql = 'SELECT * FROM ({})'.format(part_sql)
+                elif not features.supports_slicing_ordering_in_compound:
+                    part_sql = '({})'.format(part_sql)
+            parts += ((part_sql, part_args),)
+        except EmptyResultSet:
+            if combinator == 'union' or (combinator == 'difference' and parts):
+                continue
+            raise
+    if not parts:
+        raise EmptyResultSet
+    combinator_sql = self.connection.ops.set_operators[combinator]
+    if all and combinator == 'union':
+        combinator_sql += ' ALL'
+    braces = '({})' if features.supports_slicing_ordering_in_compound else '{}'
+    sql_parts, args_parts = zip(*((braces.format(sql), args) for sql, args in parts))
+    result = [' {} '.format(combinator_sql).join(sql_parts)]
+    params = []
+    for part in args_parts:
+        params.extend(part)
+    return (result, params)","[{""var"": ""part"", ""rename"": ""query_components""}, {""var"": ""braces"", ""rename"": ""compound_query_structure""}, {""var"": ""query"", ""rename"": ""combined_query""}, {""var"": ""params"", ""rename"": ""sql_arguments""}, {""var"": ""features"", ""rename"": ""database_connection_features""}, {""var"": ""compilers"", ""rename"": ""query_compilers""}, {""var"": ""compiler"", ""rename"": ""query_compiler""}, {""var"": ""result"", ""rename"": ""composed_sql_statement""}, {""var"": ""sql_parts"", ""rename"": ""compound_query_segments""}, {""var"": ""part_args"", ""rename"": ""query_arguments""}, {""var"": ""part_sql"", ""rename"": ""sql_fragment""}, {""var"": ""sql"", ""rename"": ""combined_query_sql_result""}, {""var"": ""args"", ""rename"": ""sql_parameters""}, {""var"": ""combinator_sql"", ""rename"": ""compound_query_operator_sql""}, {""var"": ""args_parts"", ""rename"": ""combined_sql_arguments""}, {""var"": ""parts"", ""rename"": ""sql_query_parts""}]"

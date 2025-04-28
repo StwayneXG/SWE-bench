@@ -1,0 +1,150 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./xarray/core/indexing.py,__init__,initialize_array_with_dtype_handling,1232,1244,"def __init__(self, array, dtype=None):
+    self.array = utils.safe_cast_to_index(array)
+    if dtype is None:
+        if isinstance(array, pd.PeriodIndex):
+            dtype = np.dtype('O')
+        elif hasattr(array, 'categories'):
+            dtype = array.categories.dtype
+        elif not utils.is_valid_numpy_dtype(array.dtype):
+            dtype = np.dtype('O')
+        else:
+            dtype = array.dtype
+    self._dtype = dtype","def initialize_array_with_dtype_handling(self, array, dtype=None):
+    self.array = utils.safe_cast_to_index(array)
+    if dtype is None:
+        if isinstance(array, pd.PeriodIndex):
+            dtype = np.dtype('O')
+        elif hasattr(array, 'categories'):
+            dtype = array.categories.dtype
+        elif not utils.is_valid_numpy_dtype(array.dtype):
+            dtype = np.dtype('O')
+        else:
+            dtype = array.dtype
+    self._dtype = dtype",[]
+./xarray/core/indexing.py,dtype,data_type_property,1247,1248,"@property
+def dtype(self):
+    return self._dtype","@property
+def data_type_property(self):
+    return self._dtype",[]
+./xarray/core/indexing.py,__array__,convert_to_numpy_array,1250,1258,"def __array__(self, dtype=None):
+    if dtype is None:
+        dtype = self.dtype
+    array = self.array
+    if isinstance(array, pd.PeriodIndex):
+        with suppress(AttributeError):
+            array = array.astype('object')
+    return np.asarray(array.values, dtype=dtype)","def convert_to_numpy_array(self, dtype=None):
+    if dtype is None:
+        dtype = self.dtype
+    array = self.array
+    if isinstance(array, pd.PeriodIndex):
+        with suppress(AttributeError):
+            array = array.astype('object')
+    return np.asarray(array.values, dtype=dtype)","[{""var"": ""array"", ""rename"": ""converted_array_representation""}]"
+./xarray/core/indexing.py,__getitem__,retrieve_item_at_index,1265,1300,"def __getitem__(self, indexer):
+    key = indexer.tuple
+    if isinstance(key, tuple) and len(key) == 1:
+        key, = key
+    if getattr(key, 'ndim', 0) > 1:
+        return NumpyIndexingAdapter(self.array.values)[indexer]
+    result = self.array[key]
+    if isinstance(result, pd.Index):
+        result = PandasIndexAdapter(result, dtype=self.dtype)
+    else:
+        if result is pd.NaT:
+            result = np.datetime64('NaT', 'ns')
+        elif isinstance(result, timedelta):
+            result = np.timedelta64(getattr(result, 'value', result), 'ns')
+        elif isinstance(result, pd.Timestamp):
+            result = np.asarray(result.to_datetime64())
+        elif self.dtype != object:
+            result = np.asarray(result, dtype=self.dtype)
+        result = utils.to_0d_array(result)
+    return result","def retrieve_item_at_index(self, indexer):
+    key = indexer.tuple
+    if isinstance(key, tuple) and len(key) == 1:
+        key, = key
+    if getattr(key, 'ndim', 0) > 1:
+        return NumpyIndexingAdapter(self.array.values)[indexer]
+    result = self.array[key]
+    if isinstance(result, pd.Index):
+        result = PandasIndexAdapter(result, dtype=self.dtype)
+    else:
+        if result is pd.NaT:
+            result = np.datetime64('NaT', 'ns')
+        elif isinstance(result, timedelta):
+            result = np.timedelta64(getattr(result, 'value', result), 'ns')
+        elif isinstance(result, pd.Timestamp):
+            result = np.asarray(result.to_datetime64())
+        elif self.dtype != object:
+            result = np.asarray(result, dtype=self.dtype)
+        result = utils.to_0d_array(result)
+    return result","[{""var"": ""result"", ""rename"": ""processed_value""}, {""var"": ""key"", ""rename"": ""index_key_tuple""}]"
+./xarray/core/variable.py,copy,create_with_structure_and_data,1920,1959,"def copy(self, deep=True, data=None):
+    """"""Returns a copy of this object.
+
+        `deep` is ignored since data is stored in the form of
+        pandas.Index, which is already immutable. Dimensions, attributes
+        and encodings are always copied.
+
+        Use `data` to create a new object with the same structure as
+        original but entirely new data.
+
+        Parameters
+        ----------
+        deep : bool, optional
+            Deep is ignored when data is given. Whether the data array is
+            loaded into memory and copied onto the new object. Default is True.
+        data : array_like, optional
+            Data to use in the new object. Must have same shape as original.
+
+        Returns
+        -------
+        object : Variable
+            New object with dimensions, attributes, encodings, and optionally
+            data copied from original.
+        """"""
+    if data is None:
+        if deep:
+            data = PandasIndexAdapter(self._data.array.copy(deep=True))
+        else:
+            data = self._data
+    else:
+        data = as_compatible_data(data)
+        if self.shape != data.shape:
+            raise ValueError('Data shape {} must match shape of object {}'.format(data.shape, self.shape))
+    return type(self)(self.dims, data, self._attrs, self._encoding, fastpath=True)","def create_with_structure_and_data(self, deep=True, data=None):
+    """"""Returns a copy of this object.
+
+        `deep` is ignored since data is stored in the form of
+        pandas.Index, which is already immutable. Dimensions, attributes
+        and encodings are always copied.
+
+        Use `data` to create a new object with the same structure as
+        original but entirely new data.
+
+        Parameters
+        ----------
+        deep : bool, optional
+            Deep is ignored when data is given. Whether the data array is
+            loaded into memory and copied onto the new object. Default is True.
+        data : array_like, optional
+            Data to use in the new object. Must have same shape as original.
+
+        Returns
+        -------
+        object : Variable
+            New object with dimensions, attributes, encodings, and optionally
+            data copied from original.
+        """"""
+    if data is None:
+        if deep:
+            data = PandasIndexAdapter(self._data.array.copy(deep=True))
+        else:
+            data = self._data
+    else:
+        data = as_compatible_data(data)
+        if self.shape != data.shape:
+            raise ValueError('Data shape {} must match shape of object {}'.format(data.shape, self.shape))
+    return type(self)(self.dims, data, self._attrs, self._encoding, fastpath=True)",[]

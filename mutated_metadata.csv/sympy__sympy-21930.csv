@@ -1,0 +1,10 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./sympy/physics/secondquant.py,_latex,_format_symbol_with_super_and_subscripts,220,225,"def _latex(self, printer):
+    return '%s^{%s}_{%s}' % (self.symbol, ''.join([i.name for i in self.args[1]]), ''.join([i.name for i in self.args[2]]))","def _format_symbol_with_super_and_subscripts(self, printer):
+    return '%s^{%s}_{%s}' % (self.symbol, ''.join([i.name for i in self.args[1]]), ''.join([i.name for i in self.args[2]]))","[{""var"": ""i"", ""rename"": ""arg_component""}]"
+./sympy/physics/secondquant.py,_latex,format_state_as_latex_conjugate,480,481,"def _latex(self, printer):
+    return 'b^\\dagger_{%s}' % self.state.name","def format_state_as_latex_conjugate(self, printer):
+    return 'b^\\dagger_{%s}' % self.state.name",[]
+./sympy/physics/secondquant.py,_latex,format_latex_state_operator,941,942,"def _latex(self, printer):
+    return 'a^\\dagger_{%s}' % self.state.name","def format_latex_state_operator(self, printer):
+    return 'a^\\dagger_{%s}' % self.state.name",[]

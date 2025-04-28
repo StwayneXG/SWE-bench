@@ -1,0 +1,96 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./sklearn/linear_model/least_angle.py,fit,train_model_with_criterion_selection,1482,1546,"def fit(self, X, y, copy_X=True):
+    """"""Fit the model using X, y as training data.
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+            training data.
+
+        y : array-like, shape (n_samples,)
+            target values. Will be cast to X's dtype if necessary
+
+        copy_X : boolean, optional, default True
+            If ``True``, X will be copied; else, it may be overwritten.
+
+        Returns
+        -------
+        self : object
+            returns an instance of self.
+        """"""
+    X, y = check_X_y(X, y, y_numeric=True)
+    X, y, Xmean, ymean, Xstd = LinearModel._preprocess_data(X, y, self.fit_intercept, self.normalize, self.copy_X)
+    max_iter = self.max_iter
+    Gram = self.precompute
+    alphas_, active_, coef_path_, self.n_iter_ = lars_path(X, y, Gram=Gram, copy_X=copy_X, copy_Gram=True, alpha_min=0.0, method='lasso', verbose=self.verbose, max_iter=max_iter, eps=self.eps, return_n_iter=True, positive=self.positive)
+    n_samples = X.shape[0]
+    if self.criterion == 'aic':
+        K = 2
+    elif self.criterion == 'bic':
+        K = log(n_samples)
+    else:
+        raise ValueError('criterion should be either bic or aic')
+    R = y[:, np.newaxis] - np.dot(X, coef_path_)
+    mean_squared_error = np.mean(R ** 2, axis=0)
+    sigma2 = np.var(y)
+    df = np.zeros(coef_path_.shape[1], dtype=np.int)
+    for k, coef in enumerate(coef_path_.T):
+        mask = np.abs(coef) > np.finfo(coef.dtype).eps
+        if not np.any(mask):
+            continue
+        df[k] = np.sum(mask)
+    self.alphas_ = alphas_
+    eps64 = np.finfo('float64').eps
+    self.criterion_ = n_samples * mean_squared_error / (sigma2 + eps64) + K * df
+    n_best = np.argmin(self.criterion_)
+    self.alpha_ = alphas_[n_best]
+    self.coef_ = coef_path_[:, n_best]
+    self._set_intercept(Xmean, ymean, Xstd)
+    return self","def train_model_with_criterion_selection(self, X, y, copy_X=True):
+    """"""Fit the model using X, y as training data.
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+            training data.
+
+        y : array-like, shape (n_samples,)
+            target values. Will be cast to X's dtype if necessary
+
+        copy_X : boolean, optional, default True
+            If ``True``, X will be copied; else, it may be overwritten.
+
+        Returns
+        -------
+        self : object
+            returns an instance of self.
+        """"""
+    X, y = check_X_y(X, y, y_numeric=True)
+    X, y, Xmean, ymean, Xstd = LinearModel._preprocess_data(X, y, self.fit_intercept, self.normalize, self.copy_X)
+    max_iter = self.max_iter
+    Gram = self.precompute
+    alphas_, active_, coef_path_, self.n_iter_ = lars_path(X, y, Gram=Gram, copy_X=copy_X, copy_Gram=True, alpha_min=0.0, method='lasso', verbose=self.verbose, max_iter=max_iter, eps=self.eps, return_n_iter=True, positive=self.positive)
+    n_samples = X.shape[0]
+    if self.criterion == 'aic':
+        K = 2
+    elif self.criterion == 'bic':
+        K = log(n_samples)
+    else:
+        raise ValueError('criterion should be either bic or aic')
+    R = y[:, np.newaxis] - np.dot(X, coef_path_)
+    mean_squared_error = np.mean(R ** 2, axis=0)
+    sigma2 = np.var(y)
+    df = np.zeros(coef_path_.shape[1], dtype=np.int)
+    for k, coef in enumerate(coef_path_.T):
+        mask = np.abs(coef) > np.finfo(coef.dtype).eps
+        if not np.any(mask):
+            continue
+        df[k] = np.sum(mask)
+    self.alphas_ = alphas_
+    eps64 = np.finfo('float64').eps
+    self.criterion_ = n_samples * mean_squared_error / (sigma2 + eps64) + K * df
+    n_best = np.argmin(self.criterion_)
+    self.alpha_ = alphas_[n_best]
+    self.coef_ = coef_path_[:, n_best]
+    self._set_intercept(Xmean, ymean, Xstd)
+    return self","[{""var"": ""coef_path_"", ""rename"": ""coefficient_trajectory""}, {""var"": ""n_best"", ""rename"": ""index_of_best_model""}, {""var"": ""sigma2"", ""rename"": ""target_variance""}, {""var"": ""n_samples"", ""rename"": ""num_training_samples""}, {""var"": ""k"", ""rename"": ""current_index""}, {""var"": ""active_"", ""rename"": ""active_features_set""}, {""var"": ""max_iter"", ""rename"": ""maximum_iterations""}, {""var"": ""alphas_"", ""rename"": ""regularization_alphas""}, {""var"": ""coef"", ""rename"": ""coefficient""}, {""var"": ""mask"", ""rename"": ""significant_coefficient_mask""}, {""var"": ""Xmean"", ""rename"": ""featureMeans""}, {""var"": ""Xstd"", ""rename"": ""X_standard_deviation""}, {""var"": ""Gram"", ""rename"": ""precomputed_Gram_matrix""}, {""var"": ""eps64"", ""rename"": ""float64_machine_epsilon""}, {""var"": ""df"", ""rename"": ""degrees_of_freedom""}, {""var"": ""K"", ""rename"": ""complexity_penalty""}, {""var"": ""mean_squared_error"", ""rename"": ""mean_squared_prediction_error""}, {""var"": ""R"", ""rename"": ""residual_errors""}, {""var"": ""ymean"", ""rename"": ""target_mean_value""}]"

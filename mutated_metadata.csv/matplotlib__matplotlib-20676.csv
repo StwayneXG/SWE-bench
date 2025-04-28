@@ -1,0 +1,6 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./lib/matplotlib/widgets.py,_setup_edge_handle,initialize_edge_handle_artists,2158,2163,"def _setup_edge_handle(self, props):
+    self._edge_handles = ToolLineHandles(self.ax, self.extents, direction=self.direction, line_props=props, useblit=self.useblit)
+    self.artists.extend([line for line in self._edge_handles.artists])","def initialize_edge_handle_artists(self, props):
+    self._edge_handles = ToolLineHandles(self.ax, self.extents, direction=self.direction, line_props=props, useblit=self.useblit)
+    self.artists.extend([line for line in self._edge_handles.artists])","[{""var"": ""line"", ""rename"": ""edge_handle_artist""}]"

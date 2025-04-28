@@ -1,0 +1,4 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/db/models/expressions.py,as_sql,generate_sql_from_expression,866,867,"def as_sql(self, compiler, connection):
+    return self.expression.as_sql(compiler, connection)","def generate_sql_from_expression(self, compiler, connection):
+    return self.expression.as_sql(compiler, connection)",[]

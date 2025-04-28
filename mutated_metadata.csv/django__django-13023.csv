@@ -1,0 +1,18 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/db/models/fields/__init__.py,to_python,convert_to_decimal,1497,1509,"def to_python(self, value):
+    if value is None:
+        return value
+    if isinstance(value, float):
+        return self.context.create_decimal_from_float(value)
+    try:
+        return decimal.Decimal(value)
+    except decimal.InvalidOperation:
+        raise exceptions.ValidationError(self.error_messages['invalid'], code='invalid', params={'value': value})","def convert_to_decimal(self, value):
+    if value is None:
+        return value
+    if isinstance(value, float):
+        return self.context.create_decimal_from_float(value)
+    try:
+        return decimal.Decimal(value)
+    except decimal.InvalidOperation:
+        raise exceptions.ValidationError(self.error_messages['invalid'], code='invalid', params={'value': value})",[]

@@ -1,0 +1,18 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/contrib/auth/forms.py,__init__,"python
+initialize_form_fields_with_permissions",162,171,"def __init__(self, *args, **kwargs):
+    super().__init__(*args, **kwargs)
+    password = self.fields.get('password')
+    if password:
+        password.help_text = password.help_text.format('../password/')
+    user_permissions = self.fields.get('user_permissions')
+    if user_permissions:
+        user_permissions.queryset = user_permissions.queryset.select_related('content_type')","def python
+initialize_form_fields_with_permissions(self, *args, **kwargs):
+    super().__init__(*args, **kwargs)
+    password = self.fields.get('password')
+    if password:
+        password.help_text = password.help_text.format('../password/')
+    user_permissions = self.fields.get('user_permissions')
+    if user_permissions:
+        user_permissions.queryset = user_permissions.queryset.select_related('content_type')","[{""var"": ""password"", ""rename"": ""user_password_field""}, {""var"": ""user_permissions"", ""rename"": ""user_access_rights_queryset""}]"

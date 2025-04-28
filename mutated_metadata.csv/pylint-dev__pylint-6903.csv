@@ -1,0 +1,69 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./pylint/lint/run.py,_query_cpu,determine_docker_cpu_allocation,34,61,"def _query_cpu() -> int | None:
+    """"""Try to determine number of CPUs allotted in a docker container.
+
+    This is based on discussion and copied from suggestions in
+    https://bugs.python.org/issue36054.
+    """"""
+    cpu_quota, avail_cpu = (None, None)
+    if Path('/sys/fs/cgroup/cpu/cpu.cfs_quota_us').is_file():
+        with open('/sys/fs/cgroup/cpu/cpu.cfs_quota_us', encoding='utf-8') as file:
+            cpu_quota = int(file.read().rstrip())
+    if cpu_quota and cpu_quota != -1 and Path('/sys/fs/cgroup/cpu/cpu.cfs_period_us').is_file():
+        with open('/sys/fs/cgroup/cpu/cpu.cfs_period_us', encoding='utf-8') as file:
+            cpu_period = int(file.read().rstrip())
+        avail_cpu = int(cpu_quota / cpu_period)
+    elif Path('/sys/fs/cgroup/cpu/cpu.shares').is_file():
+        with open('/sys/fs/cgroup/cpu/cpu.shares', encoding='utf-8') as file:
+            cpu_shares = int(file.read().rstrip())
+        avail_cpu = int(cpu_shares / 1024)
+    return avail_cpu","def determine_docker_cpu_allocation() -> int | None:
+    """"""Try to determine number of CPUs allotted in a docker container.
+
+    This is based on discussion and copied from suggestions in
+    https://bugs.python.org/issue36054.
+    """"""
+    cpu_quota, avail_cpu = (None, None)
+    if Path('/sys/fs/cgroup/cpu/cpu.cfs_quota_us').is_file():
+        with open('/sys/fs/cgroup/cpu/cpu.cfs_quota_us', encoding='utf-8') as file:
+            cpu_quota = int(file.read().rstrip())
+    if cpu_quota and cpu_quota != -1 and Path('/sys/fs/cgroup/cpu/cpu.cfs_period_us').is_file():
+        with open('/sys/fs/cgroup/cpu/cpu.cfs_period_us', encoding='utf-8') as file:
+            cpu_period = int(file.read().rstrip())
+        avail_cpu = int(cpu_quota / cpu_period)
+    elif Path('/sys/fs/cgroup/cpu/cpu.shares').is_file():
+        with open('/sys/fs/cgroup/cpu/cpu.shares', encoding='utf-8') as file:
+            cpu_shares = int(file.read().rstrip())
+        avail_cpu = int(cpu_shares / 1024)
+    return avail_cpu","[{""var"": ""cpu_shares"", ""rename"": ""docker_cpu_share_allocation""}, {""var"": ""cpu_quota"", ""rename"": ""allocated_cpu_quota""}, {""var"": ""cpu_period"", ""rename"": ""cpu_time_period_us""}, {""var"": ""file"", ""rename"": ""cpu_file""}, {""var"": ""avail_cpu"", ""rename"": ""allocated_cpu_count""}]"
+./pylint/lint/run.py,_cpu_count,determine_effective_cpu_count,64,80,"def _cpu_count() -> int:
+    """"""Use sched_affinity if available for virtualized or containerized
+    environments.
+    """"""
+    cpu_share = _query_cpu()
+    cpu_count = None
+    sched_getaffinity = getattr(os, 'sched_getaffinity', None)
+    if sched_getaffinity:
+        cpu_count = len(sched_getaffinity(0))
+    elif multiprocessing:
+        cpu_count = multiprocessing.cpu_count()
+    else:
+        cpu_count = 1
+    if cpu_share is not None:
+        return min(cpu_share, cpu_count)
+    return cpu_count","def determine_effective_cpu_count() -> int:
+    """"""Use sched_affinity if available for virtualized or containerized
+    environments.
+    """"""
+    cpu_share = _query_cpu()
+    cpu_count = None
+    sched_getaffinity = getattr(os, 'sched_getaffinity', None)
+    if sched_getaffinity:
+        cpu_count = len(sched_getaffinity(0))
+    elif multiprocessing:
+        cpu_count = multiprocessing.cpu_count()
+    else:
+        cpu_count = 1
+    if cpu_share is not None:
+        return min(cpu_share, cpu_count)
+    return cpu_count","[{""var"": ""cpu_share"", ""rename"": ""virtual_cpu_capacity""}, {""var"": ""sched_getaffinity"", ""rename"": ""sched_affinity_function""}, {""var"": ""cpu_count"", ""rename"": ""adjusted_cpu_count""}]"

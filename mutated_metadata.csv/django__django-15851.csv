@@ -1,0 +1,84 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/db/backends/postgresql/client.py,settings_to_cmd_args_env,generate_pg_command_args_and_env,10,54,"@classmethod
+def settings_to_cmd_args_env(cls, settings_dict, parameters):
+    args = [cls.executable_name]
+    options = settings_dict.get('OPTIONS', {})
+    host = settings_dict.get('HOST')
+    port = settings_dict.get('PORT')
+    dbname = settings_dict.get('NAME')
+    user = settings_dict.get('USER')
+    passwd = settings_dict.get('PASSWORD')
+    passfile = options.get('passfile')
+    service = options.get('service')
+    sslmode = options.get('sslmode')
+    sslrootcert = options.get('sslrootcert')
+    sslcert = options.get('sslcert')
+    sslkey = options.get('sslkey')
+    if not dbname and (not service):
+        dbname = 'postgres'
+    if user:
+        args += ['-U', user]
+    if host:
+        args += ['-h', host]
+    if port:
+        args += ['-p', str(port)]
+    if dbname:
+        args += [dbname]
+    args.extend(parameters)
+    env = {}
+    if passwd:
+        env['PGPASSWORD'] = str(passwd)
+    if service:
+        env['PGSERVICE'] = str(service)
+    if sslmode:
+        env['PGSSLMODE'] = str(sslmode)
+    if sslrootcert:
+        env['PGSSLROOTCERT'] = str(sslrootcert)
+    if sslcert:
+        env['PGSSLCERT'] = str(sslcert)
+    if sslkey:
+        env['PGSSLKEY'] = str(sslkey)
+    if passfile:
+        env['PGPASSFILE'] = str(passfile)
+    return (args, env or None)","@classmethod
+def generate_pg_command_args_and_env(cls, settings_dict, parameters):
+    args = [cls.executable_name]
+    options = settings_dict.get('OPTIONS', {})
+    host = settings_dict.get('HOST')
+    port = settings_dict.get('PORT')
+    dbname = settings_dict.get('NAME')
+    user = settings_dict.get('USER')
+    passwd = settings_dict.get('PASSWORD')
+    passfile = options.get('passfile')
+    service = options.get('service')
+    sslmode = options.get('sslmode')
+    sslrootcert = options.get('sslrootcert')
+    sslcert = options.get('sslcert')
+    sslkey = options.get('sslkey')
+    if not dbname and (not service):
+        dbname = 'postgres'
+    if user:
+        args += ['-U', user]
+    if host:
+        args += ['-h', host]
+    if port:
+        args += ['-p', str(port)]
+    if dbname:
+        args += [dbname]
+    args.extend(parameters)
+    env = {}
+    if passwd:
+        env['PGPASSWORD'] = str(passwd)
+    if service:
+        env['PGSERVICE'] = str(service)
+    if sslmode:
+        env['PGSSLMODE'] = str(sslmode)
+    if sslrootcert:
+        env['PGSSLROOTCERT'] = str(sslrootcert)
+    if sslcert:
+        env['PGSSLCERT'] = str(sslcert)
+    if sslkey:
+        env['PGSSLKEY'] = str(sslkey)
+    if passfile:
+        env['PGPASSFILE'] = str(passfile)
+    return (args, env or None)","[{""var"": ""sslcert"", ""rename"": ""ssl_certificate_path""}, {""var"": ""service"", ""rename"": ""database_service_name""}, {""var"": ""sslrootcert"", ""rename"": ""ssl_root_certificate_path""}, {""var"": ""host"", ""rename"": ""database_host""}, {""var"": ""port"", ""rename"": ""database_port""}, {""var"": ""sslkey"", ""rename"": ""ssl_private_key_path""}, {""var"": ""sslmode"", ""rename"": ""ssl_connection_mode""}, {""var"": ""dbname"", ""rename"": ""database_name""}, {""var"": ""env"", ""rename"": ""environment_variables""}, {""var"": ""user"", ""rename"": ""database_user""}, {""var"": ""args"", ""rename"": ""command_line_arguments""}, {""var"": ""options"", ""rename"": ""connection_options""}, {""var"": ""passwd"", ""rename"": ""password""}, {""var"": ""passfile"", ""rename"": ""password_file_path""}]"

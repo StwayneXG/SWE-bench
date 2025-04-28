@@ -1,0 +1,93 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./sphinx/application.py,_init_i18n,initialize_translations,279,302,"def _init_i18n(self) -> None:
+    """"""Load translated strings from the configured localedirs if enabled in
+        the configuration.
+        """"""
+    if self.config.language is None:
+        self.translator, has_translation = locale.init([], None)
+    else:
+        logger.info(bold(__('loading translations [%s]... ') % self.config.language), nonl=True)
+        repo = CatalogRepository(self.srcdir, self.config.locale_dirs, self.config.language, self.config.source_encoding)
+        for catalog in repo.catalogs:
+            if catalog.domain == 'sphinx' and catalog.is_outdated():
+                catalog.write_mo(self.config.language)
+        locale_dirs = [None, path.join(package_dir, 'locale')] + list(repo.locale_dirs)
+        self.translator, has_translation = locale.init(locale_dirs, self.config.language)
+        if has_translation or self.config.language == 'en':
+            logger.info(__('done'))
+        else:
+            logger.info(__('not available for built-in messages'))","def initialize_translations(self) -> None:
+    """"""Load translated strings from the configured localedirs if enabled in
+        the configuration.
+        """"""
+    if self.config.language is None:
+        self.translator, has_translation = locale.init([], None)
+    else:
+        logger.info(bold(__('loading translations [%s]... ') % self.config.language), nonl=True)
+        repo = CatalogRepository(self.srcdir, self.config.locale_dirs, self.config.language, self.config.source_encoding)
+        for catalog in repo.catalogs:
+            if catalog.domain == 'sphinx' and catalog.is_outdated():
+                catalog.write_mo(self.config.language)
+        locale_dirs = [None, path.join(package_dir, 'locale')] + list(repo.locale_dirs)
+        self.translator, has_translation = locale.init(locale_dirs, self.config.language)
+        if has_translation or self.config.language == 'en':
+            logger.info(__('done'))
+        else:
+            logger.info(__('not available for built-in messages'))","[{""var"": ""repo"", ""rename"": ""translation_catalog_repository""}, {""var"": ""locale_dirs"", ""rename"": ""translation_directory_paths""}, {""var"": ""has_translation"", ""rename"": ""python\nhas_active_translation""}, {""var"": ""catalog"", ""rename"": ""translation_catalog""}]"
+./sphinx/locale/__init__.py,init,initialize_translations_catalog,109,146,"def init(locale_dirs: List[str], language: str, catalog: str='sphinx', namespace: str='general') -> Tuple[NullTranslations, bool]:
+    """"""Look for message catalogs in `locale_dirs` and *ensure* that there is at
+    least a NullTranslations catalog set in `translators`. If called multiple
+    times or if several ``.mo`` files are found, their contents are merged
+    together (thus making ``init`` reentrant).
+    """"""
+    global translators
+    translator = translators.get((namespace, catalog))
+    if translator.__class__ is NullTranslations:
+        translator = None
+    has_translation = True
+    if language and '_' in language:
+        languages = [language, language.split('_')[0]]
+    else:
+        languages = [language]
+    for dir_ in locale_dirs:
+        try:
+            trans = gettext.translation(catalog, localedir=dir_, languages=languages)
+            if translator is None:
+                translator = trans
+            else:
+                translator.add_fallback(trans)
+        except Exception:
+            pass
+    if translator is None:
+        translator = NullTranslations()
+        has_translation = False
+    translators[namespace, catalog] = translator
+    return (translator, has_translation)","def initialize_translations_catalog(locale_dirs: List[str], language: str, catalog: str='sphinx', namespace: str='general') -> Tuple[NullTranslations, bool]:
+    """"""Look for message catalogs in `locale_dirs` and *ensure* that there is at
+    least a NullTranslations catalog set in `translators`. If called multiple
+    times or if several ``.mo`` files are found, their contents are merged
+    together (thus making ``init`` reentrant).
+    """"""
+    global translators
+    translator = translators.get((namespace, catalog))
+    if translator.__class__ is NullTranslations:
+        translator = None
+    has_translation = True
+    if language and '_' in language:
+        languages = [language, language.split('_')[0]]
+    else:
+        languages = [language]
+    for dir_ in locale_dirs:
+        try:
+            trans = gettext.translation(catalog, localedir=dir_, languages=languages)
+            if translator is None:
+                translator = trans
+            else:
+                translator.add_fallback(trans)
+        except Exception:
+            pass
+    if translator is None:
+        translator = NullTranslations()
+        has_translation = False
+    translators[namespace, catalog] = translator
+    return (translator, has_translation)","[{""var"": ""dir_"", ""rename"": ""locale_directory""}, {""var"": ""translator"", ""rename"": ""localizedTranslatorInstance""}, {""var"": ""trans"", ""rename"": ""message_catalog""}, {""var"": ""has_translation"", ""rename"": ""has_active_translation""}, {""var"": ""languages"", ""rename"": ""locale_language_variants""}]"

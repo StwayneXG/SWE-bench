@@ -1,0 +1,4 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./src/_pytest/capture.py,__getattr__,delegate_to_buffer_attribute,450,451,"def __getattr__(self, name):
+    return getattr(object.__getattribute__(self, 'buffer'), name)","def delegate_to_buffer_attribute(self, name):
+    return getattr(object.__getattribute__(self, 'buffer'), name)",[]

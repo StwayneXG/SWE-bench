@@ -1,0 +1,15 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/core/management/base.py,isatty,is_output_stream_interactive,143,144,"def isatty(self):
+    return hasattr(self._out, 'isatty') and self._out.isatty()","def is_output_stream_interactive(self):
+    return hasattr(self._out, 'isatty') and self._out.isatty()",[]
+./django/core/management/base.py,write,styled_message_output,146,151,"def write(self, msg='', style_func=None, ending=None):
+    ending = self.ending if ending is None else ending
+    if ending and (not msg.endswith(ending)):
+        msg += ending
+    style_func = style_func or self.style_func
+    self._out.write(style_func(msg))","def styled_message_output(self, msg='', style_func=None, ending=None):
+    ending = self.ending if ending is None else ending
+    if ending and (not msg.endswith(ending)):
+        msg += ending
+    style_func = style_func or self.style_func
+    self._out.write(style_func(msg))",[]

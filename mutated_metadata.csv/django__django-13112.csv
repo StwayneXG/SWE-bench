@@ -1,0 +1,36 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/db/models/fields/related.py,deconstruct,construct_foreignKey_representation,576,605,"def deconstruct(self):
+    name, path, args, kwargs = super().deconstruct()
+    kwargs['on_delete'] = self.remote_field.on_delete
+    kwargs['from_fields'] = self.from_fields
+    kwargs['to_fields'] = self.to_fields
+    if self.remote_field.parent_link:
+        kwargs['parent_link'] = self.remote_field.parent_link
+    if isinstance(self.remote_field.model, str):
+        kwargs['to'] = self.remote_field.model.lower()
+    else:
+        kwargs['to'] = self.remote_field.model._meta.label_lower
+    swappable_setting = self.swappable_setting
+    if swappable_setting is not None:
+        if hasattr(kwargs['to'], 'setting_name'):
+            if kwargs['to'].setting_name != swappable_setting:
+                raise ValueError('Cannot deconstruct a ForeignKey pointing to a model that is swapped in place of more than one model (%s and %s)' % (kwargs['to'].setting_name, swappable_setting))
+        kwargs['to'] = SettingsReference(kwargs['to'], swappable_setting)
+    return (name, path, args, kwargs)","def construct_foreignKey_representation(self):
+    name, path, args, kwargs = super().deconstruct()
+    kwargs['on_delete'] = self.remote_field.on_delete
+    kwargs['from_fields'] = self.from_fields
+    kwargs['to_fields'] = self.to_fields
+    if self.remote_field.parent_link:
+        kwargs['parent_link'] = self.remote_field.parent_link
+    if isinstance(self.remote_field.model, str):
+        kwargs['to'] = self.remote_field.model.lower()
+    else:
+        kwargs['to'] = self.remote_field.model._meta.label_lower
+    swappable_setting = self.swappable_setting
+    if swappable_setting is not None:
+        if hasattr(kwargs['to'], 'setting_name'):
+            if kwargs['to'].setting_name != swappable_setting:
+                raise ValueError('Cannot deconstruct a ForeignKey pointing to a model that is swapped in place of more than one model (%s and %s)' % (kwargs['to'].setting_name, swappable_setting))
+        kwargs['to'] = SettingsReference(kwargs['to'], swappable_setting)
+    return (name, path, args, kwargs)","[{""var"": ""name"", ""rename"": ""field_name""}, {""var"": ""path"", ""rename"": ""dotted_module_path""}, {""var"": ""swappable_setting"", ""rename"": ""model_swap_identifier""}, {""var"": ""kwargs"", ""rename"": ""field_options""}, {""var"": ""args"", ""rename"": ""constructor_arguments""}]"

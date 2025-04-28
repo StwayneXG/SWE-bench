@@ -1,0 +1,27 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/views/generic/base.py,_wrap_url_kwargs_with_deprecation_warning,generate_context_with_url_kwargs_deprecation_warning,168,182,"def _wrap_url_kwargs_with_deprecation_warning(url_kwargs):
+    context_kwargs = {}
+    for key, value in url_kwargs.items():
+
+        @SimpleLazyObject
+        def access_value(key=key, value=value):
+            warnings.warn('TemplateView passing URL kwargs to the context is deprecated. Reference %s in your template through view.kwargs instead.' % key, RemovedInDjango40Warning, stacklevel=2)
+            return value
+        context_kwargs[key] = access_value
+    return context_kwargs","def generate_context_with_url_kwargs_deprecation_warning(url_kwargs):
+    context_kwargs = {}
+    for key, value in url_kwargs.items():
+
+        @SimpleLazyObject
+        def access_value(key=key, value=value):
+            warnings.warn('TemplateView passing URL kwargs to the context is deprecated. Reference %s in your template through view.kwargs instead.' % key, RemovedInDjango40Warning, stacklevel=2)
+            return value
+        context_kwargs[key] = access_value
+    return context_kwargs","[{""var"": ""value"", ""rename"": ""url_parameter_value""}, {""var"": ""context_kwargs"", ""rename"": ""deprecated_url_context_wrappers""}, {""var"": ""key"", ""rename"": ""url_parameter_name""}]"
+./django/views/generic/base.py,access_value,deprecation_warning_and_return_value,173,180,"@SimpleLazyObject
+def access_value(key=key, value=value):
+    warnings.warn('TemplateView passing URL kwargs to the context is deprecated. Reference %s in your template through view.kwargs instead.' % key, RemovedInDjango40Warning, stacklevel=2)
+    return value","@SimpleLazyObject
+def deprecation_warning_and_return_value(key=key, value=value):
+    warnings.warn('TemplateView passing URL kwargs to the context is deprecated. Reference %s in your template through view.kwargs instead.' % key, RemovedInDjango40Warning, stacklevel=2)
+    return value",[]

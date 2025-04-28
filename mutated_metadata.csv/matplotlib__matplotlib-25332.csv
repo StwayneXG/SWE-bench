@@ -1,0 +1,46 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./lib/matplotlib/cbook.py,__contains__,is_weak_reference_in_mapping,791,792,"def __contains__(self, item):
+    return weakref.ref(item) in self._mapping","def is_weak_reference_in_mapping(self, item):
+    return weakref.ref(item) in self._mapping",[]
+./lib/matplotlib/cbook.py,clean,cleanup_dead_weakrefs_from_dict,794,800,"def clean(self):
+    """"""Clean dead weak references from the dictionary.""""""
+    mapping = self._mapping
+    to_drop = [key for key in mapping if key() is None]
+    for key in to_drop:
+        val = mapping.pop(key)
+        val.remove(key)","def cleanup_dead_weakrefs_from_dict(self):
+    """"""Clean dead weak references from the dictionary.""""""
+    mapping = self._mapping
+    to_drop = [key for key in mapping if key() is None]
+    for key in to_drop:
+        val = mapping.pop(key)
+        val.remove(key)","[{""var"": ""key"", ""rename"": ""obsolete_reference_key""}, {""var"": ""val"", ""rename"": ""removed_item""}, {""var"": ""mapping"", ""rename"": ""active_reference_map""}, {""var"": ""to_drop"", ""rename"": ""keys_to_remove_due_to_weakref""}]"
+./lib/matplotlib/cbook.py,join,unify_sets_with_weakrefs,802,818,"def join(self, a, *args):
+    """"""
+        Join given arguments into the same set.  Accepts one or more arguments.
+        """"""
+    mapping = self._mapping
+    set_a = mapping.setdefault(weakref.ref(a), [weakref.ref(a)])
+    for arg in args:
+        set_b = mapping.get(weakref.ref(arg), [weakref.ref(arg)])
+        if set_b is not set_a:
+            if len(set_b) > len(set_a):
+                set_a, set_b = (set_b, set_a)
+            set_a.extend(set_b)
+            for elem in set_b:
+                mapping[elem] = set_a
+    self.clean()","def unify_sets_with_weakrefs(self, a, *args):
+    """"""
+        Join given arguments into the same set.  Accepts one or more arguments.
+        """"""
+    mapping = self._mapping
+    set_a = mapping.setdefault(weakref.ref(a), [weakref.ref(a)])
+    for arg in args:
+        set_b = mapping.get(weakref.ref(arg), [weakref.ref(arg)])
+        if set_b is not set_a:
+            if len(set_b) > len(set_a):
+                set_a, set_b = (set_b, set_a)
+            set_a.extend(set_b)
+            for elem in set_b:
+                mapping[elem] = set_a
+    self.clean()","[{""var"": ""arg"", ""rename"": ""additional_elements""}, {""var"": ""elem"", ""rename"": ""element_ref""}, {""var"": ""set_b"", ""rename"": ""current_set""}, {""var"": ""mapping"", ""rename"": ""element_group_mapping""}, {""var"": ""set_a"", ""rename"": ""primary_set""}]"

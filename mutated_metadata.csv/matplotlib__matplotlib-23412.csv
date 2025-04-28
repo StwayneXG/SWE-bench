@@ -1,0 +1,20 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./lib/matplotlib/patches.py,draw,render_with_rasterization_support,585,601,"@artist.allow_rasterization
+def draw(self, renderer):
+    if not self.get_visible():
+        return
+    with cbook._setattr_cm(self, _dash_pattern=(0, self._dash_pattern[1])), self._bind_draw_path_function(renderer) as draw_path:
+        path = self.get_path()
+        transform = self.get_transform()
+        tpath = transform.transform_path_non_affine(path)
+        affine = transform.get_affine()
+        draw_path(tpath, affine, self._facecolor if self._facecolor[3] else None)","@artist.allow_rasterization
+def render_with_rasterization_support(self, renderer):
+    if not self.get_visible():
+        return
+    with cbook._setattr_cm(self, _dash_pattern=(0, self._dash_pattern[1])), self._bind_draw_path_function(renderer) as draw_path:
+        path = self.get_path()
+        transform = self.get_transform()
+        tpath = transform.transform_path_non_affine(path)
+        affine = transform.get_affine()
+        draw_path(tpath, affine, self._facecolor if self._facecolor[3] else None)","[{""var"": ""draw_path"", ""rename"": ""render_transformed_path""}, {""var"": ""path"", ""rename"": ""transformed_path""}, {""var"": ""tpath"", ""rename"": ""transformed_non_affine_path""}, {""var"": ""transform"", ""rename"": ""geometry_transformer""}, {""var"": ""affine"", ""rename"": ""affine_transform_matrix""}]"

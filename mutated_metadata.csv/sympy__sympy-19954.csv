@@ -1,0 +1,142 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./sympy/combinatorics/perm_groups.py,minimal_blocks,compute_transitive_block_systems,2133,2214,"def minimal_blocks(self, randomized=True):
+    """"""
+        For a transitive group, return the list of all minimal
+        block systems. If a group is intransitive, return `False`.
+
+        Examples
+        ========
+        >>> from sympy.combinatorics import Permutation
+        >>> from sympy.combinatorics.perm_groups import PermutationGroup
+        >>> from sympy.combinatorics.named_groups import DihedralGroup
+        >>> DihedralGroup(6).minimal_blocks()
+        [[0, 1, 0, 1, 0, 1], [0, 1, 2, 0, 1, 2]]
+        >>> G = PermutationGroup(Permutation(1,2,5))
+        >>> G.minimal_blocks()
+        False
+
+        See Also
+        ========
+
+        minimal_block, is_transitive, is_primitive
+
+        """"""
+
+    def _number_blocks(blocks):
+        n = len(blocks)
+        appeared = {}
+        m = 0
+        b = [None] * n
+        for i in range(n):
+            if blocks[i] not in appeared:
+                appeared[blocks[i]] = m
+                b[i] = m
+                m += 1
+            else:
+                b[i] = appeared[blocks[i]]
+        return (tuple(b), m)
+    if not self.is_transitive():
+        return False
+    blocks = []
+    num_blocks = []
+    rep_blocks = []
+    if randomized:
+        random_stab_gens = []
+        v = self.schreier_vector(0)
+        for i in range(len(self)):
+            random_stab_gens.append(self.random_stab(0, v))
+        stab = PermutationGroup(random_stab_gens)
+    else:
+        stab = self.stabilizer(0)
+    orbits = stab.orbits()
+    for orb in orbits:
+        x = orb.pop()
+        if x != 0:
+            block = self.minimal_block([0, x])
+            num_block, m = _number_blocks(block)
+            rep = {j for j in range(self.degree) if num_block[j] == 0}
+            minimal = True
+            to_remove = []
+            for i, r in enumerate(rep_blocks):
+                if len(r) > len(rep) and rep.issubset(r):
+                    del num_blocks[i], blocks[i]
+                    to_remove.append(rep_blocks[i])
+                elif len(r) < len(rep) and r.issubset(rep):
+                    minimal = False
+                    break
+            rep_blocks = [r for r in rep_blocks if r not in to_remove]
+            if minimal and num_block not in num_blocks:
+                blocks.append(block)
+                num_blocks.append(num_block)
+                rep_blocks.append(rep)
+    return blocks","def compute_transitive_block_systems(self, randomized=True):
+    """"""
+        For a transitive group, return the list of all minimal
+        block systems. If a group is intransitive, return `False`.
+
+        Examples
+        ========
+        >>> from sympy.combinatorics import Permutation
+        >>> from sympy.combinatorics.perm_groups import PermutationGroup
+        >>> from sympy.combinatorics.named_groups import DihedralGroup
+        >>> DihedralGroup(6).minimal_blocks()
+        [[0, 1, 0, 1, 0, 1], [0, 1, 2, 0, 1, 2]]
+        >>> G = PermutationGroup(Permutation(1,2,5))
+        >>> G.minimal_blocks()
+        False
+
+        See Also
+        ========
+
+        minimal_block, is_transitive, is_primitive
+
+        """"""
+
+    def _number_blocks(blocks):
+        n = len(blocks)
+        appeared = {}
+        m = 0
+        b = [None] * n
+        for i in range(n):
+            if blocks[i] not in appeared:
+                appeared[blocks[i]] = m
+                b[i] = m
+                m += 1
+            else:
+                b[i] = appeared[blocks[i]]
+        return (tuple(b), m)
+    if not self.is_transitive():
+        return False
+    blocks = []
+    num_blocks = []
+    rep_blocks = []
+    if randomized:
+        random_stab_gens = []
+        v = self.schreier_vector(0)
+        for i in range(len(self)):
+            random_stab_gens.append(self.random_stab(0, v))
+        stab = PermutationGroup(random_stab_gens)
+    else:
+        stab = self.stabilizer(0)
+    orbits = stab.orbits()
+    for orb in orbits:
+        x = orb.pop()
+        if x != 0:
+            block = self.minimal_block([0, x])
+            num_block, m = _number_blocks(block)
+            rep = {j for j in range(self.degree) if num_block[j] == 0}
+            minimal = True
+            to_remove = []
+            for i, r in enumerate(rep_blocks):
+                if len(r) > len(rep) and rep.issubset(r):
+                    del num_blocks[i], blocks[i]
+                    to_remove.append(rep_blocks[i])
+                elif len(r) < len(rep) and r.issubset(rep):
+                    minimal = False
+                    break
+            rep_blocks = [r for r in rep_blocks if r not in to_remove]
+            if minimal and num_block not in num_blocks:
+                blocks.append(block)
+                num_blocks.append(num_block)
+                rep_blocks.append(rep)
+    return blocks","[{""var"": ""n"", ""rename"": ""total_blocks""}, {""var"": ""i"", ""rename"": ""index""}, {""var"": ""x"", ""rename"": ""orbit_element""}, {""var"": ""j"", ""rename"": ""degree_index""}, {""var"": ""orbits"", ""rename"": ""stabilizer_orbits""}, {""var"": ""num_blocks"", ""rename"": ""numerical_block_identifiers""}, {""var"": ""minimal"", ""rename"": ""minimal_block_systems""}, {""var"": ""orb"", ""rename"": ""orbit_set""}, {""var"": ""to_remove"", ""rename"": ""rep_blocks_to_be_removed""}, {""var"": ""appeared"", ""rename"": ""block_appearance_map""}, {""var"": ""m"", ""rename"": ""unique_block_identifier_count""}, {""var"": ""stab"", ""rename"": ""stabilizer_group""}, {""var"": ""v"", ""rename"": ""schreier_indices""}, {""var"": ""num_block"", ""rename"": ""indexed_block_representation""}, {""var"": ""rep_blocks"", ""rename"": ""representative_block_sets""}, {""var"": ""b"", ""rename"": ""block_indices""}, {""var"": ""rep"", ""rename"": ""representative_blocks_set""}, {""var"": ""random_stab_gens"", ""rename"": ""randomized_stabilizer_generators""}, {""var"": ""block"", ""rename"": ""minimalBlockPattern""}, {""var"": ""r"", ""rename"": ""current_rep_block""}]"

@@ -1,0 +1,12 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./sympy/polys/rings.py,as_expr,convert_to_symbolic_expression,618,624,"def as_expr(self, *symbols):
+    if symbols and len(symbols) != self.ring.ngens:
+        raise ValueError('not enough symbols, expected %s got %s' % (self.ring.ngens, len(symbols)))
+    else:
+        symbols = self.ring.symbols
+    return expr_from_dict(self.as_expr_dict(), *symbols)","def convert_to_symbolic_expression(self, *symbols):
+    if symbols and len(symbols) != self.ring.ngens:
+        raise ValueError('not enough symbols, expected %s got %s' % (self.ring.ngens, len(symbols)))
+    else:
+        symbols = self.ring.symbols
+    return expr_from_dict(self.as_expr_dict(), *symbols)",[]

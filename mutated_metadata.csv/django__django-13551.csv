@@ -1,0 +1,37 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/contrib/auth/tokens.py,_make_hash_value,generate_user_token_hash,79,97,"def _make_hash_value(self, user, timestamp):
+    """"""
+        Hash the user's primary key and some user state that's sure to change
+        after a password reset to produce a token that invalidated when it's
+        used:
+        1. The password field will change upon a password reset (even if the
+           same password is chosen, due to password salting).
+        2. The last_login field will usually be updated very shortly after
+           a password reset.
+        Failing those things, settings.PASSWORD_RESET_TIMEOUT eventually
+        invalidates the token.
+
+        Running this data through salted_hmac() prevents password cracking
+        attempts using the reset token, provided the secret isn't compromised.
+        """"""
+    login_timestamp = '' if user.last_login is None else user.last_login.replace(microsecond=0, tzinfo=None)
+    return str(user.pk) + user.password + str(login_timestamp) + str(timestamp)","def generate_user_token_hash(self, user, timestamp):
+    """"""
+        Hash the user's primary key and some user state that's sure to change
+        after a password reset to produce a token that invalidated when it's
+        used:
+        1. The password field will change upon a password reset (even if the
+           same password is chosen, due to password salting).
+        2. The last_login field will usually be updated very shortly after
+           a password reset.
+        Failing those things, settings.PASSWORD_RESET_TIMEOUT eventually
+        invalidates the token.
+
+        Running this data through salted_hmac() prevents password cracking
+        attempts using the reset token, provided the secret isn't compromised.
+        """"""
+    login_timestamp = '' if user.last_login is None else user.last_login.replace(microsecond=0, tzinfo=None)
+    return str(user.pk) + user.password + str(login_timestamp) + str(timestamp)","[{""var"": ""login_timestamp"", ""rename"": ""last_login_normalized_timestamp""}]"
+./django/contrib/auth/tokens.py,_num_seconds,calculate_seconds_since_start_of_21st_century,99,100,"def _num_seconds(self, dt):
+    return int((dt - datetime(2001, 1, 1)).total_seconds())","def calculate_seconds_since_start_of_21st_century(self, dt):
+    return int((dt - datetime(2001, 1, 1)).total_seconds())",[]

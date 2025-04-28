@@ -1,0 +1,47 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/db/models/fields/json.py,process_lhs,handle_sqlite_null_json_lhs,382,389,"def process_lhs(self, compiler, connection):
+    lhs, lhs_params = super().process_lhs(compiler, connection)
+    if connection.vendor == 'sqlite':
+        rhs, rhs_params = super().process_rhs(compiler, connection)
+        if rhs == '%s' and rhs_params == ['null']:
+            lhs, _ = self.lhs.preprocess_lhs(compiler, connection, lhs_only=True)
+            lhs = 'JSON_TYPE(%s, %%s)' % lhs
+    return (lhs, lhs_params)","def handle_sqlite_null_json_lhs(self, compiler, connection):
+    lhs, lhs_params = super().process_lhs(compiler, connection)
+    if connection.vendor == 'sqlite':
+        rhs, rhs_params = super().process_rhs(compiler, connection)
+        if rhs == '%s' and rhs_params == ['null']:
+            lhs, _ = self.lhs.preprocess_lhs(compiler, connection, lhs_only=True)
+            lhs = 'JSON_TYPE(%s, %%s)' % lhs
+    return (lhs, lhs_params)","[{""var"": ""rhs_params"", ""rename"": ""right_hand_side_parameters""}, {""var"": ""rhs"", ""rename"": ""right_hand_side_expression""}, {""var"": ""_"", ""rename"": ""adjusted_lhs_expression""}, {""var"": ""lhs"", ""rename"": ""left_hand_side_expression""}, {""var"": ""lhs_params"", ""rename"": ""left_hand_params""}]"
+./django/db/models/fields/json.py,process_rhs,process_rhs_json_handling,391,409,"def process_rhs(self, compiler, connection):
+    if isinstance(self.rhs, KeyTransform):
+        return super(lookups.Exact, self).process_rhs(compiler, connection)
+    rhs, rhs_params = super().process_rhs(compiler, connection)
+    if connection.vendor == 'oracle':
+        func = []
+        for value in rhs_params:
+            value = json.loads(value)
+            function = 'JSON_QUERY' if isinstance(value, (list, dict)) else 'JSON_VALUE'
+            func.append(""%s('%s', '$.value')"" % (function, json.dumps({'value': value})))
+        rhs = rhs % tuple(func)
+        rhs_params = []
+    elif connection.vendor == 'sqlite':
+        func = [""JSON_EXTRACT(%s, '$')"" if value != 'null' else '%s' for value in rhs_params]
+        rhs = rhs % tuple(func)
+    return (rhs, rhs_params)","def process_rhs_json_handling(self, compiler, connection):
+    if isinstance(self.rhs, KeyTransform):
+        return super(lookups.Exact, self).process_rhs(compiler, connection)
+    rhs, rhs_params = super().process_rhs(compiler, connection)
+    if connection.vendor == 'oracle':
+        func = []
+        for value in rhs_params:
+            value = json.loads(value)
+            function = 'JSON_QUERY' if isinstance(value, (list, dict)) else 'JSON_VALUE'
+            func.append(""%s('%s', '$.value')"" % (function, json.dumps({'value': value})))
+        rhs = rhs % tuple(func)
+        rhs_params = []
+    elif connection.vendor == 'sqlite':
+        func = [""JSON_EXTRACT(%s, '$')"" if value != 'null' else '%s' for value in rhs_params]
+        rhs = rhs % tuple(func)
+    return (rhs, rhs_params)","[{""var"": ""rhs_params"", ""rename"": ""transformed_rhs_params""}, {""var"": ""rhs"", ""rename"": ""right_hand_side_expression""}, {""var"": ""func"", ""rename"": ""json_function_calls""}, {""var"": ""value"", ""rename"": ""rhs_transformed_value""}, {""var"": ""function"", ""rename"": ""json_function_name""}]"

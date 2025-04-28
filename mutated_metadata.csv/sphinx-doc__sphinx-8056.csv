@@ -1,0 +1,54 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./sphinx/ext/napoleon/docstring.py,_consume_fields,_collect_and_parse_field_data,269,277,"def _consume_fields(self, parse_type: bool=True, prefer_type: bool=False) -> List[Tuple[str, str, List[str]]]:
+    self._consume_empty()
+    fields = []
+    while not self._is_section_break():
+        _name, _type, _desc = self._consume_field(parse_type, prefer_type)
+        if _name or _type or _desc:
+            fields.append((_name, _type, _desc))
+    return fields","def _collect_and_parse_field_data(self, parse_type: bool=True, prefer_type: bool=False) -> List[Tuple[str, str, List[str]]]:
+    self._consume_empty()
+    fields = []
+    while not self._is_section_break():
+        _name, _type, _desc = self._consume_field(parse_type, prefer_type)
+        if _name or _type or _desc:
+            fields.append((_name, _type, _desc))
+    return fields","[{""var"": ""_type"", ""rename"": ""field_type""}, {""var"": ""_desc"", ""rename"": ""field_descriptions""}, {""var"": ""fields"", ""rename"": ""parsed_fields_with_descriptions""}, {""var"": ""_name"", ""rename"": ""field_name""}]"
+./sphinx/ext/napoleon/docstring.py,_parse_parameters_section,_parse_and_format_parameters_section,683,688,"def _parse_parameters_section(self, section: str) -> List[str]:
+    fields = self._consume_fields()
+    if self._config.napoleon_use_param:
+        return self._format_docutils_params(fields)
+    else:
+        return self._format_fields(_('Parameters'), fields)","def _parse_and_format_parameters_section(self, section: str) -> List[str]:
+    fields = self._consume_fields()
+    if self._config.napoleon_use_param:
+        return self._format_docutils_params(fields)
+    else:
+        return self._format_fields(_('Parameters'), fields)","[{""var"": ""fields"", ""rename"": ""parameter_fields""}]"
+./sphinx/ext/napoleon/docstring.py,_parse_raises_section,_generate_exception_docstrings,690,703,"def _parse_raises_section(self, section: str) -> List[str]:
+    fields = self._consume_fields(parse_type=False, prefer_type=True)
+    lines = []
+    for _name, _type, _desc in fields:
+        m = self._name_rgx.match(_type)
+        if m and m.group('name'):
+            _type = m.group('name')
+        _type = ' ' + _type if _type else ''
+        _desc = self._strip_empty(_desc)
+        _descs = ' ' + '\n    '.join(_desc) if any(_desc) else ''
+        lines.append(':raises%s:%s' % (_type, _descs))
+    if lines:
+        lines.append('')
+    return lines","def _generate_exception_docstrings(self, section: str) -> List[str]:
+    fields = self._consume_fields(parse_type=False, prefer_type=True)
+    lines = []
+    for _name, _type, _desc in fields:
+        m = self._name_rgx.match(_type)
+        if m and m.group('name'):
+            _type = m.group('name')
+        _type = ' ' + _type if _type else ''
+        _desc = self._strip_empty(_desc)
+        _descs = ' ' + '\n    '.join(_desc) if any(_desc) else ''
+        lines.append(':raises%s:%s' % (_type, _descs))
+    if lines:
+        lines.append('')
+    return lines","[{""var"": ""fields"", ""rename"": ""exception_fields""}, {""var"": ""_descs"", ""rename"": ""exception_descriptions""}, {""var"": ""_type"", ""rename"": ""exception_type_name""}, {""var"": ""m"", ""rename"": ""match_result""}, {""var"": ""_name"", ""rename"": ""exception_name""}, {""var"": ""_desc"", ""rename"": ""exception_description""}, {""var"": ""lines"", ""rename"": ""raises_section_lines""}]"

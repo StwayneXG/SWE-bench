@@ -1,0 +1,39 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/db/models/sql/query.py,resolve_lookup_value,evaluate_and_transform_lookup,1072,1084,"def resolve_lookup_value(self, value, can_reuse, allow_joins):
+    if hasattr(value, 'resolve_expression'):
+        value = value.resolve_expression(self, reuse=can_reuse, allow_joins=allow_joins)
+    elif isinstance(value, (list, tuple)):
+        return type(value)((self.resolve_lookup_value(sub_value, can_reuse, allow_joins) for sub_value in value))
+    return value","def evaluate_and_transform_lookup(self, value, can_reuse, allow_joins):
+    if hasattr(value, 'resolve_expression'):
+        value = value.resolve_expression(self, reuse=can_reuse, allow_joins=allow_joins)
+    elif isinstance(value, (list, tuple)):
+        return type(value)((self.resolve_lookup_value(sub_value, can_reuse, allow_joins) for sub_value in value))
+    return value","[{""var"": ""sub_value"", ""rename"": ""individual_lookup_item""}]"
+./django/db/models/sql/query.py,solve_lookup_type,determine_lookup_components,1086,1102,"def solve_lookup_type(self, lookup):
+    """"""
+        Solve the lookup type from the lookup (e.g.: 'foobar__id__icontains').
+        """"""
+    lookup_splitted = lookup.split(LOOKUP_SEP)
+    if self.annotations:
+        expression, expression_lookups = refs_expression(lookup_splitted, self.annotations)
+        if expression:
+            return (expression_lookups, (), expression)
+    _, field, _, lookup_parts = self.names_to_path(lookup_splitted, self.get_meta())
+    field_parts = lookup_splitted[0:len(lookup_splitted) - len(lookup_parts)]
+    if len(lookup_parts) > 1 and (not field_parts):
+        raise FieldError('Invalid lookup ""%s"" for model %s"".' % (lookup, self.get_meta().model.__name__))
+    return (lookup_parts, field_parts, False)","def determine_lookup_components(self, lookup):
+    """"""
+        Solve the lookup type from the lookup (e.g.: 'foobar__id__icontains').
+        """"""
+    lookup_splitted = lookup.split(LOOKUP_SEP)
+    if self.annotations:
+        expression, expression_lookups = refs_expression(lookup_splitted, self.annotations)
+        if expression:
+            return (expression_lookups, (), expression)
+    _, field, _, lookup_parts = self.names_to_path(lookup_splitted, self.get_meta())
+    field_parts = lookup_splitted[0:len(lookup_splitted) - len(lookup_parts)]
+    if len(lookup_parts) > 1 and (not field_parts):
+        raise FieldError('Invalid lookup ""%s"" for model %s"".' % (lookup, self.get_meta().model.__name__))
+    return (lookup_parts, field_parts, False)","[{""var"": ""field_parts"", ""rename"": ""resolved_field_path_segments""}, {""var"": ""field"", ""rename"": ""target_field_reference""}, {""var"": ""_"", ""rename"": ""lookup_type_details""}, {""var"": ""lookup_splitted"", ""rename"": ""lookup_components""}, {""var"": ""expression_lookups"", ""rename"": ""resolved_expression_lookups""}, {""var"": ""lookup_parts"", ""rename"": ""lookup_components""}, {""var"": ""expression"", ""rename"": ""resolved_expression""}]"

@@ -1,0 +1,89 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./sympy/matrices/expressions/matexpr.py,get_postprocessor,generate_matrix_expression_postprocessor,597,631,"def get_postprocessor(cls):
+
+    def _postprocessor(expr):
+        mat_class = {Mul: MatMul, Add: MatAdd}[cls]
+        nonmatrices = []
+        matrices = []
+        for term in expr.args:
+            if isinstance(term, MatrixExpr):
+                matrices.append(term)
+            else:
+                nonmatrices.append(term)
+        if not matrices:
+            return cls._from_args(nonmatrices)
+        if nonmatrices:
+            if cls == Mul:
+                for i in range(len(matrices)):
+                    if not matrices[i].is_MatrixExpr:
+                        matrices[i] = matrices[i].__mul__(cls._from_args(nonmatrices))
+                        nonmatrices = []
+                        break
+            else:
+                return cls._from_args(nonmatrices + [mat_class(*matrices).doit(deep=False)])
+        return mat_class(cls._from_args(nonmatrices), *matrices).doit(deep=False)
+    return _postprocessor","def generate_matrix_expression_postprocessor(cls):
+
+    def _postprocessor(expr):
+        mat_class = {Mul: MatMul, Add: MatAdd}[cls]
+        nonmatrices = []
+        matrices = []
+        for term in expr.args:
+            if isinstance(term, MatrixExpr):
+                matrices.append(term)
+            else:
+                nonmatrices.append(term)
+        if not matrices:
+            return cls._from_args(nonmatrices)
+        if nonmatrices:
+            if cls == Mul:
+                for i in range(len(matrices)):
+                    if not matrices[i].is_MatrixExpr:
+                        matrices[i] = matrices[i].__mul__(cls._from_args(nonmatrices))
+                        nonmatrices = []
+                        break
+            else:
+                return cls._from_args(nonmatrices + [mat_class(*matrices).doit(deep=False)])
+        return mat_class(cls._from_args(nonmatrices), *matrices).doit(deep=False)
+    return _postprocessor","[{""var"": ""matrices"", ""rename"": ""matrix_expr_list""}, {""var"": ""i"", ""rename"": ""matrix_index""}, {""var"": ""nonmatrices"", ""rename"": ""non_matrix_elements""}, {""var"": ""term"", ""rename"": ""expression_component""}, {""var"": ""mat_class"", ""rename"": ""matrix_operation_class""}]"
+./sympy/matrices/expressions/matexpr.py,_postprocessor,transform_and_consolidate_matrix_expressions,598,630,"def _postprocessor(expr):
+    mat_class = {Mul: MatMul, Add: MatAdd}[cls]
+    nonmatrices = []
+    matrices = []
+    for term in expr.args:
+        if isinstance(term, MatrixExpr):
+            matrices.append(term)
+        else:
+            nonmatrices.append(term)
+    if not matrices:
+        return cls._from_args(nonmatrices)
+    if nonmatrices:
+        if cls == Mul:
+            for i in range(len(matrices)):
+                if not matrices[i].is_MatrixExpr:
+                    matrices[i] = matrices[i].__mul__(cls._from_args(nonmatrices))
+                    nonmatrices = []
+                    break
+        else:
+            return cls._from_args(nonmatrices + [mat_class(*matrices).doit(deep=False)])
+    return mat_class(cls._from_args(nonmatrices), *matrices).doit(deep=False)","def transform_and_consolidate_matrix_expressions(expr):
+    mat_class = {Mul: MatMul, Add: MatAdd}[cls]
+    nonmatrices = []
+    matrices = []
+    for term in expr.args:
+        if isinstance(term, MatrixExpr):
+            matrices.append(term)
+        else:
+            nonmatrices.append(term)
+    if not matrices:
+        return cls._from_args(nonmatrices)
+    if nonmatrices:
+        if cls == Mul:
+            for i in range(len(matrices)):
+                if not matrices[i].is_MatrixExpr:
+                    matrices[i] = matrices[i].__mul__(cls._from_args(nonmatrices))
+                    nonmatrices = []
+                    break
+        else:
+            return cls._from_args(nonmatrices + [mat_class(*matrices).doit(deep=False)])
+    return mat_class(cls._from_args(nonmatrices), *matrices).doit(deep=False)","[{""var"": ""matrices"", ""rename"": ""matrix_expressions""}, {""var"": ""i"", ""rename"": ""matrix_index""}, {""var"": ""nonmatrices"", ""rename"": ""non_matrix_terms""}, {""var"": ""term"", ""rename"": ""expression_component""}, {""var"": ""mat_class"", ""rename"": ""matrix_operation_type""}]"

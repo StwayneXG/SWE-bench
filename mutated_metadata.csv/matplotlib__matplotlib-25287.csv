@@ -1,0 +1,87 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./lib/matplotlib/axis.py,_init,initialize_label_and_offset_text_positions,2237,2260,"def _init(self):
+    """"""
+        Initialize the label and offsetText instance values and
+        `label_position` / `offset_text_position`.
+        """"""
+    self.label.set(x=0.5, y=0, verticalalignment='top', horizontalalignment='center', transform=mtransforms.blended_transform_factory(self.axes.transAxes, mtransforms.IdentityTransform()))
+    self.label_position = 'bottom'
+    self.offsetText.set(x=1, y=0, verticalalignment='top', horizontalalignment='right', transform=mtransforms.blended_transform_factory(self.axes.transAxes, mtransforms.IdentityTransform()), fontsize=mpl.rcParams['xtick.labelsize'], color=mpl.rcParams['xtick.color'])
+    self.offset_text_position = 'bottom'","def initialize_label_and_offset_text_positions(self):
+    """"""
+        Initialize the label and offsetText instance values and
+        `label_position` / `offset_text_position`.
+        """"""
+    self.label.set(x=0.5, y=0, verticalalignment='top', horizontalalignment='center', transform=mtransforms.blended_transform_factory(self.axes.transAxes, mtransforms.IdentityTransform()))
+    self.label_position = 'bottom'
+    self.offsetText.set(x=1, y=0, verticalalignment='top', horizontalalignment='right', transform=mtransforms.blended_transform_factory(self.axes.transAxes, mtransforms.IdentityTransform()), fontsize=mpl.rcParams['xtick.labelsize'], color=mpl.rcParams['xtick.color'])
+    self.offset_text_position = 'bottom'",[]
+./lib/matplotlib/axis.py,contains,is_mouse_event_in_x_axis,2262,2278,"def contains(self, mouseevent):
+    """"""Test whether the mouse event occurred in the x-axis.""""""
+    inside, info = self._default_contains(mouseevent)
+    if inside is not None:
+        return (inside, info)
+    x, y = (mouseevent.x, mouseevent.y)
+    try:
+        trans = self.axes.transAxes.inverted()
+        xaxes, yaxes = trans.transform((x, y))
+    except ValueError:
+        return (False, {})
+    (l, b), (r, t) = self.axes.transAxes.transform([(0, 0), (1, 1)])
+    inaxis = 0 <= xaxes <= 1 and (b - self._pickradius < y < b or t < y < t + self._pickradius)
+    return (inaxis, {})","def is_mouse_event_in_x_axis(self, mouseevent):
+    """"""Test whether the mouse event occurred in the x-axis.""""""
+    inside, info = self._default_contains(mouseevent)
+    if inside is not None:
+        return (inside, info)
+    x, y = (mouseevent.x, mouseevent.y)
+    try:
+        trans = self.axes.transAxes.inverted()
+        xaxes, yaxes = trans.transform((x, y))
+    except ValueError:
+        return (False, {})
+    (l, b), (r, t) = self.axes.transAxes.transform([(0, 0), (1, 1)])
+    inaxis = 0 <= xaxes <= 1 and (b - self._pickradius < y < b or t < y < t + self._pickradius)
+    return (inaxis, {})","[{""var"": ""inaxis"", ""rename"": ""is_within_x_axis""}, {""var"": ""b"", ""rename"": ""bottom_axis_bound""}, {""var"": ""y"", ""rename"": ""mouse_event_y_coordinate""}, {""var"": ""r"", ""rename"": ""axis_right""}, {""var"": ""yaxes"", ""rename"": ""normalized_y_coordinate""}, {""var"": ""x"", ""rename"": ""mouse_event_x_coordinate""}, {""var"": ""l"", ""rename"": ""left""}, {""var"": ""trans"", ""rename"": ""inverse_transformation_matrix""}, {""var"": ""t"", ""rename"": ""top_axis_y""}, {""var"": ""inside"", ""rename"": ""isMouseEventWithinXAxis""}, {""var"": ""info"", ""rename"": ""containment_details""}, {""var"": ""xaxes"", ""rename"": ""normalized_x_position""}]"
+./lib/matplotlib/axis.py,_init,initialize_axis_labels_and_offset_text,2496,2520,"def _init(self):
+    """"""
+        Initialize the label and offsetText instance values and
+        `label_position` / `offset_text_position`.
+        """"""
+    self.label.set(x=0, y=0.5, verticalalignment='bottom', horizontalalignment='center', rotation='vertical', rotation_mode='anchor', transform=mtransforms.blended_transform_factory(mtransforms.IdentityTransform(), self.axes.transAxes))
+    self.label_position = 'left'
+    self.offsetText.set(x=0, y=0.5, verticalalignment='baseline', horizontalalignment='left', transform=mtransforms.blended_transform_factory(self.axes.transAxes, mtransforms.IdentityTransform()), fontsize=mpl.rcParams['ytick.labelsize'], color=mpl.rcParams['ytick.color'])
+    self.offset_text_position = 'left'","def initialize_axis_labels_and_offset_text(self):
+    """"""
+        Initialize the label and offsetText instance values and
+        `label_position` / `offset_text_position`.
+        """"""
+    self.label.set(x=0, y=0.5, verticalalignment='bottom', horizontalalignment='center', rotation='vertical', rotation_mode='anchor', transform=mtransforms.blended_transform_factory(mtransforms.IdentityTransform(), self.axes.transAxes))
+    self.label_position = 'left'
+    self.offsetText.set(x=0, y=0.5, verticalalignment='baseline', horizontalalignment='left', transform=mtransforms.blended_transform_factory(self.axes.transAxes, mtransforms.IdentityTransform()), fontsize=mpl.rcParams['ytick.labelsize'], color=mpl.rcParams['ytick.color'])
+    self.offset_text_position = 'left'",[]
+./lib/matplotlib/axis.py,contains,is_point_within_axes_bounds,2522,2538,"def contains(self, mouseevent):
+    inside, info = self._default_contains(mouseevent)
+    if inside is not None:
+        return (inside, info)
+    x, y = (mouseevent.x, mouseevent.y)
+    try:
+        trans = self.axes.transAxes.inverted()
+        xaxes, yaxes = trans.transform((x, y))
+    except ValueError:
+        return (False, {})
+    (l, b), (r, t) = self.axes.transAxes.transform([(0, 0), (1, 1)])
+    inaxis = 0 <= yaxes <= 1 and (l - self._pickradius < x < l or r < x < r + self._pickradius)
+    return (inaxis, {})","def is_point_within_axes_bounds(self, mouseevent):
+    inside, info = self._default_contains(mouseevent)
+    if inside is not None:
+        return (inside, info)
+    x, y = (mouseevent.x, mouseevent.y)
+    try:
+        trans = self.axes.transAxes.inverted()
+        xaxes, yaxes = trans.transform((x, y))
+    except ValueError:
+        return (False, {})
+    (l, b), (r, t) = self.axes.transAxes.transform([(0, 0), (1, 1)])
+    inaxis = 0 <= yaxes <= 1 and (l - self._pickradius < x < l or r < x < r + self._pickradius)
+    return (inaxis, {})","[{""var"": ""inaxis"", ""rename"": ""is_within_axis_bounds""}, {""var"": ""b"", ""rename"": ""bottom_edge_coordinate""}, {""var"": ""y"", ""rename"": ""mouse_event_y_coordinate""}, {""var"": ""r"", ""rename"": ""right_boundary""}, {""var"": ""yaxes"", ""rename"": ""transformed_y_coordinate""}, {""var"": ""x"", ""rename"": ""mouse_x_coordinate""}, {""var"": ""l"", ""rename"": ""left_boundary""}, {""var"": ""trans"", ""rename"": ""inverse_axes_transform""}, {""var"": ""t"", ""rename"": ""top_boundary""}, {""var"": ""inside"", ""rename"": ""point_within_boundaries""}, {""var"": ""info"", ""rename"": ""containment_details""}, {""var"": ""xaxes"", ""rename"": ""relative_x_position""}]"

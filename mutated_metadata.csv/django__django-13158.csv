@@ -1,0 +1,81 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/db/models/sql/query.py,clone,duplicate_query_instance,288,336,"def clone(self):
+    """"""
+        Return a copy of the current Query. A lightweight alternative to
+        to deepcopy().
+        """"""
+    obj = Empty()
+    obj.__class__ = self.__class__
+    obj.__dict__ = self.__dict__.copy()
+    obj.alias_refcount = self.alias_refcount.copy()
+    obj.alias_map = self.alias_map.copy()
+    obj.external_aliases = self.external_aliases.copy()
+    obj.table_map = self.table_map.copy()
+    obj.where = self.where.clone()
+    obj.annotations = self.annotations.copy()
+    if self.annotation_select_mask is None:
+        obj.annotation_select_mask = None
+    else:
+        obj.annotation_select_mask = self.annotation_select_mask.copy()
+    obj._annotation_select_cache = None
+    obj.extra = self.extra.copy()
+    if self.extra_select_mask is None:
+        obj.extra_select_mask = None
+    else:
+        obj.extra_select_mask = self.extra_select_mask.copy()
+    if self._extra_select_cache is None:
+        obj._extra_select_cache = None
+    else:
+        obj._extra_select_cache = self._extra_select_cache.copy()
+    if self.select_related is not False:
+        obj.select_related = copy.deepcopy(obj.select_related)
+    if 'subq_aliases' in self.__dict__:
+        obj.subq_aliases = self.subq_aliases.copy()
+    obj.used_aliases = self.used_aliases.copy()
+    obj._filtered_relations = self._filtered_relations.copy()
+    try:
+        del obj.base_table
+    except AttributeError:
+        pass
+    return obj","def duplicate_query_instance(self):
+    """"""
+        Return a copy of the current Query. A lightweight alternative to
+        to deepcopy().
+        """"""
+    obj = Empty()
+    obj.__class__ = self.__class__
+    obj.__dict__ = self.__dict__.copy()
+    obj.alias_refcount = self.alias_refcount.copy()
+    obj.alias_map = self.alias_map.copy()
+    obj.external_aliases = self.external_aliases.copy()
+    obj.table_map = self.table_map.copy()
+    obj.where = self.where.clone()
+    obj.annotations = self.annotations.copy()
+    if self.annotation_select_mask is None:
+        obj.annotation_select_mask = None
+    else:
+        obj.annotation_select_mask = self.annotation_select_mask.copy()
+    obj._annotation_select_cache = None
+    obj.extra = self.extra.copy()
+    if self.extra_select_mask is None:
+        obj.extra_select_mask = None
+    else:
+        obj.extra_select_mask = self.extra_select_mask.copy()
+    if self._extra_select_cache is None:
+        obj._extra_select_cache = None
+    else:
+        obj._extra_select_cache = self._extra_select_cache.copy()
+    if self.select_related is not False:
+        obj.select_related = copy.deepcopy(obj.select_related)
+    if 'subq_aliases' in self.__dict__:
+        obj.subq_aliases = self.subq_aliases.copy()
+    obj.used_aliases = self.used_aliases.copy()
+    obj._filtered_relations = self._filtered_relations.copy()
+    try:
+        del obj.base_table
+    except AttributeError:
+        pass
+    return obj","[{""var"": ""obj"", ""rename"": ""query_clone""}]"
+./django/db/models/sql/query.py,is_empty,contains_nothing_node,1781,1782,"def is_empty(self):
+    return any((isinstance(c, NothingNode) for c in self.where.children))","def contains_nothing_node(self):
+    return any((isinstance(c, NothingNode) for c in self.where.children))","[{""var"": ""c"", ""rename"": ""child_node""}]"

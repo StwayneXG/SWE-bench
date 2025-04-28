@@ -1,0 +1,79 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./sphinx/ext/autodoc/__init__.py,get_doc,retrieve_class_and_init_docstrings,1676,1722,"def get_doc(self, ignore: int=None) -> Optional[List[List[str]]]:
+    if self.doc_as_attr:
+        return None
+    lines = getattr(self, '_new_docstrings', None)
+    if lines is not None:
+        return lines
+    classdoc_from = self.options.get('class-doc-from', self.config.autoclass_content)
+    docstrings = []
+    attrdocstring = self.get_attr(self.object, '__doc__', None)
+    if attrdocstring:
+        docstrings.append(attrdocstring)
+    if classdoc_from in ('both', 'init'):
+        __init__ = self.get_attr(self.object, '__init__', None)
+        initdocstring = getdoc(__init__, self.get_attr, self.config.autodoc_inherit_docstrings, self.parent, self.object_name)
+        if initdocstring is not None and (initdocstring == object.__init__.__doc__ or initdocstring.strip() == object.__init__.__doc__):
+            initdocstring = None
+        if not initdocstring:
+            __new__ = self.get_attr(self.object, '__new__', None)
+            initdocstring = getdoc(__new__, self.get_attr, self.config.autodoc_inherit_docstrings, self.parent, self.object_name)
+            if initdocstring is not None and (initdocstring == object.__new__.__doc__ or initdocstring.strip() == object.__new__.__doc__):
+                initdocstring = None
+        if initdocstring:
+            if classdoc_from == 'init':
+                docstrings = [initdocstring]
+            else:
+                docstrings.append(initdocstring)
+    tab_width = self.directive.state.document.settings.tab_width
+    return [prepare_docstring(docstring, ignore, tab_width) for docstring in docstrings]","def retrieve_class_and_init_docstrings(self, ignore: int=None) -> Optional[List[List[str]]]:
+    if self.doc_as_attr:
+        return None
+    lines = getattr(self, '_new_docstrings', None)
+    if lines is not None:
+        return lines
+    classdoc_from = self.options.get('class-doc-from', self.config.autoclass_content)
+    docstrings = []
+    attrdocstring = self.get_attr(self.object, '__doc__', None)
+    if attrdocstring:
+        docstrings.append(attrdocstring)
+    if classdoc_from in ('both', 'init'):
+        __init__ = self.get_attr(self.object, '__init__', None)
+        initdocstring = getdoc(__init__, self.get_attr, self.config.autodoc_inherit_docstrings, self.parent, self.object_name)
+        if initdocstring is not None and (initdocstring == object.__init__.__doc__ or initdocstring.strip() == object.__init__.__doc__):
+            initdocstring = None
+        if not initdocstring:
+            __new__ = self.get_attr(self.object, '__new__', None)
+            initdocstring = getdoc(__new__, self.get_attr, self.config.autodoc_inherit_docstrings, self.parent, self.object_name)
+            if initdocstring is not None and (initdocstring == object.__new__.__doc__ or initdocstring.strip() == object.__new__.__doc__):
+                initdocstring = None
+        if initdocstring:
+            if classdoc_from == 'init':
+                docstrings = [initdocstring]
+            else:
+                docstrings.append(initdocstring)
+    tab_width = self.directive.state.document.settings.tab_width
+    return [prepare_docstring(docstring, ignore, tab_width) for docstring in docstrings]","[{""var"": ""tab_width"", ""rename"": ""document_tab_width""}, {""var"": ""initdocstring"", ""rename"": ""constructor_docstring""}, {""var"": ""classdoc_from"", ""rename"": ""class_documentation_source""}, {""var"": ""docstring"", ""rename"": ""extracted_docstring""}, {""var"": ""docstrings"", ""rename"": ""collected_docstrings""}, {""var"": ""lines"", ""rename"": ""compiled_docstrings""}, {""var"": ""attrdocstring"", ""rename"": ""attributeDocstring""}]"
+./sphinx/ext/autodoc/__init__.py,add_content,append_alias_content_with_check,1724,1732,"def add_content(self, more_content: Optional[StringList], no_docstring: bool=False) -> None:
+    if self.doc_as_attr:
+        try:
+            more_content = StringList([_('alias of %s') % restify(self.object)], source='')
+        except AttributeError:
+            pass
+    super().add_content(more_content)","def append_alias_content_with_check(self, more_content: Optional[StringList], no_docstring: bool=False) -> None:
+    if self.doc_as_attr:
+        try:
+            more_content = StringList([_('alias of %s') % restify(self.object)], source='')
+        except AttributeError:
+            pass
+    super().add_content(more_content)",[]
+./sphinx/ext/autodoc/__init__.py,document_members,capture_and_document_class_members,1734,1737,"def document_members(self, all_members: bool=False) -> None:
+    if self.doc_as_attr:
+        return
+    super().document_members(all_members)","def capture_and_document_class_members(self, all_members: bool=False) -> None:
+    if self.doc_as_attr:
+        return
+    super().document_members(all_members)",[]
+./sphinx/ext/autodoc/__init__.py,generate,generate_with_optional_content,1739,1748,"def generate(self, more_content: Optional[StringList]=None, real_modname: str=None, check_module: bool=False, all_members: bool=False) -> None:
+    return super().generate(more_content=more_content, check_module=check_module, all_members=all_members)","def generate_with_optional_content(self, more_content: Optional[StringList]=None, real_modname: str=None, check_module: bool=False, all_members: bool=False) -> None:
+    return super().generate(more_content=more_content, check_module=check_module, all_members=all_members)",[]

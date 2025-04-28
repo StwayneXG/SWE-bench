@@ -1,0 +1,14 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/urls/resolvers.py,match,extract_path_parameters,150,159,"def match(self, path):
+    match = self.regex.search(path)
+    if match:
+        kwargs = match.groupdict()
+        args = () if kwargs else match.groups()
+        return (path[match.end():], args, kwargs)
+    return None","def extract_path_parameters(self, path):
+    match = self.regex.search(path)
+    if match:
+        kwargs = match.groupdict()
+        args = () if kwargs else match.groups()
+        return (path[match.end():], args, kwargs)
+    return None","[{""var"": ""kwargs"", ""rename"": ""matched_group_dictionary""}, {""var"": ""match"", ""rename"": ""matched_pattern""}, {""var"": ""args"", ""rename"": ""positional_parameters""}]"

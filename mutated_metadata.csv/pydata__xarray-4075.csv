@@ -1,0 +1,17 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./xarray/core/weighted.py,_sum_of_weights,calculate_weighted_sum_with_null_handling,137,150,"def _sum_of_weights(self, da: 'DataArray', dim: Optional[Union[Hashable, Iterable[Hashable]]]=None) -> 'DataArray':
+    """""" Calculate the sum of weights, accounting for missing values """"""
+    mask = da.notnull()
+    sum_of_weights = self._reduce(mask, self.weights, dim=dim, skipna=False)
+    valid_weights = sum_of_weights != 0.0
+    return sum_of_weights.where(valid_weights)","def calculate_weighted_sum_with_null_handling(self, da: 'DataArray', dim: Optional[Union[Hashable, Iterable[Hashable]]]=None) -> 'DataArray':
+    """""" Calculate the sum of weights, accounting for missing values """"""
+    mask = da.notnull()
+    sum_of_weights = self._reduce(mask, self.weights, dim=dim, skipna=False)
+    valid_weights = sum_of_weights != 0.0
+    return sum_of_weights.where(valid_weights)","[{""var"": ""sum_of_weights"", ""rename"": ""total_valid_weights""}, {""var"": ""mask"", ""rename"": ""non_missing_value_mask""}, {""var"": ""valid_weights"", ""rename"": ""nonzero_weight_mask""}]"
+./xarray/core/weighted.py,_weighted_sum,weighted_sum_reduction,152,160,"def _weighted_sum(self, da: 'DataArray', dim: Optional[Union[Hashable, Iterable[Hashable]]]=None, skipna: Optional[bool]=None) -> 'DataArray':
+    """"""Reduce a DataArray by a by a weighted ``sum`` along some dimension(s).""""""
+    return self._reduce(da, self.weights, dim=dim, skipna=skipna)","def weighted_sum_reduction(self, da: 'DataArray', dim: Optional[Union[Hashable, Iterable[Hashable]]]=None, skipna: Optional[bool]=None) -> 'DataArray':
+    """"""Reduce a DataArray by a by a weighted ``sum`` along some dimension(s).""""""
+    return self._reduce(da, self.weights, dim=dim, skipna=skipna)",[]

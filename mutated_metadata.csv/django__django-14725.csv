@@ -1,0 +1,70 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/forms/models.py,modelformset_factory,generate_model_formset_class,872,899,"def modelformset_factory(model, form=ModelForm, formfield_callback=None, formset=BaseModelFormSet, extra=1, can_delete=False, can_order=False, max_num=None, fields=None, exclude=None, widgets=None, validate_max=False, localized_fields=None, labels=None, help_texts=None, error_messages=None, min_num=None, validate_min=False, field_classes=None, absolute_max=None, can_delete_extra=True, renderer=None):
+    """"""Return a FormSet class for the given Django model class.""""""
+    meta = getattr(form, 'Meta', None)
+    if getattr(meta, 'fields', fields) is None and getattr(meta, 'exclude', exclude) is None:
+        raise ImproperlyConfigured(""Calling modelformset_factory without defining 'fields' or 'exclude' explicitly is prohibited."")
+    form = modelform_factory(model, form=form, fields=fields, exclude=exclude, formfield_callback=formfield_callback, widgets=widgets, localized_fields=localized_fields, labels=labels, help_texts=help_texts, error_messages=error_messages, field_classes=field_classes)
+    FormSet = formset_factory(form, formset, extra=extra, min_num=min_num, max_num=max_num, can_order=can_order, can_delete=can_delete, validate_min=validate_min, validate_max=validate_max, absolute_max=absolute_max, can_delete_extra=can_delete_extra, renderer=renderer)
+    FormSet.model = model
+    return FormSet","def generate_model_formset_class(model, form=ModelForm, formfield_callback=None, formset=BaseModelFormSet, extra=1, can_delete=False, can_order=False, max_num=None, fields=None, exclude=None, widgets=None, validate_max=False, localized_fields=None, labels=None, help_texts=None, error_messages=None, min_num=None, validate_min=False, field_classes=None, absolute_max=None, can_delete_extra=True, renderer=None):
+    """"""Return a FormSet class for the given Django model class.""""""
+    meta = getattr(form, 'Meta', None)
+    if getattr(meta, 'fields', fields) is None and getattr(meta, 'exclude', exclude) is None:
+        raise ImproperlyConfigured(""Calling modelformset_factory without defining 'fields' or 'exclude' explicitly is prohibited."")
+    form = modelform_factory(model, form=form, fields=fields, exclude=exclude, formfield_callback=formfield_callback, widgets=widgets, localized_fields=localized_fields, labels=labels, help_texts=help_texts, error_messages=error_messages, field_classes=field_classes)
+    FormSet = formset_factory(form, formset, extra=extra, min_num=min_num, max_num=max_num, can_order=can_order, can_delete=can_delete, validate_min=validate_min, validate_max=validate_max, absolute_max=absolute_max, can_delete_extra=can_delete_extra, renderer=renderer)
+    FormSet.model = model
+    return FormSet","[{""var"": ""FormSet"", ""rename"": ""ModelBoundFormSet""}, {""var"": ""meta"", ""rename"": ""form_meta_info""}]"
+./django/forms/models.py,inlineformset_factory,create_inline_formset_for_model,1072,1115,"def inlineformset_factory(parent_model, model, form=ModelForm, formset=BaseInlineFormSet, fk_name=None, fields=None, exclude=None, extra=3, can_order=False, can_delete=True, max_num=None, formfield_callback=None, widgets=None, validate_max=False, localized_fields=None, labels=None, help_texts=None, error_messages=None, min_num=None, validate_min=False, field_classes=None, absolute_max=None, can_delete_extra=True, renderer=None):
+    """"""
+    Return an ``InlineFormSet`` for the given kwargs.
+
+    ``fk_name`` must be provided if ``model`` has more than one ``ForeignKey``
+    to ``parent_model``.
+    """"""
+    fk = _get_foreign_key(parent_model, model, fk_name=fk_name)
+    if fk.unique:
+        max_num = 1
+    kwargs = {'form': form, 'formfield_callback': formfield_callback, 'formset': formset, 'extra': extra, 'can_delete': can_delete, 'can_order': can_order, 'fields': fields, 'exclude': exclude, 'min_num': min_num, 'max_num': max_num, 'widgets': widgets, 'validate_min': validate_min, 'validate_max': validate_max, 'localized_fields': localized_fields, 'labels': labels, 'help_texts': help_texts, 'error_messages': error_messages, 'field_classes': field_classes, 'absolute_max': absolute_max, 'can_delete_extra': can_delete_extra, 'renderer': renderer}
+    FormSet = modelformset_factory(model, **kwargs)
+    FormSet.fk = fk
+    return FormSet","def create_inline_formset_for_model(parent_model, model, form=ModelForm, formset=BaseInlineFormSet, fk_name=None, fields=None, exclude=None, extra=3, can_order=False, can_delete=True, max_num=None, formfield_callback=None, widgets=None, validate_max=False, localized_fields=None, labels=None, help_texts=None, error_messages=None, min_num=None, validate_min=False, field_classes=None, absolute_max=None, can_delete_extra=True, renderer=None):
+    """"""
+    Return an ``InlineFormSet`` for the given kwargs.
+
+    ``fk_name`` must be provided if ``model`` has more than one ``ForeignKey``
+    to ``parent_model``.
+    """"""
+    fk = _get_foreign_key(parent_model, model, fk_name=fk_name)
+    if fk.unique:
+        max_num = 1
+    kwargs = {'form': form, 'formfield_callback': formfield_callback, 'formset': formset, 'extra': extra, 'can_delete': can_delete, 'can_order': can_order, 'fields': fields, 'exclude': exclude, 'min_num': min_num, 'max_num': max_num, 'widgets': widgets, 'validate_min': validate_min, 'validate_max': validate_max, 'localized_fields': localized_fields, 'labels': labels, 'help_texts': help_texts, 'error_messages': error_messages, 'field_classes': field_classes, 'absolute_max': absolute_max, 'can_delete_extra': can_delete_extra, 'renderer': renderer}
+    FormSet = modelformset_factory(model, **kwargs)
+    FormSet.fk = fk
+    return FormSet","[{""var"": ""FormSet"", ""rename"": ""InlineFormSetFactory""}, {""var"": ""fk"", ""rename"": ""foreign_key_relation""}, {""var"": ""kwargs"", ""rename"": ""formset_configuration""}]"
+./django/forms/models.py,save,persist_all_forms_and_instances,667,679,"def save(self, commit=True):
+    """"""
+        Save model instances for every form, adding and changing instances
+        as necessary, and return the list of instances.
+        """"""
+    if not commit:
+        self.saved_forms = []
+
+        def save_m2m():
+            for form in self.saved_forms:
+                form.save_m2m()
+        self.save_m2m = save_m2m
+    return self.save_existing_objects(commit) + self.save_new_objects(commit)","def persist_all_forms_and_instances(self, commit=True):
+    """"""
+        Save model instances for every form, adding and changing instances
+        as necessary, and return the list of instances.
+        """"""
+    if not commit:
+        self.saved_forms = []
+
+        def save_m2m():
+            for form in self.saved_forms:
+                form.save_m2m()
+        self.save_m2m = save_m2m
+    return self.save_existing_objects(commit) + self.save_new_objects(commit)","[{""var"": ""form"", ""rename"": ""submission_form""}]"

@@ -1,0 +1,94 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./sympy/printing/str.py,_print_AppliedPredicate,format_function_with_argument,88,89,"def _print_AppliedPredicate(self, expr):
+    return '%s(%s)' % (expr.func, expr.arg)","def format_function_with_argument(self, expr):
+    return '%s(%s)' % (expr.func, expr.arg)",[]
+./sympy/printing/str.py,_print_ExprCondPair,format_expression_condition_pair,143,144,"def _print_ExprCondPair(self, expr):
+    return '(%s, %s)' % (expr.expr, expr.cond)","def format_expression_condition_pair(self, expr):
+    return '(%s, %s)' % (expr.expr, expr.cond)",[]
+./sympy/printing/str.py,_print_Lambda,generate_lambda_representation,204,210,"def _print_Lambda(self, obj):
+    args, expr = obj.args
+    if len(args) == 1:
+        return 'Lambda(%s, %s)' % (args.args[0], expr)
+    else:
+        arg_string = ', '.join((self._print(arg) for arg in args))
+        return 'Lambda((%s), %s)' % (arg_string, expr)","def generate_lambda_representation(self, obj):
+    args, expr = obj.args
+    if len(args) == 1:
+        return 'Lambda(%s, %s)' % (args.args[0], expr)
+    else:
+        arg_string = ', '.join((self._print(arg) for arg in args))
+        return 'Lambda((%s), %s)' % (arg_string, expr)","[{""var"": ""arg_string"", ""rename"": ""formatted_arg_list""}, {""var"": ""expr"", ""rename"": ""expression_body""}, {""var"": ""arg"", ""rename"": ""lambda_parameter""}, {""var"": ""args"", ""rename"": ""lambda_parameters""}]"
+./sympy/printing/str.py,_print_Limit,format_limit_expression,216,221,"def _print_Limit(self, expr):
+    e, z, z0, dir = expr.args
+    if str(dir) == '+':
+        return 'Limit(%s, %s, %s)' % (e, z, z0)
+    else:
+        return ""Limit(%s, %s, %s, dir='%s')"" % (e, z, z0, dir)","def format_limit_expression(self, expr):
+    e, z, z0, dir = expr.args
+    if str(dir) == '+':
+        return 'Limit(%s, %s, %s)' % (e, z, z0)
+    else:
+        return ""Limit(%s, %s, %s, dir='%s')"" % (e, z, z0, dir)","[{""var"": ""z"", ""rename"": ""variable_approaching_limit""}, {""var"": ""e"", ""rename"": ""expression_to_evaluate""}, {""var"": ""dir"", ""rename"": ""direction_indicator""}, {""var"": ""z0"", ""rename"": ""limit_approach_value""}]"
+./sympy/printing/str.py,_print_Permutation,_formatPermutationRepresentation,361,384,"def _print_Permutation(self, expr):
+    from sympy.combinatorics.permutations import Permutation, Cycle
+    if Permutation.print_cyclic:
+        if not expr.size:
+            return '()'
+        s = Cycle(expr)(expr.size - 1).__repr__()[len('Cycle'):]
+        last = s.rfind('(')
+        if not last == 0 and ',' not in s[last:]:
+            s = s[last:] + s[:last]
+        s = s.replace(',', '')
+        return s
+    else:
+        s = expr.support()
+        if not s:
+            if expr.size < 5:
+                return 'Permutation(%s)' % str(expr.array_form)
+            return 'Permutation([], size=%s)' % expr.size
+        trim = str(expr.array_form[:s[-1] + 1]) + ', size=%s' % expr.size
+        use = full = str(expr.array_form)
+        if len(trim) < len(full):
+            use = trim
+        return 'Permutation(%s)' % use","def _formatPermutationRepresentation(self, expr):
+    from sympy.combinatorics.permutations import Permutation, Cycle
+    if Permutation.print_cyclic:
+        if not expr.size:
+            return '()'
+        s = Cycle(expr)(expr.size - 1).__repr__()[len('Cycle'):]
+        last = s.rfind('(')
+        if not last == 0 and ',' not in s[last:]:
+            s = s[last:] + s[:last]
+        s = s.replace(',', '')
+        return s
+    else:
+        s = expr.support()
+        if not s:
+            if expr.size < 5:
+                return 'Permutation(%s)' % str(expr.array_form)
+            return 'Permutation([], size=%s)' % expr.size
+        trim = str(expr.array_form[:s[-1] + 1]) + ', size=%s' % expr.size
+        use = full = str(expr.array_form)
+        if len(trim) < len(full):
+            use = trim
+        return 'Permutation(%s)' % use","[{""var"": ""last"", ""rename"": ""lastOpenParenIndex""}, {""var"": ""trim"", ""rename"": ""truncated_array_representation""}, {""var"": ""s"", ""rename"": ""permutation_representation""}, {""var"": ""use"", ""rename"": ""permutation_representation""}, {""var"": ""full"", ""rename"": ""full_array_representation""}]"
+./sympy/printing/str.py,_print_PermutationGroup,format_permutation_group_for_printing,401,403,"def _print_PermutationGroup(self, expr):
+    p = ['    %s' % str(a) for a in expr.args]
+    return 'PermutationGroup([\n%s])' % ',\n'.join(p)","def format_permutation_group_for_printing(self, expr):
+    p = ['    %s' % str(a) for a in expr.args]
+    return 'PermutationGroup([\n%s])' % ',\n'.join(p)","[{""var"": ""a"", ""rename"": ""permutation_element""}, {""var"": ""p"", ""rename"": ""formatted_permutation_elements""}]"
+./sympy/printing/str.py,_print_FracField,format_rational_function_field_description,417,419,"def _print_FracField(self, field):
+    return 'Rational function field in %s over %s with %s order' % (', '.join(map(self._print, field.symbols)), field.domain, field.order)","def format_rational_function_field_description(self, field):
+    return 'Rational function field in %s over %s with %s order' % (', '.join(map(self._print, field.symbols)), field.domain, field.order)",[]
+./sympy/printing/str.py,_print_FreeGroupElement,getStringRepresentationOfFreeGroupElement,421,422,"def _print_FreeGroupElement(self, elm):
+    return elm.__str__()","def getStringRepresentationOfFreeGroupElement(self, elm):
+    return elm.__str__()",[]
+./sympy/printing/str.py,_print_Relational,formatRelationalExpression,619,637,"def _print_Relational(self, expr):
+    charmap = {'==': 'Eq', '!=': 'Ne', ':=': 'Assignment', '+=': 'AddAugmentedAssignment', '-=': 'SubAugmentedAssignment', '*=': 'MulAugmentedAssignment', '/=': 'DivAugmentedAssignment', '%=': 'ModAugmentedAssignment'}
+    if expr.rel_op in charmap:
+        return '%s(%s, %s)' % (charmap[expr.rel_op], expr.lhs, expr.rhs)
+    return '%s %s %s' % (self.parenthesize(expr.lhs, precedence(expr)), self._relationals.get(expr.rel_op) or expr.rel_op, self.parenthesize(expr.rhs, precedence(expr)))","def formatRelationalExpression(self, expr):
+    charmap = {'==': 'Eq', '!=': 'Ne', ':=': 'Assignment', '+=': 'AddAugmentedAssignment', '-=': 'SubAugmentedAssignment', '*=': 'MulAugmentedAssignment', '/=': 'DivAugmentedAssignment', '%=': 'ModAugmentedAssignment'}
+    if expr.rel_op in charmap:
+        return '%s(%s, %s)' % (charmap[expr.rel_op], expr.lhs, expr.rhs)
+    return '%s %s %s' % (self.parenthesize(expr.lhs, precedence(expr)), self._relationals.get(expr.rel_op) or expr.rel_op, self.parenthesize(expr.rhs, precedence(expr)))","[{""var"": ""charmap"", ""rename"": ""relationalOperatorMapping""}]"

@@ -1,0 +1,60 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./sphinx/util/inspect.py,object_description,safe_reST_representation,433,467,"def object_description(object: Any) -> str:
+    """"""A repr() implementation that returns text safe to use in reST context.""""""
+    if isinstance(object, dict):
+        try:
+            sorted_keys = sorted(object)
+        except Exception:
+            pass
+        else:
+            items = ('%s: %s' % (object_description(key), object_description(object[key])) for key in sorted_keys)
+            return '{%s}' % ', '.join(items)
+    if isinstance(object, set):
+        try:
+            sorted_values = sorted(object)
+        except TypeError:
+            pass
+        else:
+            return '{%s}' % ', '.join((object_description(x) for x in sorted_values))
+    if isinstance(object, frozenset):
+        try:
+            sorted_values = sorted(object)
+        except TypeError:
+            pass
+        else:
+            return 'frozenset({%s})' % ', '.join((object_description(x) for x in sorted_values))
+    try:
+        s = repr(object)
+    except Exception as exc:
+        raise ValueError from exc
+    s = memory_address_re.sub('', s)
+    return s.replace('\n', ' ')","def safe_reST_representation(object: Any) -> str:
+    """"""A repr() implementation that returns text safe to use in reST context.""""""
+    if isinstance(object, dict):
+        try:
+            sorted_keys = sorted(object)
+        except Exception:
+            pass
+        else:
+            items = ('%s: %s' % (object_description(key), object_description(object[key])) for key in sorted_keys)
+            return '{%s}' % ', '.join(items)
+    if isinstance(object, set):
+        try:
+            sorted_values = sorted(object)
+        except TypeError:
+            pass
+        else:
+            return '{%s}' % ', '.join((object_description(x) for x in sorted_values))
+    if isinstance(object, frozenset):
+        try:
+            sorted_values = sorted(object)
+        except TypeError:
+            pass
+        else:
+            return 'frozenset({%s})' % ', '.join((object_description(x) for x in sorted_values))
+    try:
+        s = repr(object)
+    except Exception as exc:
+        raise ValueError from exc
+    s = memory_address_re.sub('', s)
+    return s.replace('\n', ' ')","[{""var"": ""s"", ""rename"": ""safe_object_repr""}, {""var"": ""sorted_values"", ""rename"": ""sorted_iterable_values""}, {""var"": ""key"", ""rename"": ""current_key""}, {""var"": ""x"", ""rename"": ""sorted_element""}, {""var"": ""sorted_keys"", ""rename"": ""alphabetically_sorted_keys""}, {""var"": ""items"", ""rename"": ""formatted_object_descriptions""}]"

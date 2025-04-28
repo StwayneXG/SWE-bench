@@ -1,0 +1,4 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./sympy/sets/contains.py,as_set,convert_to_set_not_implemented,47,48,"def as_set(self):
+    raise NotImplementedError()","def convert_to_set_not_implemented(self):
+    raise NotImplementedError()",[]

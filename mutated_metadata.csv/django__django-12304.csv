@@ -1,0 +1,30 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/db/models/enums.py,__new__,create_enum_with_labels,11,34,"def __new__(metacls, classname, bases, classdict):
+    labels = []
+    for key in classdict._member_names:
+        value = classdict[key]
+        if isinstance(value, (list, tuple)) and len(value) > 1 and isinstance(value[-1], (Promise, str)):
+            *value, label = value
+            value = tuple(value)
+        else:
+            label = key.replace('_', ' ').title()
+        labels.append(label)
+        dict.__setitem__(classdict, key, value)
+    cls = super().__new__(metacls, classname, bases, classdict)
+    cls._value2label_map_ = dict(zip(cls._value2member_map_, labels))
+    cls.label = property(lambda self: cls._value2label_map_.get(self.value))
+    return enum.unique(cls)","def create_enum_with_labels(metacls, classname, bases, classdict):
+    labels = []
+    for key in classdict._member_names:
+        value = classdict[key]
+        if isinstance(value, (list, tuple)) and len(value) > 1 and isinstance(value[-1], (Promise, str)):
+            *value, label = value
+            value = tuple(value)
+        else:
+            label = key.replace('_', ' ').title()
+        labels.append(label)
+        dict.__setitem__(classdict, key, value)
+    cls = super().__new__(metacls, classname, bases, classdict)
+    cls._value2label_map_ = dict(zip(cls._value2member_map_, labels))
+    cls.label = property(lambda self: cls._value2label_map_.get(self.value))
+    return enum.unique(cls)","[{""var"": ""key"", ""rename"": ""member_name""}, {""var"": ""label"", ""rename"": ""member_display_name""}, {""var"": ""labels"", ""rename"": ""attribute_labels""}, {""var"": ""cls"", ""rename"": ""classified_enum_class""}, {""var"": ""value"", ""rename"": ""member_value""}]"

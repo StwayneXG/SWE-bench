@@ -1,0 +1,4 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./sympy/polys/domains/expressiondomain.py,__bool__,is_expression_non_zero,122,123,"def __bool__(f):
+    return f.ex != 0","def is_expression_non_zero(f):
+    return f.ex != 0",[]

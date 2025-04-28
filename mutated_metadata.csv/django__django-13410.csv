@@ -1,0 +1,11 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/core/files/locks.py,lock,acquire_file_lock_status,109,111,"def lock(f, flags):
+    ret = fcntl.flock(_fd(f), flags)
+    return ret == 0","def acquire_file_lock_status(f, flags):
+    ret = fcntl.flock(_fd(f), flags)
+    return ret == 0","[{""var"": ""ret"", ""rename"": ""lock_successful""}]"
+./django/core/files/locks.py,unlock,release_file_lock,113,115,"def unlock(f):
+    ret = fcntl.flock(_fd(f), fcntl.LOCK_UN)
+    return ret == 0","def release_file_lock(f):
+    ret = fcntl.flock(_fd(f), fcntl.LOCK_UN)
+    return ret == 0","[{""var"": ""ret"", ""rename"": ""unlock_success""}]"

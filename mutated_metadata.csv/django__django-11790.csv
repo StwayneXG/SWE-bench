@@ -1,0 +1,24 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/contrib/auth/forms.py,__init__,initialize_custom_auth_form,183,196,"def __init__(self, request=None, *args, **kwargs):
+    """"""
+        The 'request' parameter is set for custom auth use by subclasses.
+        The form data comes in via the standard 'data' kwarg.
+        """"""
+    self.request = request
+    self.user_cache = None
+    super().__init__(*args, **kwargs)
+    self.username_field = UserModel._meta.get_field(UserModel.USERNAME_FIELD)
+    self.fields['username'].max_length = self.username_field.max_length or 254
+    if self.fields['username'].label is None:
+        self.fields['username'].label = capfirst(self.username_field.verbose_name)","def initialize_custom_auth_form(self, request=None, *args, **kwargs):
+    """"""
+        The 'request' parameter is set for custom auth use by subclasses.
+        The form data comes in via the standard 'data' kwarg.
+        """"""
+    self.request = request
+    self.user_cache = None
+    super().__init__(*args, **kwargs)
+    self.username_field = UserModel._meta.get_field(UserModel.USERNAME_FIELD)
+    self.fields['username'].max_length = self.username_field.max_length or 254
+    if self.fields['username'].label is None:
+        self.fields['username'].label = capfirst(self.username_field.verbose_name)",[]

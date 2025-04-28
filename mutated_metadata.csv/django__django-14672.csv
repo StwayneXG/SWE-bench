@@ -1,0 +1,6 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/db/models/fields/reverse_related.py,identity,extended_identity_with_constraints,310,315,"@property
+def identity(self):
+    return super().identity + (self.through, self.through_fields, self.db_constraint)","@property
+def extended_identity_with_constraints(self):
+    return super().identity + (self.through, self.through_fields, self.db_constraint)",[]

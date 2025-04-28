@@ -1,0 +1,6 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/contrib/auth/forms.py,__init__,initialize_with_optional_required,57,59,"def __init__(self, *args, **kwargs):
+    kwargs.setdefault('required', False)
+    super().__init__(*args, **kwargs)","def initialize_with_optional_required(self, *args, **kwargs):
+    kwargs.setdefault('required', False)
+    super().__init__(*args, **kwargs)",[]

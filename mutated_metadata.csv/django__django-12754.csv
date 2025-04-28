@@ -1,0 +1,134 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/db/migrations/autodetector.py,generate_created_models,generate_model_creation_and_relationship_operations,511,674,"def generate_created_models(self):
+    """"""
+        Find all new models (both managed and unmanaged) and make create
+        operations for them as well as separate operations to create any
+        foreign key or M2M relationships (these are optimized later, if
+        possible).
+
+        Defer any model options that refer to collections of fields that might
+        be deferred (e.g. unique_together, index_together).
+        """"""
+    old_keys = self.old_model_keys | self.old_unmanaged_keys
+    added_models = self.new_model_keys - old_keys
+    added_unmanaged_models = self.new_unmanaged_keys - old_keys
+    all_added_models = chain(sorted(added_models, key=self.swappable_first_key, reverse=True), sorted(added_unmanaged_models, key=self.swappable_first_key, reverse=True))
+    for app_label, model_name in all_added_models:
+        model_state = self.to_state.models[app_label, model_name]
+        model_opts = self.new_apps.get_model(app_label, model_name)._meta
+        related_fields = {}
+        primary_key_rel = None
+        for field in model_opts.local_fields:
+            if field.remote_field:
+                if field.remote_field.model:
+                    if field.primary_key:
+                        primary_key_rel = field.remote_field.model
+                    elif not field.remote_field.parent_link:
+                        related_fields[field.name] = field
+                if getattr(field.remote_field, 'through', None) and (not field.remote_field.through._meta.auto_created):
+                    related_fields[field.name] = field
+        for field in model_opts.local_many_to_many:
+            if field.remote_field.model:
+                related_fields[field.name] = field
+            if getattr(field.remote_field, 'through', None) and (not field.remote_field.through._meta.auto_created):
+                related_fields[field.name] = field
+        indexes = model_state.options.pop('indexes')
+        constraints = model_state.options.pop('constraints')
+        unique_together = model_state.options.pop('unique_together', None)
+        index_together = model_state.options.pop('index_together', None)
+        order_with_respect_to = model_state.options.pop('order_with_respect_to', None)
+        dependencies = [(app_label, model_name, None, False)]
+        for base in model_state.bases:
+            if isinstance(base, str) and '.' in base:
+                base_app_label, base_name = base.split('.', 1)
+                dependencies.append((base_app_label, base_name, None, True))
+        if primary_key_rel:
+            dependencies.append((primary_key_rel._meta.app_label, primary_key_rel._meta.object_name, None, True))
+        self.add_operation(app_label, operations.CreateModel(name=model_state.name, fields=[d for d in model_state.fields.items() if d[0] not in related_fields], options=model_state.options, bases=model_state.bases, managers=model_state.managers), dependencies=dependencies, beginning=True)
+        if not model_opts.managed:
+            continue
+        for name, field in sorted(related_fields.items()):
+            dependencies = self._get_dependencies_for_foreign_key(field)
+            dependencies.append((app_label, model_name, None, True))
+            self.add_operation(app_label, operations.AddField(model_name=model_name, name=name, field=field), dependencies=list(set(dependencies)))
+        related_dependencies = [(app_label, model_name, name, True) for name in sorted(related_fields)]
+        related_dependencies.append((app_label, model_name, None, True))
+        for index in indexes:
+            self.add_operation(app_label, operations.AddIndex(model_name=model_name, index=index), dependencies=related_dependencies)
+        for constraint in constraints:
+            self.add_operation(app_label, operations.AddConstraint(model_name=model_name, constraint=constraint), dependencies=related_dependencies)
+        if unique_together:
+            self.add_operation(app_label, operations.AlterUniqueTogether(name=model_name, unique_together=unique_together), dependencies=related_dependencies)
+        if index_together:
+            self.add_operation(app_label, operations.AlterIndexTogether(name=model_name, index_together=index_together), dependencies=related_dependencies)
+        if order_with_respect_to:
+            self.add_operation(app_label, operations.AlterOrderWithRespectTo(name=model_name, order_with_respect_to=order_with_respect_to), dependencies=[(app_label, model_name, order_with_respect_to, True), (app_label, model_name, None, True)])
+        if (app_label, model_name) in self.old_proxy_keys:
+            for related_object in model_opts.related_objects:
+                self.add_operation(related_object.related_model._meta.app_label, operations.AlterField(model_name=related_object.related_model._meta.object_name, name=related_object.field.name, field=related_object.field), dependencies=[(app_label, model_name, None, True)])","def generate_model_creation_and_relationship_operations(self):
+    """"""
+        Find all new models (both managed and unmanaged) and make create
+        operations for them as well as separate operations to create any
+        foreign key or M2M relationships (these are optimized later, if
+        possible).
+
+        Defer any model options that refer to collections of fields that might
+        be deferred (e.g. unique_together, index_together).
+        """"""
+    old_keys = self.old_model_keys | self.old_unmanaged_keys
+    added_models = self.new_model_keys - old_keys
+    added_unmanaged_models = self.new_unmanaged_keys - old_keys
+    all_added_models = chain(sorted(added_models, key=self.swappable_first_key, reverse=True), sorted(added_unmanaged_models, key=self.swappable_first_key, reverse=True))
+    for app_label, model_name in all_added_models:
+        model_state = self.to_state.models[app_label, model_name]
+        model_opts = self.new_apps.get_model(app_label, model_name)._meta
+        related_fields = {}
+        primary_key_rel = None
+        for field in model_opts.local_fields:
+            if field.remote_field:
+                if field.remote_field.model:
+                    if field.primary_key:
+                        primary_key_rel = field.remote_field.model
+                    elif not field.remote_field.parent_link:
+                        related_fields[field.name] = field
+                if getattr(field.remote_field, 'through', None) and (not field.remote_field.through._meta.auto_created):
+                    related_fields[field.name] = field
+        for field in model_opts.local_many_to_many:
+            if field.remote_field.model:
+                related_fields[field.name] = field
+            if getattr(field.remote_field, 'through', None) and (not field.remote_field.through._meta.auto_created):
+                related_fields[field.name] = field
+        indexes = model_state.options.pop('indexes')
+        constraints = model_state.options.pop('constraints')
+        unique_together = model_state.options.pop('unique_together', None)
+        index_together = model_state.options.pop('index_together', None)
+        order_with_respect_to = model_state.options.pop('order_with_respect_to', None)
+        dependencies = [(app_label, model_name, None, False)]
+        for base in model_state.bases:
+            if isinstance(base, str) and '.' in base:
+                base_app_label, base_name = base.split('.', 1)
+                dependencies.append((base_app_label, base_name, None, True))
+        if primary_key_rel:
+            dependencies.append((primary_key_rel._meta.app_label, primary_key_rel._meta.object_name, None, True))
+        self.add_operation(app_label, operations.CreateModel(name=model_state.name, fields=[d for d in model_state.fields.items() if d[0] not in related_fields], options=model_state.options, bases=model_state.bases, managers=model_state.managers), dependencies=dependencies, beginning=True)
+        if not model_opts.managed:
+            continue
+        for name, field in sorted(related_fields.items()):
+            dependencies = self._get_dependencies_for_foreign_key(field)
+            dependencies.append((app_label, model_name, None, True))
+            self.add_operation(app_label, operations.AddField(model_name=model_name, name=name, field=field), dependencies=list(set(dependencies)))
+        related_dependencies = [(app_label, model_name, name, True) for name in sorted(related_fields)]
+        related_dependencies.append((app_label, model_name, None, True))
+        for index in indexes:
+            self.add_operation(app_label, operations.AddIndex(model_name=model_name, index=index), dependencies=related_dependencies)
+        for constraint in constraints:
+            self.add_operation(app_label, operations.AddConstraint(model_name=model_name, constraint=constraint), dependencies=related_dependencies)
+        if unique_together:
+            self.add_operation(app_label, operations.AlterUniqueTogether(name=model_name, unique_together=unique_together), dependencies=related_dependencies)
+        if index_together:
+            self.add_operation(app_label, operations.AlterIndexTogether(name=model_name, index_together=index_together), dependencies=related_dependencies)
+        if order_with_respect_to:
+            self.add_operation(app_label, operations.AlterOrderWithRespectTo(name=model_name, order_with_respect_to=order_with_respect_to), dependencies=[(app_label, model_name, order_with_respect_to, True), (app_label, model_name, None, True)])
+        if (app_label, model_name) in self.old_proxy_keys:
+            for related_object in model_opts.related_objects:
+                self.add_operation(related_object.related_model._meta.app_label, operations.AlterField(model_name=related_object.related_model._meta.object_name, name=related_object.field.name, field=related_object.field), dependencies=[(app_label, model_name, None, True)])","[{""var"": ""indexes"", ""rename"": ""model_indexes""}, {""var"": ""unique_together"", ""rename"": ""combined_unique_fields""}, {""var"": ""base_app_label"", ""rename"": ""base_application_label""}, {""var"": ""model_state"", ""rename"": ""model_definition_state""}, {""var"": ""base_name"", ""rename"": ""base_model_name""}, {""var"": ""all_added_models"", ""rename"": ""combined_new_models""}, {""var"": ""d"", ""rename"": ""field_name_and_field_tuple""}, {""var"": ""added_unmanaged_models"", ""rename"": ""new_unmanaged_model_keys""}, {""var"": ""name"", ""rename"": ""model_name_label""}, {""var"": ""constraints"", ""rename"": ""model_constraints""}, {""var"": ""base"", ""rename"": ""base_dependency""}, {""var"": ""added_models"", ""rename"": ""newly_created_models""}, {""var"": ""index_together"", ""rename"": ""index_grouping""}, {""var"": ""old_keys"", ""rename"": ""previous_model_keys""}, {""var"": ""model_opts"", ""rename"": ""model_metadata""}, {""var"": ""constraint"", ""rename"": ""model_constraints""}, {""var"": ""primary_key_rel"", ""rename"": ""primary_key_related_model""}, {""var"": ""app_label"", ""rename"": ""application_label""}, {""var"": ""dependencies"", ""rename"": ""model_dependency_list""}, {""var"": ""related_fields"", ""rename"": ""relationship_fields""}, {""var"": ""field"", ""rename"": ""model_related_field""}, {""var"": ""index"", ""rename"": ""database_index""}, {""var"": ""related_dependencies"", ""rename"": ""relationship_operation_dependencies""}, {""var"": ""order_with_respect_to"", ""rename"": ""relative_ordering_field""}, {""var"": ""model_name"", ""rename"": ""new_model_identifier""}, {""var"": ""related_object"", ""rename"": ""associated_model_references""}]"

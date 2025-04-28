@@ -1,0 +1,11 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/urls/resolvers.py,get_resolver,resolve_url_configuration,68,71,"def get_resolver(urlconf=None):
+    if urlconf is None:
+        urlconf = settings.ROOT_URLCONF
+    return _get_cached_resolver(urlconf)","def resolve_url_configuration(urlconf=None):
+    if urlconf is None:
+        urlconf = settings.ROOT_URLCONF
+    return _get_cached_resolver(urlconf)",[]
+./django/urls/resolvers.py,__repr__,generate_resolver_match_summary,61,65,"def __repr__(self):
+    return 'ResolverMatch(func=%s, args=%s, kwargs=%s, url_name=%s, app_names=%s, namespaces=%s, route=%s)' % (self._func_path, self.args, self.kwargs, self.url_name, self.app_names, self.namespaces, self.route)","def generate_resolver_match_summary(self):
+    return 'ResolverMatch(func=%s, args=%s, kwargs=%s, url_name=%s, app_names=%s, namespaces=%s, route=%s)' % (self._func_path, self.args, self.kwargs, self.url_name, self.app_names, self.namespaces, self.route)",[]

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import docker
 import json
 import platform
@@ -142,6 +143,19 @@ def run_instance(
         )
         container.start()
         logger.info(f"Container for {instance_id} started: {container.id}")
+
+        if os.path.exists(f"mutated_metadata/{instance_id}.csv"):
+            logger.info(f"Modify files for {instance_id}")
+            # Copy the CSV file to the container
+            copy_to_container(container, Path(f"mutated_metadata/{instance_id}.csv"), PurePosixPath(DOCKER_WORKDIR) / f"mutated_metadata/{instance_id}.csv")
+
+            # Copy modify_files.py to the container
+            copy_to_container(container, Path("modify_files.py"), PurePosixPath(DOCKER_WORKDIR) / "modify_files.py")
+
+            # Run the modify_files script
+            val = container.exec_run(f"python modify_files.py --csv_filename mo2/{instance_id}.csv", workdir=DOCKER_WORKDIR, user=DOCKER_USER)
+
+
 
         # Copy model prediction as patch file to container
         patch_file = Path(log_dir / "patch.diff")

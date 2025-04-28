@@ -1,0 +1,167 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/db/models/query.py,bulk_create,batch_insert_objects,746,841,"def bulk_create(self, objs, batch_size=None, ignore_conflicts=False, update_conflicts=False, update_fields=None, unique_fields=None):
+    """"""
+        Insert each of the instances into the database. Do *not* call
+        save() on each of the instances, do not send any pre/post_save
+        signals, and do not set the primary key attribute if it is an
+        autoincrement field (except if features.can_return_rows_from_bulk_insert=True).
+        Multi-table models are not supported.
+        """"""
+    if batch_size is not None and batch_size <= 0:
+        raise ValueError('Batch size must be a positive integer.')
+    for parent in self.model._meta.get_parent_list():
+        if parent._meta.concrete_model is not self.model._meta.concrete_model:
+            raise ValueError(""Can't bulk create a multi-table inherited model"")
+    if not objs:
+        return objs
+    opts = self.model._meta
+    if unique_fields:
+        unique_fields = [opts.pk.name if name == 'pk' else name for name in unique_fields]
+    on_conflict = self._check_bulk_create_options(ignore_conflicts, update_conflicts, update_fields, unique_fields)
+    self._for_write = True
+    fields = opts.concrete_fields
+    objs = list(objs)
+    self._prepare_for_bulk_create(objs)
+    with transaction.atomic(using=self.db, savepoint=False):
+        objs_with_pk, objs_without_pk = partition(lambda o: o.pk is None, objs)
+        if objs_with_pk:
+            returned_columns = self._batched_insert(objs_with_pk, fields, batch_size, on_conflict=on_conflict, update_fields=update_fields, unique_fields=unique_fields)
+            for obj_with_pk, results in zip(objs_with_pk, returned_columns):
+                for result, field in zip(results, opts.db_returning_fields):
+                    if field != opts.pk:
+                        setattr(obj_with_pk, field.attname, result)
+            for obj_with_pk in objs_with_pk:
+                obj_with_pk._state.adding = False
+                obj_with_pk._state.db = self.db
+        if objs_without_pk:
+            fields = [f for f in fields if not isinstance(f, AutoField)]
+            returned_columns = self._batched_insert(objs_without_pk, fields, batch_size, on_conflict=on_conflict, update_fields=update_fields, unique_fields=unique_fields)
+            connection = connections[self.db]
+            if connection.features.can_return_rows_from_bulk_insert and on_conflict is None:
+                assert len(returned_columns) == len(objs_without_pk)
+            for obj_without_pk, results in zip(objs_without_pk, returned_columns):
+                for result, field in zip(results, opts.db_returning_fields):
+                    setattr(obj_without_pk, field.attname, result)
+                obj_without_pk._state.adding = False
+                obj_without_pk._state.db = self.db
+    return objs","def batch_insert_objects(self, objs, batch_size=None, ignore_conflicts=False, update_conflicts=False, update_fields=None, unique_fields=None):
+    """"""
+        Insert each of the instances into the database. Do *not* call
+        save() on each of the instances, do not send any pre/post_save
+        signals, and do not set the primary key attribute if it is an
+        autoincrement field (except if features.can_return_rows_from_bulk_insert=True).
+        Multi-table models are not supported.
+        """"""
+    if batch_size is not None and batch_size <= 0:
+        raise ValueError('Batch size must be a positive integer.')
+    for parent in self.model._meta.get_parent_list():
+        if parent._meta.concrete_model is not self.model._meta.concrete_model:
+            raise ValueError(""Can't bulk create a multi-table inherited model"")
+    if not objs:
+        return objs
+    opts = self.model._meta
+    if unique_fields:
+        unique_fields = [opts.pk.name if name == 'pk' else name for name in unique_fields]
+    on_conflict = self._check_bulk_create_options(ignore_conflicts, update_conflicts, update_fields, unique_fields)
+    self._for_write = True
+    fields = opts.concrete_fields
+    objs = list(objs)
+    self._prepare_for_bulk_create(objs)
+    with transaction.atomic(using=self.db, savepoint=False):
+        objs_with_pk, objs_without_pk = partition(lambda o: o.pk is None, objs)
+        if objs_with_pk:
+            returned_columns = self._batched_insert(objs_with_pk, fields, batch_size, on_conflict=on_conflict, update_fields=update_fields, unique_fields=unique_fields)
+            for obj_with_pk, results in zip(objs_with_pk, returned_columns):
+                for result, field in zip(results, opts.db_returning_fields):
+                    if field != opts.pk:
+                        setattr(obj_with_pk, field.attname, result)
+            for obj_with_pk in objs_with_pk:
+                obj_with_pk._state.adding = False
+                obj_with_pk._state.db = self.db
+        if objs_without_pk:
+            fields = [f for f in fields if not isinstance(f, AutoField)]
+            returned_columns = self._batched_insert(objs_without_pk, fields, batch_size, on_conflict=on_conflict, update_fields=update_fields, unique_fields=unique_fields)
+            connection = connections[self.db]
+            if connection.features.can_return_rows_from_bulk_insert and on_conflict is None:
+                assert len(returned_columns) == len(objs_without_pk)
+            for obj_without_pk, results in zip(objs_without_pk, returned_columns):
+                for result, field in zip(results, opts.db_returning_fields):
+                    setattr(obj_without_pk, field.attname, result)
+                obj_without_pk._state.adding = False
+                obj_without_pk._state.db = self.db
+    return objs","[{""var"": ""obj_with_pk"", ""rename"": ""objects_with_primary_key""}, {""var"": ""connection"", ""rename"": ""database_connection""}, {""var"": ""parent"", ""rename"": ""parent_model""}, {""var"": ""name"", ""rename"": ""unique_field_name""}, {""var"": ""field"", ""rename"": ""database_fields""}, {""var"": ""objs_without_pk"", ""rename"": ""objects_without_primary_key""}, {""var"": ""results"", ""rename"": ""inserted_records_data""}, {""var"": ""f"", ""rename"": ""non_auto_fields""}, {""var"": ""opts"", ""rename"": ""model_meta_options""}, {""var"": ""result"", ""rename"": ""bulk_created_objects""}, {""var"": ""obj_without_pk"", ""rename"": ""instances_without_primary_key""}, {""var"": ""returned_columns"", ""rename"": ""bulk_insert_returned_fields""}, {""var"": ""on_conflict"", ""rename"": ""conflict_resolution_strategy""}, {""var"": ""objs_with_pk"", ""rename"": ""objs_with_existing_pk""}, {""var"": ""fields"", ""rename"": ""model_concrete_fields""}]"
+./django/db/models/sql/compiler.py,as_sql,generate_insert_sql_statement,1688,1766,"def as_sql(self):
+    qn = self.connection.ops.quote_name
+    opts = self.query.get_meta()
+    insert_statement = self.connection.ops.insert_statement(on_conflict=self.query.on_conflict)
+    result = ['%s %s' % (insert_statement, qn(opts.db_table))]
+    fields = self.query.fields or [opts.pk]
+    result.append('(%s)' % ', '.join((qn(f.column) for f in fields)))
+    if self.query.fields:
+        value_rows = [[self.prepare_value(field, self.pre_save_val(field, obj)) for field in fields] for obj in self.query.objs]
+    else:
+        value_rows = [[self.connection.ops.pk_default_value()] for _ in self.query.objs]
+        fields = [None]
+    can_bulk = not self.returning_fields and self.connection.features.has_bulk_insert
+    placeholder_rows, param_rows = self.assemble_as_sql(fields, value_rows)
+    on_conflict_suffix_sql = self.connection.ops.on_conflict_suffix_sql(fields, self.query.on_conflict, self.query.update_fields, self.query.unique_fields)
+    if self.returning_fields and self.connection.features.can_return_columns_from_insert:
+        if self.connection.features.can_return_rows_from_bulk_insert:
+            result.append(self.connection.ops.bulk_insert_sql(fields, placeholder_rows))
+            params = param_rows
+        else:
+            result.append('VALUES (%s)' % ', '.join(placeholder_rows[0]))
+            params = [param_rows[0]]
+        if on_conflict_suffix_sql:
+            result.append(on_conflict_suffix_sql)
+        r_sql, self.returning_params = self.connection.ops.return_insert_columns(self.returning_fields)
+        if r_sql:
+            result.append(r_sql)
+            params += [self.returning_params]
+        return [(' '.join(result), tuple(chain.from_iterable(params)))]
+    if can_bulk:
+        result.append(self.connection.ops.bulk_insert_sql(fields, placeholder_rows))
+        if on_conflict_suffix_sql:
+            result.append(on_conflict_suffix_sql)
+        return [(' '.join(result), tuple((p for ps in param_rows for p in ps)))]
+    else:
+        if on_conflict_suffix_sql:
+            result.append(on_conflict_suffix_sql)
+        return [(' '.join(result + ['VALUES (%s)' % ', '.join(p)]), vals) for p, vals in zip(placeholder_rows, param_rows)]","def generate_insert_sql_statement(self):
+    qn = self.connection.ops.quote_name
+    opts = self.query.get_meta()
+    insert_statement = self.connection.ops.insert_statement(on_conflict=self.query.on_conflict)
+    result = ['%s %s' % (insert_statement, qn(opts.db_table))]
+    fields = self.query.fields or [opts.pk]
+    result.append('(%s)' % ', '.join((qn(f.column) for f in fields)))
+    if self.query.fields:
+        value_rows = [[self.prepare_value(field, self.pre_save_val(field, obj)) for field in fields] for obj in self.query.objs]
+    else:
+        value_rows = [[self.connection.ops.pk_default_value()] for _ in self.query.objs]
+        fields = [None]
+    can_bulk = not self.returning_fields and self.connection.features.has_bulk_insert
+    placeholder_rows, param_rows = self.assemble_as_sql(fields, value_rows)
+    on_conflict_suffix_sql = self.connection.ops.on_conflict_suffix_sql(fields, self.query.on_conflict, self.query.update_fields, self.query.unique_fields)
+    if self.returning_fields and self.connection.features.can_return_columns_from_insert:
+        if self.connection.features.can_return_rows_from_bulk_insert:
+            result.append(self.connection.ops.bulk_insert_sql(fields, placeholder_rows))
+            params = param_rows
+        else:
+            result.append('VALUES (%s)' % ', '.join(placeholder_rows[0]))
+            params = [param_rows[0]]
+        if on_conflict_suffix_sql:
+            result.append(on_conflict_suffix_sql)
+        r_sql, self.returning_params = self.connection.ops.return_insert_columns(self.returning_fields)
+        if r_sql:
+            result.append(r_sql)
+            params += [self.returning_params]
+        return [(' '.join(result), tuple(chain.from_iterable(params)))]
+    if can_bulk:
+        result.append(self.connection.ops.bulk_insert_sql(fields, placeholder_rows))
+        if on_conflict_suffix_sql:
+            result.append(on_conflict_suffix_sql)
+        return [(' '.join(result), tuple((p for ps in param_rows for p in ps)))]
+    else:
+        if on_conflict_suffix_sql:
+            result.append(on_conflict_suffix_sql)
+        return [(' '.join(result + ['VALUES (%s)' % ', '.join(p)]), vals) for p, vals in zip(placeholder_rows, param_rows)]","[{""var"": ""params"", ""rename"": ""query_parameters""}, {""var"": ""p"", ""rename"": ""placeholder_values""}, {""var"": ""insert_statement"", ""rename"": ""conflict_safe_insert_clause""}, {""var"": ""obj"", ""rename"": ""record_object""}, {""var"": ""r_sql"", ""rename"": ""returning_sql_fragment""}, {""var"": ""fields"", ""rename"": ""insert_fields""}, {""var"": ""on_conflict_suffix_sql"", ""rename"": ""insert_on_conflict_clause_sql""}, {""var"": ""param_rows"", ""rename"": ""parameter_batches""}, {""var"": ""result"", ""rename"": ""sql_components""}, {""var"": ""vals"", ""rename"": ""parameter_values""}, {""var"": ""placeholder_rows"", ""rename"": ""sql_placeholder_values""}, {""var"": ""can_bulk"", ""rename"": ""supports_bulk_insert""}, {""var"": ""opts"", ""rename"": ""query_metadata""}, {""var"": ""ps"", ""rename"": ""parameter_set""}, {""var"": ""qn"", ""rename"": ""quote_name_function""}, {""var"": ""field"", ""rename"": ""data_field""}, {""var"": ""f"", ""rename"": ""field""}, {""var"": ""_"", ""rename"": ""query_objects_iterator""}, {""var"": ""value_rows"", ""rename"": ""prepared_value_matrices""}]"

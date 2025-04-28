@@ -1,0 +1,108 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./sympy/simplify/simplify.py,posify,ensure_positive_symbols,202,257,"def posify(eq):
+    """"""Return eq (with generic symbols made positive) and a
+    dictionary containing the mapping between the old and new
+    symbols.
+
+    Any symbol that has positive=None will be replaced with a positive dummy
+    symbol having the same name. This replacement will allow more symbolic
+    processing of expressions, especially those involving powers and
+    logarithms.
+
+    A dictionary that can be sent to subs to restore eq to its original
+    symbols is also returned.
+
+    >>> from sympy import posify, Symbol, log, solve
+    >>> from sympy.abc import x
+    >>> posify(x + Symbol('p', positive=True) + Symbol('n', negative=True))
+    (_x + n + p, {_x: x})
+
+    >>> eq = 1/x
+    >>> log(eq).expand()
+    log(1/x)
+    >>> log(posify(eq)[0]).expand()
+    -log(_x)
+    >>> p, rep = posify(eq)
+    >>> log(p).expand().subs(rep)
+    -log(x)
+
+    It is possible to apply the same transformations to an iterable
+    of expressions:
+
+    >>> eq = x**2 - 4
+    >>> solve(eq, x)
+    [-2, 2]
+    >>> eq_x, reps = posify([eq, x]); eq_x
+    [_x**2 - 4, _x]
+    >>> solve(*eq_x)
+    [2]
+    """"""
+    eq = sympify(eq)
+    if iterable(eq):
+        f = type(eq)
+        eq = list(eq)
+        syms = set()
+        for e in eq:
+            syms = syms.union(e.atoms(Symbol))
+        reps = {}
+        for s in syms:
+            reps.update(dict(((v, k) for k, v in posify(s)[1].items())))
+        for i, e in enumerate(eq):
+            eq[i] = e.subs(reps)
+        return (f(eq), {r: s for s, r in reps.items()})
+    reps = {s: Dummy(s.name, positive=True) for s in eq.free_symbols if s.is_positive is None}
+    eq = eq.subs(reps)
+    return (eq, {r: s for s, r in reps.items()})","def ensure_positive_symbols(eq):
+    """"""Return eq (with generic symbols made positive) and a
+    dictionary containing the mapping between the old and new
+    symbols.
+
+    Any symbol that has positive=None will be replaced with a positive dummy
+    symbol having the same name. This replacement will allow more symbolic
+    processing of expressions, especially those involving powers and
+    logarithms.
+
+    A dictionary that can be sent to subs to restore eq to its original
+    symbols is also returned.
+
+    >>> from sympy import posify, Symbol, log, solve
+    >>> from sympy.abc import x
+    >>> posify(x + Symbol('p', positive=True) + Symbol('n', negative=True))
+    (_x + n + p, {_x: x})
+
+    >>> eq = 1/x
+    >>> log(eq).expand()
+    log(1/x)
+    >>> log(posify(eq)[0]).expand()
+    -log(_x)
+    >>> p, rep = posify(eq)
+    >>> log(p).expand().subs(rep)
+    -log(x)
+
+    It is possible to apply the same transformations to an iterable
+    of expressions:
+
+    >>> eq = x**2 - 4
+    >>> solve(eq, x)
+    [-2, 2]
+    >>> eq_x, reps = posify([eq, x]); eq_x
+    [_x**2 - 4, _x]
+    >>> solve(*eq_x)
+    [2]
+    """"""
+    eq = sympify(eq)
+    if iterable(eq):
+        f = type(eq)
+        eq = list(eq)
+        syms = set()
+        for e in eq:
+            syms = syms.union(e.atoms(Symbol))
+        reps = {}
+        for s in syms:
+            reps.update(dict(((v, k) for k, v in posify(s)[1].items())))
+        for i, e in enumerate(eq):
+            eq[i] = e.subs(reps)
+        return (f(eq), {r: s for s, r in reps.items()})
+    reps = {s: Dummy(s.name, positive=True) for s in eq.free_symbols if s.is_positive is None}
+    eq = eq.subs(reps)
+    return (eq, {r: s for s, r in reps.items()})","[{""var"": ""syms"", ""rename"": ""generic_symbols_set""}, {""var"": ""reps"", ""rename"": ""symbol_replacements""}, {""var"": ""s"", ""rename"": ""symbol""}, {""var"": ""k"", ""rename"": ""positive_symbol_mapping""}, {""var"": ""r"", ""rename"": ""old_symbol_map""}, {""var"": ""i"", ""rename"": ""equation_index""}, {""var"": ""f"", ""rename"": ""equation_type""}, {""var"": ""v"", ""rename"": ""replacement_dict""}, {""var"": ""e"", ""rename"": ""expression""}]"

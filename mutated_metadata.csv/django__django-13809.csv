@@ -1,0 +1,59 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/core/management/commands/runserver.py,execute,conditionalDjangoColorExecution,55,61,"def execute(self, *args, **options):
+    if options['no_color']:
+        os.environ['DJANGO_COLORS'] = 'nocolor'
+    super().execute(*args, **options)","def conditionalDjangoColorExecution(self, *args, **options):
+    if options['no_color']:
+        os.environ['DJANGO_COLORS'] = 'nocolor'
+    super().execute(*args, **options)",[]
+./django/core/management/commands/runserver.py,inner_run,run_development_server_with_checks,107,158,"def inner_run(self, *args, **options):
+    autoreload.raise_last_exception()
+    threading = options['use_threading']
+    shutdown_message = options.get('shutdown_message', '')
+    quit_command = 'CTRL-BREAK' if sys.platform == 'win32' else 'CONTROL-C'
+    self.stdout.write('Performing system checks...\n\n')
+    self.check(display_num_errors=True)
+    self.check_migrations()
+    now = datetime.now().strftime('%B %d, %Y - %X')
+    self.stdout.write(now)
+    self.stdout.write('Django version %(version)s, using settings %(settings)r\nStarting development server at %(protocol)s://%(addr)s:%(port)s/\nQuit the server with %(quit_command)s.' % {'version': self.get_version(), 'settings': settings.SETTINGS_MODULE, 'protocol': self.protocol, 'addr': '[%s]' % self.addr if self._raw_ipv6 else self.addr, 'port': self.port, 'quit_command': quit_command})
+    try:
+        handler = self.get_handler(*args, **options)
+        run(self.addr, int(self.port), handler, ipv6=self.use_ipv6, threading=threading, server_cls=self.server_cls)
+    except OSError as e:
+        ERRORS = {errno.EACCES: ""You don't have permission to access that port."", errno.EADDRINUSE: 'That port is already in use.', errno.EADDRNOTAVAIL: ""That IP address can't be assigned to.""}
+        try:
+            error_text = ERRORS[e.errno]
+        except KeyError:
+            error_text = e
+        self.stderr.write('Error: %s' % error_text)
+        os._exit(1)
+    except KeyboardInterrupt:
+        if shutdown_message:
+            self.stdout.write(shutdown_message)
+        sys.exit(0)","def run_development_server_with_checks(self, *args, **options):
+    autoreload.raise_last_exception()
+    threading = options['use_threading']
+    shutdown_message = options.get('shutdown_message', '')
+    quit_command = 'CTRL-BREAK' if sys.platform == 'win32' else 'CONTROL-C'
+    self.stdout.write('Performing system checks...\n\n')
+    self.check(display_num_errors=True)
+    self.check_migrations()
+    now = datetime.now().strftime('%B %d, %Y - %X')
+    self.stdout.write(now)
+    self.stdout.write('Django version %(version)s, using settings %(settings)r\nStarting development server at %(protocol)s://%(addr)s:%(port)s/\nQuit the server with %(quit_command)s.' % {'version': self.get_version(), 'settings': settings.SETTINGS_MODULE, 'protocol': self.protocol, 'addr': '[%s]' % self.addr if self._raw_ipv6 else self.addr, 'port': self.port, 'quit_command': quit_command})
+    try:
+        handler = self.get_handler(*args, **options)
+        run(self.addr, int(self.port), handler, ipv6=self.use_ipv6, threading=threading, server_cls=self.server_cls)
+    except OSError as e:
+        ERRORS = {errno.EACCES: ""You don't have permission to access that port."", errno.EADDRINUSE: 'That port is already in use.', errno.EADDRNOTAVAIL: ""That IP address can't be assigned to.""}
+        try:
+            error_text = ERRORS[e.errno]
+        except KeyError:
+            error_text = e
+        self.stderr.write('Error: %s' % error_text)
+        os._exit(1)
+    except KeyboardInterrupt:
+        if shutdown_message:
+            self.stdout.write(shutdown_message)
+        sys.exit(0)","[{""var"": ""now"", ""rename"": ""current_datetime_str""}, {""var"": ""shutdown_message"", ""rename"": ""custom_shutdown_notification""}, {""var"": ""quit_command"", ""rename"": ""server_exit_command""}, {""var"": ""handler"", ""rename"": ""request_handler""}, {""var"": ""threading"", ""rename"": ""threading_enabled""}, {""var"": ""error_text"", ""rename"": ""error_message_description""}, {""var"": ""ERRORS"", ""rename"": ""PORT_ACCESS_ERRORS""}]"

@@ -1,0 +1,56 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/utils/autoreload.py,get_child_arguments,construct_executable_command_with_workaround,213,248,"def get_child_arguments():
+    """"""
+    Return the executable. This contains a workaround for Windows if the
+    executable is reported to not have the .exe extension which can cause bugs
+    on reloading.
+    """"""
+    import __main__
+    py_script = Path(sys.argv[0])
+    args = [sys.executable] + ['-W%s' % o for o in sys.warnoptions]
+    if getattr(__main__, '__spec__', None) is not None:
+        spec = __main__.__spec__
+        if (spec.name == '__main__' or spec.name.endswith('.__main__')) and spec.parent:
+            name = spec.parent
+        else:
+            name = spec.name
+        args += ['-m', name]
+        args += sys.argv[1:]
+    elif not py_script.exists():
+        exe_entrypoint = py_script.with_suffix('.exe')
+        if exe_entrypoint.exists():
+            return [exe_entrypoint, *sys.argv[1:]]
+        script_entrypoint = py_script.with_name('%s-script.py' % py_script.name)
+        if script_entrypoint.exists():
+            return [*args, script_entrypoint, *sys.argv[1:]]
+        raise RuntimeError('Script %s does not exist.' % py_script)
+    else:
+        args += sys.argv
+    return args","def construct_executable_command_with_workaround():
+    """"""
+    Return the executable. This contains a workaround for Windows if the
+    executable is reported to not have the .exe extension which can cause bugs
+    on reloading.
+    """"""
+    import __main__
+    py_script = Path(sys.argv[0])
+    args = [sys.executable] + ['-W%s' % o for o in sys.warnoptions]
+    if getattr(__main__, '__spec__', None) is not None:
+        spec = __main__.__spec__
+        if (spec.name == '__main__' or spec.name.endswith('.__main__')) and spec.parent:
+            name = spec.parent
+        else:
+            name = spec.name
+        args += ['-m', name]
+        args += sys.argv[1:]
+    elif not py_script.exists():
+        exe_entrypoint = py_script.with_suffix('.exe')
+        if exe_entrypoint.exists():
+            return [exe_entrypoint, *sys.argv[1:]]
+        script_entrypoint = py_script.with_name('%s-script.py' % py_script.name)
+        if script_entrypoint.exists():
+            return [*args, script_entrypoint, *sys.argv[1:]]
+        raise RuntimeError('Script %s does not exist.' % py_script)
+    else:
+        args += sys.argv
+    return args","[{""var"": ""script_entrypoint"", ""rename"": ""alternative_script_path""}, {""var"": ""o"", ""rename"": ""warning_option""}, {""var"": ""name"", ""rename"": ""module_name""}, {""var"": ""spec"", ""rename"": ""module_specification""}, {""var"": ""args"", ""rename"": ""executable_with_options_and_script_args""}, {""var"": ""py_script"", ""rename"": ""python_script_path""}, {""var"": ""exe_entrypoint"", ""rename"": ""executable_entry_point""}]"

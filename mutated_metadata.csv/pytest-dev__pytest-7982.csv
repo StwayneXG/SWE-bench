@@ -1,0 +1,20 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./src/_pytest/pathlib.py,visit,walk_directory_breadth_first,551,562,"def visit(path: str, recurse: Callable[['os.DirEntry[str]'], bool]) -> Iterator['os.DirEntry[str]']:
+    """"""Walk a directory recursively, in breadth-first order.
+
+    Entries at each directory level are sorted.
+    """"""
+    entries = sorted(os.scandir(path), key=lambda entry: entry.name)
+    yield from entries
+    for entry in entries:
+        if entry.is_dir(follow_symlinks=False) and recurse(entry):
+            yield from visit(entry.path, recurse)","def walk_directory_breadth_first(path: str, recurse: Callable[['os.DirEntry[str]'], bool]) -> Iterator['os.DirEntry[str]']:
+    """"""Walk a directory recursively, in breadth-first order.
+
+    Entries at each directory level are sorted.
+    """"""
+    entries = sorted(os.scandir(path), key=lambda entry: entry.name)
+    yield from entries
+    for entry in entries:
+        if entry.is_dir(follow_symlinks=False) and recurse(entry):
+            yield from visit(entry.path, recurse)","[{""var"": ""entries"", ""rename"": ""sorted_directory_entries""}]"

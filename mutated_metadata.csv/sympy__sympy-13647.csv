@@ -1,0 +1,31 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./sympy/matrices/common.py,_eval_col_insert,insert_columns_at_position,81,92,"def _eval_col_insert(self, pos, other):
+    cols = self.cols
+
+    def entry(i, j):
+        if j < pos:
+            return self[i, j]
+        elif pos <= j < pos + other.cols:
+            return other[i, j - pos]
+        return self[i, j - pos - other.cols]
+    return self._new(self.rows, self.cols + other.cols, lambda i, j: entry(i, j))","def insert_columns_at_position(self, pos, other):
+    cols = self.cols
+
+    def entry(i, j):
+        if j < pos:
+            return self[i, j]
+        elif pos <= j < pos + other.cols:
+            return other[i, j - pos]
+        return self[i, j - pos - other.cols]
+    return self._new(self.rows, self.cols + other.cols, lambda i, j: entry(i, j))","[{""var"": ""cols"", ""rename"": ""total_columns_after_insertion""}]"
+./sympy/matrices/common.py,entry,matrix_element_selector,84,89,"def entry(i, j):
+    if j < pos:
+        return self[i, j]
+    elif pos <= j < pos + other.cols:
+        return other[i, j - pos]
+    return self[i, j - pos - other.cols]","def matrix_element_selector(i, j):
+    if j < pos:
+        return self[i, j]
+    elif pos <= j < pos + other.cols:
+        return other[i, j - pos]
+    return self[i, j - pos - other.cols]",[]

@@ -1,0 +1,10 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/db/models/base.py,_check_default_pk,validate_auto_created_primary_key_settings,1299,1320,"@classmethod
+def _check_default_pk(cls):
+    if cls._meta.pk.auto_created and (not settings.is_overridden('DEFAULT_AUTO_FIELD')) and (not cls._meta.app_config._is_default_auto_field_overridden):
+        return [checks.Warning(f""Auto-created primary key used when not defining a primary key type, by default '{settings.DEFAULT_AUTO_FIELD}'."", hint=f""Configure the DEFAULT_AUTO_FIELD setting or the {cls._meta.app_config.__class__.__qualname__}.default_auto_field attribute to point to a subclass of AutoField, e.g. 'django.db.models.BigAutoField'."", obj=cls, id='models.W042')]
+    return []","@classmethod
+def validate_auto_created_primary_key_settings(cls):
+    if cls._meta.pk.auto_created and (not settings.is_overridden('DEFAULT_AUTO_FIELD')) and (not cls._meta.app_config._is_default_auto_field_overridden):
+        return [checks.Warning(f""Auto-created primary key used when not defining a primary key type, by default '{settings.DEFAULT_AUTO_FIELD}'."", hint=f""Configure the DEFAULT_AUTO_FIELD setting or the {cls._meta.app_config.__class__.__qualname__}.default_auto_field attribute to point to a subclass of AutoField, e.g. 'django.db.models.BigAutoField'."", obj=cls, id='models.W042')]
+    return []",[]

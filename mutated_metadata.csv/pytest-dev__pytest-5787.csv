@@ -1,0 +1,201 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./src/_pytest/reports.py,pytest_report_to_serializable,convert_pytest_report_to_json_serializable,411,415,"def pytest_report_to_serializable(report):
+    if isinstance(report, (TestReport, CollectReport)):
+        data = report._to_json()
+        data['_report_type'] = report.__class__.__name__
+        return data","def convert_pytest_report_to_json_serializable(report):
+    if isinstance(report, (TestReport, CollectReport)):
+        data = report._to_json()
+        data['_report_type'] = report.__class__.__name__
+        return data","[{""var"": ""data"", ""rename"": ""serialized_report_data""}]"
+./src/_pytest/reports.py,pytest_report_from_serializable,deserialize_pytest_report,418,426,"def pytest_report_from_serializable(data):
+    if '_report_type' in data:
+        if data['_report_type'] == 'TestReport':
+            return TestReport._from_json(data)
+        elif data['_report_type'] == 'CollectReport':
+            return CollectReport._from_json(data)
+        assert False, 'Unknown report_type unserialize data: {}'.format(data['_report_type'])","def deserialize_pytest_report(data):
+    if '_report_type' in data:
+        if data['_report_type'] == 'TestReport':
+            return TestReport._from_json(data)
+        elif data['_report_type'] == 'CollectReport':
+            return CollectReport._from_json(data)
+        assert False, 'Unknown report_type unserialize data: {}'.format(data['_report_type'])",[]
+./src/_pytest/reports.py,_to_json,serialize_report_to_dict,154,202,"def _to_json(self):
+    """"""
+        This was originally the serialize_report() function from xdist (ca03269).
+
+        Returns the contents of this report as a dict of builtin entries, suitable for
+        serialization.
+
+        Experimental method.
+        """"""
+
+    def disassembled_report(rep):
+        reprtraceback = rep.longrepr.reprtraceback.__dict__.copy()
+        reprcrash = rep.longrepr.reprcrash.__dict__.copy()
+        new_entries = []
+        for entry in reprtraceback['reprentries']:
+            entry_data = {'type': type(entry).__name__, 'data': entry.__dict__.copy()}
+            for key, value in entry_data['data'].items():
+                if hasattr(value, '__dict__'):
+                    entry_data['data'][key] = value.__dict__.copy()
+            new_entries.append(entry_data)
+        reprtraceback['reprentries'] = new_entries
+        return {'reprcrash': reprcrash, 'reprtraceback': reprtraceback, 'sections': rep.longrepr.sections}
+    d = self.__dict__.copy()
+    if hasattr(self.longrepr, 'toterminal'):
+        if hasattr(self.longrepr, 'reprtraceback') and hasattr(self.longrepr, 'reprcrash'):
+            d['longrepr'] = disassembled_report(self)
+        else:
+            d['longrepr'] = str(self.longrepr)
+    else:
+        d['longrepr'] = self.longrepr
+    for name in d:
+        if isinstance(d[name], (py.path.local, Path)):
+            d[name] = str(d[name])
+        elif name == 'result':
+            d[name] = None
+    return d","def serialize_report_to_dict(self):
+    """"""
+        This was originally the serialize_report() function from xdist (ca03269).
+
+        Returns the contents of this report as a dict of builtin entries, suitable for
+        serialization.
+
+        Experimental method.
+        """"""
+
+    def disassembled_report(rep):
+        reprtraceback = rep.longrepr.reprtraceback.__dict__.copy()
+        reprcrash = rep.longrepr.reprcrash.__dict__.copy()
+        new_entries = []
+        for entry in reprtraceback['reprentries']:
+            entry_data = {'type': type(entry).__name__, 'data': entry.__dict__.copy()}
+            for key, value in entry_data['data'].items():
+                if hasattr(value, '__dict__'):
+                    entry_data['data'][key] = value.__dict__.copy()
+            new_entries.append(entry_data)
+        reprtraceback['reprentries'] = new_entries
+        return {'reprcrash': reprcrash, 'reprtraceback': reprtraceback, 'sections': rep.longrepr.sections}
+    d = self.__dict__.copy()
+    if hasattr(self.longrepr, 'toterminal'):
+        if hasattr(self.longrepr, 'reprtraceback') and hasattr(self.longrepr, 'reprcrash'):
+            d['longrepr'] = disassembled_report(self)
+        else:
+            d['longrepr'] = str(self.longrepr)
+    else:
+        d['longrepr'] = self.longrepr
+    for name in d:
+        if isinstance(d[name], (py.path.local, Path)):
+            d[name] = str(d[name])
+        elif name == 'result':
+            d[name] = None
+    return d","[{""var"": ""entry_data"", ""rename"": ""entry_serialization_info""}, {""var"": ""reprcrash"", ""rename"": ""crash_report_summary""}, {""var"": ""name"", ""rename"": ""report_entry_key""}, {""var"": ""reprtraceback"", ""rename"": ""traceback_representation""}, {""var"": ""key"", ""rename"": ""entry_attribute""}, {""var"": ""entry"", ""rename"": ""traceback_entry""}, {""var"": ""new_entries"", ""rename"": ""serialized_trace_entries""}, {""var"": ""value"", ""rename"": ""entry_component""}, {""var"": ""d"", ""rename"": ""serialized_report_dict""}]"
+./src/_pytest/reports.py,from_item_and_call,create_standard_test_report_from_item_call,339,379,"@classmethod
+def from_item_and_call(cls, item, call):
+    """"""
+        Factory method to create and fill a TestReport with standard item and call info.
+        """"""
+    when = call.when
+    duration = call.stop - call.start
+    keywords = {x: 1 for x in item.keywords}
+    excinfo = call.excinfo
+    sections = []
+    if not call.excinfo:
+        outcome = 'passed'
+        longrepr = None
+    elif not isinstance(excinfo, ExceptionInfo):
+        outcome = 'failed'
+        longrepr = excinfo
+    elif excinfo.errisinstance(skip.Exception):
+        outcome = 'skipped'
+        r = excinfo._getreprcrash()
+        longrepr = (str(r.path), r.lineno, r.message)
+    else:
+        outcome = 'failed'
+        if call.when == 'call':
+            longrepr = item.repr_failure(excinfo)
+        else:
+            longrepr = item._repr_failure_py(excinfo, style=item.config.getoption('tbstyle', 'auto'))
+    for rwhen, key, content in item._report_sections:
+        sections.append(('Captured {} {}'.format(key, rwhen), content))
+    return cls(item.nodeid, item.location, keywords, outcome, longrepr, when, sections, duration, user_properties=item.user_properties)","@classmethod
+def create_standard_test_report_from_item_call(cls, item, call):
+    """"""
+        Factory method to create and fill a TestReport with standard item and call info.
+        """"""
+    when = call.when
+    duration = call.stop - call.start
+    keywords = {x: 1 for x in item.keywords}
+    excinfo = call.excinfo
+    sections = []
+    if not call.excinfo:
+        outcome = 'passed'
+        longrepr = None
+    elif not isinstance(excinfo, ExceptionInfo):
+        outcome = 'failed'
+        longrepr = excinfo
+    elif excinfo.errisinstance(skip.Exception):
+        outcome = 'skipped'
+        r = excinfo._getreprcrash()
+        longrepr = (str(r.path), r.lineno, r.message)
+    else:
+        outcome = 'failed'
+        if call.when == 'call':
+            longrepr = item.repr_failure(excinfo)
+        else:
+            longrepr = item._repr_failure_py(excinfo, style=item.config.getoption('tbstyle', 'auto'))
+    for rwhen, key, content in item._report_sections:
+        sections.append(('Captured {} {}'.format(key, rwhen), content))
+    return cls(item.nodeid, item.location, keywords, outcome, longrepr, when, sections, duration, user_properties=item.user_properties)","[{""var"": ""content"", ""rename"": ""report_content""}, {""var"": ""when"", ""rename"": ""execution_phase""}, {""var"": ""keywords"", ""rename"": ""item_keywords_map""}, {""var"": ""r"", ""rename"": ""exception_location""}, {""var"": ""x"", ""rename"": ""keyword_map""}, {""var"": ""key"", ""rename"": ""report_section_key""}, {""var"": ""outcome"", ""rename"": ""test_result_status""}, {""var"": ""duration"", ""rename"": ""execution_time_interval""}, {""var"": ""longrepr"", ""rename"": ""detailed_failure_representation""}, {""var"": ""sections"", ""rename"": ""captured_output_sections""}, {""var"": ""excinfo"", ""rename"": ""exception_information""}, {""var"": ""rwhen"", ""rename"": ""reported_phase""}]"
+./src/_pytest/reports.py,__init__,initialize_test_result,385,391,"def __init__(self, nodeid, outcome, longrepr, result, sections=(), **extra):
+    self.nodeid = nodeid
+    self.outcome = outcome
+    self.longrepr = longrepr
+    self.result = result or []
+    self.sections = list(sections)
+    self.__dict__.update(extra)","def initialize_test_result(self, nodeid, outcome, longrepr, result, sections=(), **extra):
+    self.nodeid = nodeid
+    self.outcome = outcome
+    self.longrepr = longrepr
+    self.result = result or []
+    self.sections = list(sections)
+    self.__dict__.update(extra)",[]
+./src/_pytest/reports.py,location,file_path_location_tuple,394,395,"@property
+def location(self):
+    return (self.fspath, None, self.fspath)","@property
+def file_path_location_tuple(self):
+    return (self.fspath, None, self.fspath)",[]
+./src/_pytest/reports.py,__repr__,generate_summary_representation,397,400,"def __repr__(self):
+    return '<CollectReport {!r} lenresult={} outcome={!r}>'.format(self.nodeid, len(self.result), self.outcome)","def generate_summary_representation(self):
+    return '<CollectReport {!r} lenresult={} outcome={!r}>'.format(self.nodeid, len(self.result), self.outcome)",[]
+./src/_pytest/reports.py,__init__,initialize_long_representation,404,405,"def __init__(self, msg):
+    self.longrepr = msg","def initialize_long_representation(self, msg):
+    self.longrepr = msg",[]
+./src/_pytest/reports.py,toterminal,outputErrorInRed,407,408,"def toterminal(self, out):
+    out.line(self.longrepr, red=True)","def outputErrorInRed(self, out):
+    out.line(self.longrepr, red=True)",[]
+./src/_pytest/reports.py,disassembled_report,extract_detailed_report_structure,164,185,"def disassembled_report(rep):
+    reprtraceback = rep.longrepr.reprtraceback.__dict__.copy()
+    reprcrash = rep.longrepr.reprcrash.__dict__.copy()
+    new_entries = []
+    for entry in reprtraceback['reprentries']:
+        entry_data = {'type': type(entry).__name__, 'data': entry.__dict__.copy()}
+        for key, value in entry_data['data'].items():
+            if hasattr(value, '__dict__'):
+                entry_data['data'][key] = value.__dict__.copy()
+        new_entries.append(entry_data)
+    reprtraceback['reprentries'] = new_entries
+    return {'reprcrash': reprcrash, 'reprtraceback': reprtraceback, 'sections': rep.longrepr.sections}","def extract_detailed_report_structure(rep):
+    reprtraceback = rep.longrepr.reprtraceback.__dict__.copy()
+    reprcrash = rep.longrepr.reprcrash.__dict__.copy()
+    new_entries = []
+    for entry in reprtraceback['reprentries']:
+        entry_data = {'type': type(entry).__name__, 'data': entry.__dict__.copy()}
+        for key, value in entry_data['data'].items():
+            if hasattr(value, '__dict__'):
+                entry_data['data'][key] = value.__dict__.copy()
+        new_entries.append(entry_data)
+    reprtraceback['reprentries'] = new_entries
+    return {'reprcrash': reprcrash, 'reprtraceback': reprtraceback, 'sections': rep.longrepr.sections}","[{""var"": ""entry_data"", ""rename"": ""entry_structure""}, {""var"": ""reprcrash"", ""rename"": ""crash_details_snapshot""}, {""var"": ""reprtraceback"", ""rename"": ""detailed_traceback_info""}, {""var"": ""key"", ""rename"": ""attribute_key""}, {""var"": ""entry"", ""rename"": ""trace_entry""}, {""var"": ""new_entries"", ""rename"": ""parsed_traceback_entries""}, {""var"": ""value"", ""rename"": ""entry_field_value""}]"

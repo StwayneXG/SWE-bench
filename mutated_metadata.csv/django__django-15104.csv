@@ -1,0 +1,26 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/db/migrations/autodetector.py,only_relation_agnostic_fields,extract_relation_independent_field_definitions,89,101,"def only_relation_agnostic_fields(self, fields):
+    """"""
+        Return a definition of the fields that ignores field names and
+        what related fields actually relate to. Used for detecting renames (as
+        the related fields change during renames).
+        """"""
+    fields_def = []
+    for name, field in sorted(fields.items()):
+        deconstruction = self.deep_deconstruct(field)
+        if field.remote_field and field.remote_field.model:
+            del deconstruction[2]['to']
+        fields_def.append(deconstruction)
+    return fields_def","def extract_relation_independent_field_definitions(self, fields):
+    """"""
+        Return a definition of the fields that ignores field names and
+        what related fields actually relate to. Used for detecting renames (as
+        the related fields change during renames).
+        """"""
+    fields_def = []
+    for name, field in sorted(fields.items()):
+        deconstruction = self.deep_deconstruct(field)
+        if field.remote_field and field.remote_field.model:
+            del deconstruction[2]['to']
+        fields_def.append(deconstruction)
+    return fields_def","[{""var"": ""deconstruction"", ""rename"": ""field_signature_agnostic_deconstruction""}, {""var"": ""name"", ""rename"": ""field_name""}, {""var"": ""field"", ""rename"": ""relation_agnostic_field""}, {""var"": ""fields_def"", ""rename"": ""relation_agnostic_field_definitions""}]"

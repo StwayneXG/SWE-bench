@@ -1,0 +1,287 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./astropy/io/ascii/qdp.py,_line_type,interpret_qdp_line_type,20,85,"def _line_type(line, delimiter=None):
+    """"""Interpret a QDP file line.
+
+    Parameters
+    ----------
+    line : str
+        a single line of the file
+
+    Returns
+    -------
+    type : str
+        Line type: ""comment"", ""command"", or ""data""
+
+    Examples
+    --------
+    >>> _line_type(""READ SERR 3"")
+    'command'
+    >>> _line_type("" \\n    !some gibberish"")
+    'comment'
+    >>> _line_type(""   "")
+    'comment'
+    >>> _line_type("" 21345.45"")
+    'data,1'
+    >>> _line_type("" 21345.45 1.53e-3 1e-3 .04 NO nan"")
+    'data,6'
+    >>> _line_type("" 21345.45,1.53e-3,1e-3,.04,NO,nan"", delimiter=',')
+    'data,6'
+    >>> _line_type("" 21345.45 ! a comment to disturb"")
+    'data,1'
+    >>> _line_type(""NO NO NO NO NO"")
+    'new'
+    >>> _line_type(""NO,NO,NO,NO,NO"", delimiter=',')
+    'new'
+    >>> _line_type(""N O N NOON OON O"")
+    Traceback (most recent call last):
+        ...
+    ValueError: Unrecognized QDP line...
+    >>> _line_type("" some non-comment gibberish"")
+    Traceback (most recent call last):
+        ...
+    ValueError: Unrecognized QDP line...
+    """"""
+    _decimal_re = '[+-]?(\\d+(\\.\\d*)?|\\.\\d+)([eE][+-]?\\d+)?'
+    _command_re = 'READ [TS]ERR(\\s+[0-9]+)+'
+    sep = delimiter
+    if delimiter is None:
+        sep = '\\s+'
+    _new_re = f'NO({sep}NO)+'
+    _data_re = f'({_decimal_re}|NO|[-+]?nan)({sep}({_decimal_re}|NO|[-+]?nan))*)'
+    _type_re = f'^\\s*((?P<command>{_command_re})|(?P<new>{_new_re})|(?P<data>{_data_re})?\\s*(\\!(?P<comment>.*))?\\s*$'
+    _line_type_re = re.compile(_type_re)
+    line = line.strip()
+    if not line:
+        return 'comment'
+    match = _line_type_re.match(line)
+    if match is None:
+        raise ValueError(f'Unrecognized QDP line: {line}')
+    for type_, val in match.groupdict().items():
+        if val is None:
+            continue
+        if type_ == 'data':
+            return f'data,{len(val.split(sep=delimiter))}'
+        else:
+            return type_","def interpret_qdp_line_type(line, delimiter=None):
+    """"""Interpret a QDP file line.
+
+    Parameters
+    ----------
+    line : str
+        a single line of the file
+
+    Returns
+    -------
+    type : str
+        Line type: ""comment"", ""command"", or ""data""
+
+    Examples
+    --------
+    >>> _line_type(""READ SERR 3"")
+    'command'
+    >>> _line_type("" \\n    !some gibberish"")
+    'comment'
+    >>> _line_type(""   "")
+    'comment'
+    >>> _line_type("" 21345.45"")
+    'data,1'
+    >>> _line_type("" 21345.45 1.53e-3 1e-3 .04 NO nan"")
+    'data,6'
+    >>> _line_type("" 21345.45,1.53e-3,1e-3,.04,NO,nan"", delimiter=',')
+    'data,6'
+    >>> _line_type("" 21345.45 ! a comment to disturb"")
+    'data,1'
+    >>> _line_type(""NO NO NO NO NO"")
+    'new'
+    >>> _line_type(""NO,NO,NO,NO,NO"", delimiter=',')
+    'new'
+    >>> _line_type(""N O N NOON OON O"")
+    Traceback (most recent call last):
+        ...
+    ValueError: Unrecognized QDP line...
+    >>> _line_type("" some non-comment gibberish"")
+    Traceback (most recent call last):
+        ...
+    ValueError: Unrecognized QDP line...
+    """"""
+    _decimal_re = '[+-]?(\\d+(\\.\\d*)?|\\.\\d+)([eE][+-]?\\d+)?'
+    _command_re = 'READ [TS]ERR(\\s+[0-9]+)+'
+    sep = delimiter
+    if delimiter is None:
+        sep = '\\s+'
+    _new_re = f'NO({sep}NO)+'
+    _data_re = f'({_decimal_re}|NO|[-+]?nan)({sep}({_decimal_re}|NO|[-+]?nan))*)'
+    _type_re = f'^\\s*((?P<command>{_command_re})|(?P<new>{_new_re})|(?P<data>{_data_re})?\\s*(\\!(?P<comment>.*))?\\s*$'
+    _line_type_re = re.compile(_type_re)
+    line = line.strip()
+    if not line:
+        return 'comment'
+    match = _line_type_re.match(line)
+    if match is None:
+        raise ValueError(f'Unrecognized QDP line: {line}')
+    for type_, val in match.groupdict().items():
+        if val is None:
+            continue
+        if type_ == 'data':
+            return f'data,{len(val.split(sep=delimiter))}'
+        else:
+            return type_","[{""var"": ""val"", ""rename"": ""matched_value""}, {""var"": ""_command_re"", ""rename"": ""read_command_regex""}, {""var"": ""type_"", ""rename"": ""line_category""}, {""var"": ""match"", ""rename"": ""line_type_match""}, {""var"": ""_data_re"", ""rename"": ""_qdp_data_re""}, {""var"": ""sep"", ""rename"": ""delimiter_separator""}, {""var"": ""_line_type_re"", ""rename"": ""line_classification_pattern""}, {""var"": ""_decimal_re"", ""rename"": ""decimal_number_pattern""}, {""var"": ""_type_re"", ""rename"": ""line_classification_pattern""}, {""var"": ""_new_re"", ""rename"": ""no_repeat_pattern""}]"
+./astropy/io/ascii/qdp.py,_get_tables_from_qdp_file,extract_tables_from_qdp_file,237,342,"def _get_tables_from_qdp_file(qdp_file, input_colnames=None, delimiter=None):
+    """"""Get all tables from a QDP file.
+
+    Parameters
+    ----------
+    qdp_file : str
+        Input QDP file name
+
+    Other Parameters
+    ----------------
+    input_colnames : list of str
+        Name of data columns (defaults to ['col1', 'col2', ...]), _not_
+        including error columns.
+    delimiter : str
+        Delimiter for the values in the table.
+
+    Returns
+    -------
+    list of `~astropy.table.Table`
+        List containing all the tables present inside the QDP file
+    """"""
+    lines = _get_lines_from_file(qdp_file)
+    contents, ncol = _get_type_from_list_of_lines(lines, delimiter=delimiter)
+    table_list = []
+    err_specs = {}
+    colnames = None
+    comment_text = ''
+    initial_comments = ''
+    command_lines = ''
+    current_rows = None
+    for line, datatype in zip(lines, contents):
+        line = line.strip().lstrip('!')
+        if datatype == 'comment':
+            comment_text += line + '\n'
+            continue
+        if datatype == 'command':
+            if command_lines == '':
+                initial_comments = comment_text
+                comment_text = ''
+            if err_specs != {}:
+                warnings.warn('This file contains multiple command blocks. Please verify', AstropyUserWarning)
+            command_lines += line + '\n'
+            continue
+        if datatype.startswith('data'):
+            if err_specs == {} and command_lines != '':
+                for cline in command_lines.strip().split('\n'):
+                    command = cline.strip().split()
+                    if len(command) < 3:
+                        continue
+                    err_specs[command[1].lower()] = [int(c) for c in command[2:]]
+            if colnames is None:
+                colnames = _interpret_err_lines(err_specs, ncol, names=input_colnames)
+            if current_rows is None:
+                current_rows = []
+            values = []
+            for v in line.split(delimiter):
+                if v == 'NO':
+                    values.append(np.ma.masked)
+                else:
+                    try:
+                        values.append(int(v))
+                    except ValueError:
+                        values.append(float(v))
+            current_rows.append(values)
+            continue
+        if datatype == 'new':
+            if current_rows is not None:
+                new_table = Table(names=colnames, rows=current_rows)
+                new_table.meta['initial_comments'] = initial_comments.strip().split('\n')
+                new_table.meta['comments'] = comment_text.strip().split('\n')
+                comment_text = ''
+                table_list.append(new_table)
+                current_rows = None
+            continue
+    if current_rows is not None:
+        new_table = Table(names=colnames, rows=current_rows)
+        new_table.meta['initial_comments'] = initial_comments.strip().split('\n')
+        new_table.meta['comments'] = comment_text.strip().split('\n')
+        table_list.append(new_table)
+    return table_list","def extract_tables_from_qdp_file(qdp_file, input_colnames=None, delimiter=None):
+    """"""Get all tables from a QDP file.
+
+    Parameters
+    ----------
+    qdp_file : str
+        Input QDP file name
+
+    Other Parameters
+    ----------------
+    input_colnames : list of str
+        Name of data columns (defaults to ['col1', 'col2', ...]), _not_
+        including error columns.
+    delimiter : str
+        Delimiter for the values in the table.
+
+    Returns
+    -------
+    list of `~astropy.table.Table`
+        List containing all the tables present inside the QDP file
+    """"""
+    lines = _get_lines_from_file(qdp_file)
+    contents, ncol = _get_type_from_list_of_lines(lines, delimiter=delimiter)
+    table_list = []
+    err_specs = {}
+    colnames = None
+    comment_text = ''
+    initial_comments = ''
+    command_lines = ''
+    current_rows = None
+    for line, datatype in zip(lines, contents):
+        line = line.strip().lstrip('!')
+        if datatype == 'comment':
+            comment_text += line + '\n'
+            continue
+        if datatype == 'command':
+            if command_lines == '':
+                initial_comments = comment_text
+                comment_text = ''
+            if err_specs != {}:
+                warnings.warn('This file contains multiple command blocks. Please verify', AstropyUserWarning)
+            command_lines += line + '\n'
+            continue
+        if datatype.startswith('data'):
+            if err_specs == {} and command_lines != '':
+                for cline in command_lines.strip().split('\n'):
+                    command = cline.strip().split()
+                    if len(command) < 3:
+                        continue
+                    err_specs[command[1].lower()] = [int(c) for c in command[2:]]
+            if colnames is None:
+                colnames = _interpret_err_lines(err_specs, ncol, names=input_colnames)
+            if current_rows is None:
+                current_rows = []
+            values = []
+            for v in line.split(delimiter):
+                if v == 'NO':
+                    values.append(np.ma.masked)
+                else:
+                    try:
+                        values.append(int(v))
+                    except ValueError:
+                        values.append(float(v))
+            current_rows.append(values)
+            continue
+        if datatype == 'new':
+            if current_rows is not None:
+                new_table = Table(names=colnames, rows=current_rows)
+                new_table.meta['initial_comments'] = initial_comments.strip().split('\n')
+                new_table.meta['comments'] = comment_text.strip().split('\n')
+                comment_text = ''
+                table_list.append(new_table)
+                current_rows = None
+            continue
+    if current_rows is not None:
+        new_table = Table(names=colnames, rows=current_rows)
+        new_table.meta['initial_comments'] = initial_comments.strip().split('\n')
+        new_table.meta['comments'] = comment_text.strip().split('\n')
+        table_list.append(new_table)
+    return table_list","[{""var"": ""c"", ""rename"": ""current_line""}, {""var"": ""values"", ""rename"": ""processed_data_values""}, {""var"": ""current_rows"", ""rename"": ""accumulated_table_rows""}, {""var"": ""line"", ""rename"": ""current_line""}, {""var"": ""ncol"", ""rename"": ""num_data_columns""}, {""var"": ""datatype"", ""rename"": ""line_type""}, {""var"": ""initial_comments"", ""rename"": ""pre_command_comments""}, {""var"": ""command_lines"", ""rename"": ""command_block_content""}, {""var"": ""cline"", ""rename"": ""command_line""}, {""var"": ""colnames"", ""rename"": ""data_column_names""}, {""var"": ""command"", ""rename"": ""error_command""}, {""var"": ""contents"", ""rename"": ""line_types""}, {""var"": ""table_list"", ""rename"": ""extracted_tables""}, {""var"": ""err_specs"", ""rename"": ""error_specifications""}, {""var"": ""v"", ""rename"": ""data_value""}, {""var"": ""new_table"", ""rename"": ""parsed_table""}, {""var"": ""comment_text"", ""rename"": ""pending_comments""}, {""var"": ""lines"", ""rename"": ""file_content_lines""}]"

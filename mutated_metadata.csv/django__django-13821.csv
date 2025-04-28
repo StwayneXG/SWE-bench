@@ -1,0 +1,6 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/db/backends/sqlite3/base.py,check_sqlite_version,validate_minimum_sqlite_version_requirement,66,68,"def check_sqlite_version():
+    if Database.sqlite_version_info < (3, 8, 3):
+        raise ImproperlyConfigured('SQLite 3.8.3 or later is required (found %s).' % Database.sqlite_version)","def validate_minimum_sqlite_version_requirement():
+    if Database.sqlite_version_info < (3, 8, 3):
+        raise ImproperlyConfigured('SQLite 3.8.3 or later is required (found %s).' % Database.sqlite_version)",[]

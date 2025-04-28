@@ -1,0 +1,64 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./lib/mpl_toolkits/mplot3d/axes3d.py,draw,render_3d_axes_with_aspect_handling,389,444,"@martist.allow_rasterization
+def draw(self, renderer):
+    self._unstale_viewLim()
+    self.patch.draw(renderer)
+    self._frameon = False
+    locator = self.get_axes_locator()
+    if locator:
+        pos = locator(self, renderer)
+        self.apply_aspect(pos)
+    else:
+        self.apply_aspect()
+    self.M = self.get_proj()
+    collections_and_patches = (artist for artist in self._children if isinstance(artist, (mcoll.Collection, mpatches.Patch)) and artist.get_visible())
+    if self.computed_zorder:
+        zorder_offset = max((axis.get_zorder() for axis in self._axis_map.values())) + 1
+        collection_zorder = patch_zorder = zorder_offset
+        for artist in sorted(collections_and_patches, key=lambda artist: artist.do_3d_projection(), reverse=True):
+            if isinstance(artist, mcoll.Collection):
+                artist.zorder = collection_zorder
+                collection_zorder += 1
+            elif isinstance(artist, mpatches.Patch):
+                artist.zorder = patch_zorder
+                patch_zorder += 1
+    else:
+        for artist in collections_and_patches:
+            artist.do_3d_projection()
+    if self._axis3don:
+        for axis in self._axis_map.values():
+            axis.draw_pane(renderer)
+        for axis in self._axis_map.values():
+            axis.draw(renderer)
+    super().draw(renderer)","@martist.allow_rasterization
+def render_3d_axes_with_aspect_handling(self, renderer):
+    self._unstale_viewLim()
+    self.patch.draw(renderer)
+    self._frameon = False
+    locator = self.get_axes_locator()
+    if locator:
+        pos = locator(self, renderer)
+        self.apply_aspect(pos)
+    else:
+        self.apply_aspect()
+    self.M = self.get_proj()
+    collections_and_patches = (artist for artist in self._children if isinstance(artist, (mcoll.Collection, mpatches.Patch)) and artist.get_visible())
+    if self.computed_zorder:
+        zorder_offset = max((axis.get_zorder() for axis in self._axis_map.values())) + 1
+        collection_zorder = patch_zorder = zorder_offset
+        for artist in sorted(collections_and_patches, key=lambda artist: artist.do_3d_projection(), reverse=True):
+            if isinstance(artist, mcoll.Collection):
+                artist.zorder = collection_zorder
+                collection_zorder += 1
+            elif isinstance(artist, mpatches.Patch):
+                artist.zorder = patch_zorder
+                patch_zorder += 1
+    else:
+        for artist in collections_and_patches:
+            artist.do_3d_projection()
+    if self._axis3don:
+        for axis in self._axis_map.values():
+            axis.draw_pane(renderer)
+        for axis in self._axis_map.values():
+            axis.draw(renderer)
+    super().draw(renderer)","[{""var"": ""pos"", ""rename"": ""axis_position""}, {""var"": ""collections_and_patches"", ""rename"": ""visible_collections_and_patches""}, {""var"": ""locator"", ""rename"": ""axes_position_locator""}, {""var"": ""collection_zorder"", ""rename"": ""collection_zorder_priority""}, {""var"": ""zorder_offset"", ""rename"": ""zorder_increment_base""}, {""var"": ""artist"", ""rename"": ""graphic_component""}, {""var"": ""axis"", ""rename"": ""axis_element""}, {""var"": ""patch_zorder"", ""rename"": ""patch_layer_zorder""}]"

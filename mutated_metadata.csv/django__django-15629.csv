@@ -1,0 +1,287 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/db/backends/base/schema.py,_alter_field,_update_database_field,764,1094,"def _alter_field(self, model, old_field, new_field, old_type, new_type, old_db_params, new_db_params, strict=False):
+    """"""Perform a ""physical"" (non-ManyToMany) field update.""""""
+    fks_dropped = set()
+    if self.connection.features.supports_foreign_keys and old_field.remote_field and old_field.db_constraint:
+        fk_names = self._constraint_names(model, [old_field.column], foreign_key=True)
+        if strict and len(fk_names) != 1:
+            raise ValueError('Found wrong number (%s) of foreign key constraints for %s.%s' % (len(fk_names), model._meta.db_table, old_field.column))
+        for fk_name in fk_names:
+            fks_dropped.add((old_field.column,))
+            self.execute(self._delete_fk_sql(model, fk_name))
+    if old_field.unique and (not new_field.unique or self._field_became_primary_key(old_field, new_field)):
+        meta_constraint_names = {constraint.name for constraint in model._meta.constraints}
+        constraint_names = self._constraint_names(model, [old_field.column], unique=True, primary_key=False, exclude=meta_constraint_names)
+        if strict and len(constraint_names) != 1:
+            raise ValueError('Found wrong number (%s) of unique constraints for %s.%s' % (len(constraint_names), model._meta.db_table, old_field.column))
+        for constraint_name in constraint_names:
+            self.execute(self._delete_unique_sql(model, constraint_name))
+    drop_foreign_keys = self.connection.features.supports_foreign_keys and (old_field.primary_key and new_field.primary_key or (old_field.unique and new_field.unique)) and (old_type != new_type)
+    if drop_foreign_keys:
+        for _old_rel, new_rel in _related_non_m2m_objects(old_field, new_field):
+            rel_fk_names = self._constraint_names(new_rel.related_model, [new_rel.field.column], foreign_key=True)
+            for fk_name in rel_fk_names:
+                self.execute(self._delete_fk_sql(new_rel.related_model, fk_name))
+    if old_field.db_index and (not old_field.unique) and (not new_field.db_index or new_field.unique):
+        meta_index_names = {index.name for index in model._meta.indexes}
+        index_names = self._constraint_names(model, [old_field.column], index=True, type_=Index.suffix, exclude=meta_index_names)
+        for index_name in index_names:
+            self.execute(self._delete_index_sql(model, index_name))
+    if old_db_params['check'] != new_db_params['check'] and old_db_params['check']:
+        meta_constraint_names = {constraint.name for constraint in model._meta.constraints}
+        constraint_names = self._constraint_names(model, [old_field.column], check=True, exclude=meta_constraint_names)
+        if strict and len(constraint_names) != 1:
+            raise ValueError('Found wrong number (%s) of check constraints for %s.%s' % (len(constraint_names), model._meta.db_table, old_field.column))
+        for constraint_name in constraint_names:
+            self.execute(self._delete_check_sql(model, constraint_name))
+    if old_field.column != new_field.column:
+        self.execute(self._rename_field_sql(model._meta.db_table, old_field, new_field, new_type))
+        for sql in self.deferred_sql:
+            if isinstance(sql, Statement):
+                sql.rename_column_references(model._meta.db_table, old_field.column, new_field.column)
+    actions = []
+    null_actions = []
+    post_actions = []
+    old_type_suffix = old_field.db_type_suffix(connection=self.connection)
+    new_type_suffix = new_field.db_type_suffix(connection=self.connection)
+    old_collation = old_db_params.get('collation')
+    new_collation = new_db_params.get('collation')
+    if old_collation != new_collation:
+        fragment = self._alter_column_collation_sql(model, new_field, new_type, new_collation)
+        actions.append(fragment)
+    elif (old_type, old_type_suffix) != (new_type, new_type_suffix):
+        fragment, other_actions = self._alter_column_type_sql(model, old_field, new_field, new_type)
+        actions.append(fragment)
+        post_actions.extend(other_actions)
+    needs_database_default = False
+    if old_field.null and (not new_field.null):
+        old_default = self.effective_default(old_field)
+        new_default = self.effective_default(new_field)
+        if not self.skip_default_on_alter(new_field) and old_default != new_default and (new_default is not None):
+            needs_database_default = True
+            actions.append(self._alter_column_default_sql(model, old_field, new_field))
+    if old_field.null != new_field.null:
+        fragment = self._alter_column_null_sql(model, old_field, new_field)
+        if fragment:
+            null_actions.append(fragment)
+    four_way_default_alteration = new_field.has_default() and (old_field.null and (not new_field.null))
+    if actions or null_actions:
+        if not four_way_default_alteration:
+            actions = actions + null_actions
+        if self.connection.features.supports_combined_alters and actions:
+            sql, params = tuple(zip(*actions))
+            actions = [(', '.join(sql), sum(params, []))]
+        for sql, params in actions:
+            self.execute(self.sql_alter_column % {'table': self.quote_name(model._meta.db_table), 'changes': sql}, params)
+        if four_way_default_alteration:
+            self.execute(self.sql_update_with_default % {'table': self.quote_name(model._meta.db_table), 'column': self.quote_name(new_field.column), 'default': '%s'}, [new_default])
+            for sql, params in null_actions:
+                self.execute(self.sql_alter_column % {'table': self.quote_name(model._meta.db_table), 'changes': sql}, params)
+    if post_actions:
+        for sql, params in post_actions:
+            self.execute(sql, params)
+    if old_field.primary_key and (not new_field.primary_key):
+        self._delete_primary_key(model, strict)
+    if self._unique_should_be_added(old_field, new_field):
+        self.execute(self._create_unique_sql(model, [new_field]))
+    if (not old_field.db_index or old_field.unique) and new_field.db_index and (not new_field.unique):
+        self.execute(self._create_index_sql(model, fields=[new_field]))
+    rels_to_update = []
+    if drop_foreign_keys:
+        rels_to_update.extend(_related_non_m2m_objects(old_field, new_field))
+    if self._field_became_primary_key(old_field, new_field):
+        self.execute(self._create_primary_key_sql(model, new_field))
+        rels_to_update.extend(_related_non_m2m_objects(old_field, new_field))
+    for old_rel, new_rel in rels_to_update:
+        rel_db_params = new_rel.field.db_parameters(connection=self.connection)
+        rel_type = rel_db_params['type']
+        fragment, other_actions = self._alter_column_type_sql(new_rel.related_model, old_rel.field, new_rel.field, rel_type)
+        self.execute(self.sql_alter_column % {'table': self.quote_name(new_rel.related_model._meta.db_table), 'changes': fragment[0]}, fragment[1])
+        for sql, params in other_actions:
+            self.execute(sql, params)
+    if self.connection.features.supports_foreign_keys and new_field.remote_field and (fks_dropped or not old_field.remote_field or (not old_field.db_constraint)) and new_field.db_constraint:
+        self.execute(self._create_fk_sql(model, new_field, '_fk_%(to_table)s_%(to_column)s'))
+    if drop_foreign_keys:
+        for _, rel in rels_to_update:
+            if rel.field.db_constraint:
+                self.execute(self._create_fk_sql(rel.related_model, rel.field, '_fk'))
+    if old_db_params['check'] != new_db_params['check'] and new_db_params['check']:
+        constraint_name = self._create_index_name(model._meta.db_table, [new_field.column], suffix='_check')
+        self.execute(self._create_check_sql(model, constraint_name, new_db_params['check']))
+    if needs_database_default:
+        changes_sql, params = self._alter_column_default_sql(model, old_field, new_field, drop=True)
+        sql = self.sql_alter_column % {'table': self.quote_name(model._meta.db_table), 'changes': changes_sql}
+        self.execute(sql, params)
+    if self.connection.features.connection_persists_old_columns:
+        self.connection.close()","def _update_database_field(self, model, old_field, new_field, old_type, new_type, old_db_params, new_db_params, strict=False):
+    """"""Perform a ""physical"" (non-ManyToMany) field update.""""""
+    fks_dropped = set()
+    if self.connection.features.supports_foreign_keys and old_field.remote_field and old_field.db_constraint:
+        fk_names = self._constraint_names(model, [old_field.column], foreign_key=True)
+        if strict and len(fk_names) != 1:
+            raise ValueError('Found wrong number (%s) of foreign key constraints for %s.%s' % (len(fk_names), model._meta.db_table, old_field.column))
+        for fk_name in fk_names:
+            fks_dropped.add((old_field.column,))
+            self.execute(self._delete_fk_sql(model, fk_name))
+    if old_field.unique and (not new_field.unique or self._field_became_primary_key(old_field, new_field)):
+        meta_constraint_names = {constraint.name for constraint in model._meta.constraints}
+        constraint_names = self._constraint_names(model, [old_field.column], unique=True, primary_key=False, exclude=meta_constraint_names)
+        if strict and len(constraint_names) != 1:
+            raise ValueError('Found wrong number (%s) of unique constraints for %s.%s' % (len(constraint_names), model._meta.db_table, old_field.column))
+        for constraint_name in constraint_names:
+            self.execute(self._delete_unique_sql(model, constraint_name))
+    drop_foreign_keys = self.connection.features.supports_foreign_keys and (old_field.primary_key and new_field.primary_key or (old_field.unique and new_field.unique)) and (old_type != new_type)
+    if drop_foreign_keys:
+        for _old_rel, new_rel in _related_non_m2m_objects(old_field, new_field):
+            rel_fk_names = self._constraint_names(new_rel.related_model, [new_rel.field.column], foreign_key=True)
+            for fk_name in rel_fk_names:
+                self.execute(self._delete_fk_sql(new_rel.related_model, fk_name))
+    if old_field.db_index and (not old_field.unique) and (not new_field.db_index or new_field.unique):
+        meta_index_names = {index.name for index in model._meta.indexes}
+        index_names = self._constraint_names(model, [old_field.column], index=True, type_=Index.suffix, exclude=meta_index_names)
+        for index_name in index_names:
+            self.execute(self._delete_index_sql(model, index_name))
+    if old_db_params['check'] != new_db_params['check'] and old_db_params['check']:
+        meta_constraint_names = {constraint.name for constraint in model._meta.constraints}
+        constraint_names = self._constraint_names(model, [old_field.column], check=True, exclude=meta_constraint_names)
+        if strict and len(constraint_names) != 1:
+            raise ValueError('Found wrong number (%s) of check constraints for %s.%s' % (len(constraint_names), model._meta.db_table, old_field.column))
+        for constraint_name in constraint_names:
+            self.execute(self._delete_check_sql(model, constraint_name))
+    if old_field.column != new_field.column:
+        self.execute(self._rename_field_sql(model._meta.db_table, old_field, new_field, new_type))
+        for sql in self.deferred_sql:
+            if isinstance(sql, Statement):
+                sql.rename_column_references(model._meta.db_table, old_field.column, new_field.column)
+    actions = []
+    null_actions = []
+    post_actions = []
+    old_type_suffix = old_field.db_type_suffix(connection=self.connection)
+    new_type_suffix = new_field.db_type_suffix(connection=self.connection)
+    old_collation = old_db_params.get('collation')
+    new_collation = new_db_params.get('collation')
+    if old_collation != new_collation:
+        fragment = self._alter_column_collation_sql(model, new_field, new_type, new_collation)
+        actions.append(fragment)
+    elif (old_type, old_type_suffix) != (new_type, new_type_suffix):
+        fragment, other_actions = self._alter_column_type_sql(model, old_field, new_field, new_type)
+        actions.append(fragment)
+        post_actions.extend(other_actions)
+    needs_database_default = False
+    if old_field.null and (not new_field.null):
+        old_default = self.effective_default(old_field)
+        new_default = self.effective_default(new_field)
+        if not self.skip_default_on_alter(new_field) and old_default != new_default and (new_default is not None):
+            needs_database_default = True
+            actions.append(self._alter_column_default_sql(model, old_field, new_field))
+    if old_field.null != new_field.null:
+        fragment = self._alter_column_null_sql(model, old_field, new_field)
+        if fragment:
+            null_actions.append(fragment)
+    four_way_default_alteration = new_field.has_default() and (old_field.null and (not new_field.null))
+    if actions or null_actions:
+        if not four_way_default_alteration:
+            actions = actions + null_actions
+        if self.connection.features.supports_combined_alters and actions:
+            sql, params = tuple(zip(*actions))
+            actions = [(', '.join(sql), sum(params, []))]
+        for sql, params in actions:
+            self.execute(self.sql_alter_column % {'table': self.quote_name(model._meta.db_table), 'changes': sql}, params)
+        if four_way_default_alteration:
+            self.execute(self.sql_update_with_default % {'table': self.quote_name(model._meta.db_table), 'column': self.quote_name(new_field.column), 'default': '%s'}, [new_default])
+            for sql, params in null_actions:
+                self.execute(self.sql_alter_column % {'table': self.quote_name(model._meta.db_table), 'changes': sql}, params)
+    if post_actions:
+        for sql, params in post_actions:
+            self.execute(sql, params)
+    if old_field.primary_key and (not new_field.primary_key):
+        self._delete_primary_key(model, strict)
+    if self._unique_should_be_added(old_field, new_field):
+        self.execute(self._create_unique_sql(model, [new_field]))
+    if (not old_field.db_index or old_field.unique) and new_field.db_index and (not new_field.unique):
+        self.execute(self._create_index_sql(model, fields=[new_field]))
+    rels_to_update = []
+    if drop_foreign_keys:
+        rels_to_update.extend(_related_non_m2m_objects(old_field, new_field))
+    if self._field_became_primary_key(old_field, new_field):
+        self.execute(self._create_primary_key_sql(model, new_field))
+        rels_to_update.extend(_related_non_m2m_objects(old_field, new_field))
+    for old_rel, new_rel in rels_to_update:
+        rel_db_params = new_rel.field.db_parameters(connection=self.connection)
+        rel_type = rel_db_params['type']
+        fragment, other_actions = self._alter_column_type_sql(new_rel.related_model, old_rel.field, new_rel.field, rel_type)
+        self.execute(self.sql_alter_column % {'table': self.quote_name(new_rel.related_model._meta.db_table), 'changes': fragment[0]}, fragment[1])
+        for sql, params in other_actions:
+            self.execute(sql, params)
+    if self.connection.features.supports_foreign_keys and new_field.remote_field and (fks_dropped or not old_field.remote_field or (not old_field.db_constraint)) and new_field.db_constraint:
+        self.execute(self._create_fk_sql(model, new_field, '_fk_%(to_table)s_%(to_column)s'))
+    if drop_foreign_keys:
+        for _, rel in rels_to_update:
+            if rel.field.db_constraint:
+                self.execute(self._create_fk_sql(rel.related_model, rel.field, '_fk'))
+    if old_db_params['check'] != new_db_params['check'] and new_db_params['check']:
+        constraint_name = self._create_index_name(model._meta.db_table, [new_field.column], suffix='_check')
+        self.execute(self._create_check_sql(model, constraint_name, new_db_params['check']))
+    if needs_database_default:
+        changes_sql, params = self._alter_column_default_sql(model, old_field, new_field, drop=True)
+        sql = self.sql_alter_column % {'table': self.quote_name(model._meta.db_table), 'changes': changes_sql}
+        self.execute(sql, params)
+    if self.connection.features.connection_persists_old_columns:
+        self.connection.close()","[{""var"": ""params"", ""rename"": ""db_parameter_diff""}, {""var"": ""_old_rel"", ""rename"": ""old_relationship""}, {""var"": ""rel_db_params"", ""rename"": ""related_db_parameters""}, {""var"": ""old_collation"", ""rename"": ""previous_collation_setting""}, {""var"": ""meta_constraint_names"", ""rename"": ""existing_meta_constraint_names""}, {""var"": ""post_actions"", ""rename"": ""post_update_sql_list""}, {""var"": ""new_default"", ""rename"": ""updated_default_value""}, {""var"": ""null_actions"", ""rename"": ""null_constraint_actions""}, {""var"": ""rel_type"", ""rename"": ""related_field_type""}, {""var"": ""index_names"", ""rename"": ""db_index_names""}, {""var"": ""index_name"", ""rename"": ""index_column_name""}, {""var"": ""drop_foreign_keys"", ""rename"": ""should_drop_foreign_keys""}, {""var"": ""sql"", ""rename"": ""alteration_sql_statements""}, {""var"": ""other_actions"", ""rename"": ""alteration_procedures""}, {""var"": ""old_rel"", ""rename"": ""old_relationship""}, {""var"": ""rel"", ""rename"": ""related_model_details""}, {""var"": ""four_way_default_alteration"", ""rename"": ""default_update_with_non_nullable""}, {""var"": ""rel_fk_names"", ""rename"": ""related_foreign_key_names""}, {""var"": ""new_collation"", ""rename"": ""updated_collation""}, {""var"": ""actions"", ""rename"": ""column_modification_steps""}, {""var"": ""new_type_suffix"", ""rename"": ""updated_field_type_suffix""}, {""var"": ""fragment"", ""rename"": ""column_modification_statement""}, {""var"": ""changes_sql"", ""rename"": ""column_alteration_statements""}, {""var"": ""fks_dropped"", ""rename"": ""dropped_foreign_keys""}, {""var"": ""constraint"", ""rename"": ""database_constraint_manager""}, {""var"": ""old_type_suffix"", ""rename"": ""old_field_db_type_suffix""}, {""var"": ""needs_database_default"", ""rename"": ""requires_database_default_update""}, {""var"": ""constraint_name"", ""rename"": ""unique_constraint_names""}, {""var"": ""old_default"", ""rename"": ""previous_effective_default""}, {""var"": ""rels_to_update"", ""rename"": ""related_fields_to_update""}, {""var"": ""fk_names"", ""rename"": ""foreign_key_constraint_names""}, {""var"": ""index"", ""rename"": ""constraint_index""}, {""var"": ""constraint_names"", ""rename"": ""matching_constraint_names""}, {""var"": ""meta_index_names"", ""rename"": ""existing_meta_index_names""}, {""var"": ""_"", ""rename"": ""physical_field_update""}, {""var"": ""new_rel"", ""rename"": ""updated_relationship""}, {""var"": ""fk_name"", ""rename"": ""foreignKeyConstraintName""}]"
+./django/db/backends/sqlite3/schema.py,_alter_field,_update_field_schema_and_constraints,425,478,"def _alter_field(self, model, old_field, new_field, old_type, new_type, old_db_params, new_db_params, strict=False):
+    """"""Perform a ""physical"" (non-ManyToMany) field update.""""""
+    if self.connection.features.can_alter_table_rename_column and old_field.column != new_field.column and (self.column_sql(model, old_field) == self.column_sql(model, new_field)) and (not (old_field.remote_field and old_field.db_constraint or (new_field.remote_field and new_field.db_constraint))):
+        return self.execute(self._rename_field_sql(model._meta.db_table, old_field, new_field, new_type))
+    self._remake_table(model, alter_field=(old_field, new_field))
+    if new_field.unique and old_type != new_type:
+        related_models = set()
+        opts = new_field.model._meta
+        for remote_field in opts.related_objects:
+            if remote_field.related_model == model:
+                continue
+            if not remote_field.many_to_many:
+                if remote_field.field_name == new_field.name:
+                    related_models.add(remote_field.related_model)
+            elif new_field.primary_key and remote_field.through._meta.auto_created:
+                related_models.add(remote_field.through)
+        if new_field.primary_key:
+            for many_to_many in opts.many_to_many:
+                if many_to_many.related_model == model:
+                    continue
+                if many_to_many.remote_field.through._meta.auto_created:
+                    related_models.add(many_to_many.remote_field.through)
+        for related_model in related_models:
+            self._remake_table(related_model)","def _update_field_schema_and_constraints(self, model, old_field, new_field, old_type, new_type, old_db_params, new_db_params, strict=False):
+    """"""Perform a ""physical"" (non-ManyToMany) field update.""""""
+    if self.connection.features.can_alter_table_rename_column and old_field.column != new_field.column and (self.column_sql(model, old_field) == self.column_sql(model, new_field)) and (not (old_field.remote_field and old_field.db_constraint or (new_field.remote_field and new_field.db_constraint))):
+        return self.execute(self._rename_field_sql(model._meta.db_table, old_field, new_field, new_type))
+    self._remake_table(model, alter_field=(old_field, new_field))
+    if new_field.unique and old_type != new_type:
+        related_models = set()
+        opts = new_field.model._meta
+        for remote_field in opts.related_objects:
+            if remote_field.related_model == model:
+                continue
+            if not remote_field.many_to_many:
+                if remote_field.field_name == new_field.name:
+                    related_models.add(remote_field.related_model)
+            elif new_field.primary_key and remote_field.through._meta.auto_created:
+                related_models.add(remote_field.through)
+        if new_field.primary_key:
+            for many_to_many in opts.many_to_many:
+                if many_to_many.related_model == model:
+                    continue
+                if many_to_many.remote_field.through._meta.auto_created:
+                    related_models.add(many_to_many.remote_field.through)
+        for related_model in related_models:
+            self._remake_table(related_model)","[{""var"": ""opts"", ""rename"": ""model_metadata_options""}, {""var"": ""related_models"", ""rename"": ""dependent_related_models""}, {""var"": ""related_model"", ""rename"": ""dependent_models_set""}, {""var"": ""many_to_many"", ""rename"": ""many_to_many_relationship""}, {""var"": ""remote_field"", ""rename"": ""associated_field""}]"
+./django/db/models/fields/related.py,db_parameters,retrieve_database_metadata,1182,1183,"def db_parameters(self, connection):
+    return {'type': self.db_type(connection), 'check': self.db_check(connection)}","def retrieve_database_metadata(self, connection):
+    return {'type': self.db_type(connection), 'check': self.db_check(connection)}",[]
+./django/db/models/fields/related.py,convert_empty_strings,transform_blank_string_to_none,1185,1188,"def convert_empty_strings(self, value, expression, connection):
+    if not value and isinstance(value, str):
+        return None
+    return value","def transform_blank_string_to_none(self, value, expression, connection):
+    if not value and isinstance(value, str):
+        return None
+    return value",[]

@@ -1,0 +1,127 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/db/backends/mysql/base.py,get_connection_params,generate_database_connection_kwargs,194,229,"def get_connection_params(self):
+    kwargs = {'conv': django_conversions, 'charset': 'utf8'}
+    settings_dict = self.settings_dict
+    if settings_dict['USER']:
+        kwargs['user'] = settings_dict['USER']
+    if settings_dict['NAME']:
+        kwargs['db'] = settings_dict['NAME']
+    if settings_dict['PASSWORD']:
+        kwargs['passwd'] = settings_dict['PASSWORD']
+    if settings_dict['HOST'].startswith('/'):
+        kwargs['unix_socket'] = settings_dict['HOST']
+    elif settings_dict['HOST']:
+        kwargs['host'] = settings_dict['HOST']
+    if settings_dict['PORT']:
+        kwargs['port'] = int(settings_dict['PORT'])
+    kwargs['client_flag'] = CLIENT.FOUND_ROWS
+    options = settings_dict['OPTIONS'].copy()
+    isolation_level = options.pop('isolation_level', 'read committed')
+    if isolation_level:
+        isolation_level = isolation_level.lower()
+        if isolation_level not in self.isolation_levels:
+            raise ImproperlyConfigured(""Invalid transaction isolation level '%s' specified.\nUse one of %s, or None."" % (isolation_level, ', '.join((""'%s'"" % s for s in sorted(self.isolation_levels)))))
+    self.isolation_level = isolation_level
+    kwargs.update(options)
+    return kwargs","def generate_database_connection_kwargs(self):
+    kwargs = {'conv': django_conversions, 'charset': 'utf8'}
+    settings_dict = self.settings_dict
+    if settings_dict['USER']:
+        kwargs['user'] = settings_dict['USER']
+    if settings_dict['NAME']:
+        kwargs['db'] = settings_dict['NAME']
+    if settings_dict['PASSWORD']:
+        kwargs['passwd'] = settings_dict['PASSWORD']
+    if settings_dict['HOST'].startswith('/'):
+        kwargs['unix_socket'] = settings_dict['HOST']
+    elif settings_dict['HOST']:
+        kwargs['host'] = settings_dict['HOST']
+    if settings_dict['PORT']:
+        kwargs['port'] = int(settings_dict['PORT'])
+    kwargs['client_flag'] = CLIENT.FOUND_ROWS
+    options = settings_dict['OPTIONS'].copy()
+    isolation_level = options.pop('isolation_level', 'read committed')
+    if isolation_level:
+        isolation_level = isolation_level.lower()
+        if isolation_level not in self.isolation_levels:
+            raise ImproperlyConfigured(""Invalid transaction isolation level '%s' specified.\nUse one of %s, or None."" % (isolation_level, ', '.join((""'%s'"" % s for s in sorted(self.isolation_levels)))))
+    self.isolation_level = isolation_level
+    kwargs.update(options)
+    return kwargs","[{""var"": ""s"", ""rename"": ""setting_parameter""}, {""var"": ""settings_dict"", ""rename"": ""database_connection_settings""}, {""var"": ""isolation_level"", ""rename"": ""transaction_isolation_level""}, {""var"": ""kwargs"", ""rename"": ""connection_parameters""}, {""var"": ""options"", ""rename"": ""connection_options""}]"
+./django/db/backends/mysql/client.py,settings_to_cmd_args_env,generate_db_connection_cmd_args_and_env,8,57,"@classmethod
+def settings_to_cmd_args_env(cls, settings_dict, parameters):
+    args = [cls.executable_name]
+    env = None
+    db = settings_dict['OPTIONS'].get('db', settings_dict['NAME'])
+    user = settings_dict['OPTIONS'].get('user', settings_dict['USER'])
+    password = settings_dict['OPTIONS'].get('password', settings_dict['OPTIONS'].get('passwd', settings_dict['PASSWORD']))
+    host = settings_dict['OPTIONS'].get('host', settings_dict['HOST'])
+    port = settings_dict['OPTIONS'].get('port', settings_dict['PORT'])
+    server_ca = settings_dict['OPTIONS'].get('ssl', {}).get('ca')
+    client_cert = settings_dict['OPTIONS'].get('ssl', {}).get('cert')
+    client_key = settings_dict['OPTIONS'].get('ssl', {}).get('key')
+    defaults_file = settings_dict['OPTIONS'].get('read_default_file')
+    charset = settings_dict['OPTIONS'].get('charset')
+    if defaults_file:
+        args += ['--defaults-file=%s' % defaults_file]
+    if user:
+        args += ['--user=%s' % user]
+    if password:
+        env = {'MYSQL_PWD': password}
+    if host:
+        if '/' in host:
+            args += ['--socket=%s' % host]
+        else:
+            args += ['--host=%s' % host]
+    if port:
+        args += ['--port=%s' % port]
+    if server_ca:
+        args += ['--ssl-ca=%s' % server_ca]
+    if client_cert:
+        args += ['--ssl-cert=%s' % client_cert]
+    if client_key:
+        args += ['--ssl-key=%s' % client_key]
+    if charset:
+        args += ['--default-character-set=%s' % charset]
+    if db:
+        args += [db]
+    args.extend(parameters)
+    return (args, env)","@classmethod
+def generate_db_connection_cmd_args_and_env(cls, settings_dict, parameters):
+    args = [cls.executable_name]
+    env = None
+    db = settings_dict['OPTIONS'].get('db', settings_dict['NAME'])
+    user = settings_dict['OPTIONS'].get('user', settings_dict['USER'])
+    password = settings_dict['OPTIONS'].get('password', settings_dict['OPTIONS'].get('passwd', settings_dict['PASSWORD']))
+    host = settings_dict['OPTIONS'].get('host', settings_dict['HOST'])
+    port = settings_dict['OPTIONS'].get('port', settings_dict['PORT'])
+    server_ca = settings_dict['OPTIONS'].get('ssl', {}).get('ca')
+    client_cert = settings_dict['OPTIONS'].get('ssl', {}).get('cert')
+    client_key = settings_dict['OPTIONS'].get('ssl', {}).get('key')
+    defaults_file = settings_dict['OPTIONS'].get('read_default_file')
+    charset = settings_dict['OPTIONS'].get('charset')
+    if defaults_file:
+        args += ['--defaults-file=%s' % defaults_file]
+    if user:
+        args += ['--user=%s' % user]
+    if password:
+        env = {'MYSQL_PWD': password}
+    if host:
+        if '/' in host:
+            args += ['--socket=%s' % host]
+        else:
+            args += ['--host=%s' % host]
+    if port:
+        args += ['--port=%s' % port]
+    if server_ca:
+        args += ['--ssl-ca=%s' % server_ca]
+    if client_cert:
+        args += ['--ssl-cert=%s' % client_cert]
+    if client_key:
+        args += ['--ssl-key=%s' % client_key]
+    if charset:
+        args += ['--default-character-set=%s' % charset]
+    if db:
+        args += [db]
+    args.extend(parameters)
+    return (args, env)","[{""var"": ""password"", ""rename"": ""db_password""}, {""var"": ""host"", ""rename"": ""database_host_address""}, {""var"": ""port"", ""rename"": ""database_port_number""}, {""var"": ""server_ca"", ""rename"": ""server_ssl_ca_certificate""}, {""var"": ""charset"", ""rename"": ""default_character_set""}, {""var"": ""db"", ""rename"": ""database_name""}, {""var"": ""env"", ""rename"": ""environment_variables""}, {""var"": ""client_key"", ""rename"": ""ssl_client_private_key""}, {""var"": ""user"", ""rename"": ""database_user""}, {""var"": ""args"", ""rename"": ""command_line_args""}, {""var"": ""defaults_file"", ""rename"": ""config_defaults_filepath""}, {""var"": ""client_cert"", ""rename"": ""ssl_client_certificate""}]"

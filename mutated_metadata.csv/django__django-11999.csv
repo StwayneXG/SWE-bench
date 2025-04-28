@@ -1,0 +1,41 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/db/models/fields/__init__.py,contribute_to_class,register_field_with_model,749,767,"def contribute_to_class(self, cls, name, private_only=False):
+    """"""
+        Register the field with the model class it belongs to.
+
+        If private_only is True, create a separate instance of this field
+        for every subclass of cls, even if cls is not an abstract model.
+        """"""
+    self.set_attributes_from_name(name)
+    self.model = cls
+    cls._meta.add_field(self, private=private_only)
+    if self.column:
+        if not getattr(cls, self.attname, None):
+            setattr(cls, self.attname, self.descriptor_class(self))
+    if self.choices is not None:
+        setattr(cls, 'get_%s_display' % self.name, partialmethod(cls._get_FIELD_display, field=self))","def register_field_with_model(self, cls, name, private_only=False):
+    """"""
+        Register the field with the model class it belongs to.
+
+        If private_only is True, create a separate instance of this field
+        for every subclass of cls, even if cls is not an abstract model.
+        """"""
+    self.set_attributes_from_name(name)
+    self.model = cls
+    cls._meta.add_field(self, private=private_only)
+    if self.column:
+        if not getattr(cls, self.attname, None):
+            setattr(cls, self.attname, self.descriptor_class(self))
+    if self.choices is not None:
+        setattr(cls, 'get_%s_display' % self.name, partialmethod(cls._get_FIELD_display, field=self))",[]
+./django/db/models/fields/__init__.py,get_filter_kwargs_for_object,generate_filter_kwargs_matching_object_field,769,774,"def get_filter_kwargs_for_object(self, obj):
+    """"""
+        Return a dict that when passed as kwargs to self.model.filter(), would
+        yield all instances having the same value for this field as obj has.
+        """"""
+    return {self.name: getattr(obj, self.attname)}","def generate_filter_kwargs_matching_object_field(self, obj):
+    """"""
+        Return a dict that when passed as kwargs to self.model.filter(), would
+        yield all instances having the same value for this field as obj has.
+        """"""
+    return {self.name: getattr(obj, self.attname)}",[]

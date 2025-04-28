@@ -1,0 +1,476 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./lib/matplotlib/backends/backend_agg.py,draw_text,render_rotated_text,200,219,"def draw_text(self, gc, x, y, s, prop, angle, ismath=False, mtext=None):
+    if ismath:
+        return self.draw_mathtext(gc, x, y, s, prop, angle)
+    font = self._prepare_font(prop)
+    font.set_text(s, 0, flags=get_hinting_flag())
+    font.draw_glyphs_to_bitmap(antialiased=mpl.rcParams['text.antialiased'])
+    d = font.get_descent() / 64.0
+    xo, yo = font.get_bitmap_offset()
+    xo /= 64.0
+    yo /= 64.0
+    xd = d * sin(radians(angle))
+    yd = d * cos(radians(angle))
+    x = round(x + xo + xd)
+    y = round(y + yo + yd)
+    self._renderer.draw_text_image(font, x, y + 1, angle, gc)","def render_rotated_text(self, gc, x, y, s, prop, angle, ismath=False, mtext=None):
+    if ismath:
+        return self.draw_mathtext(gc, x, y, s, prop, angle)
+    font = self._prepare_font(prop)
+    font.set_text(s, 0, flags=get_hinting_flag())
+    font.draw_glyphs_to_bitmap(antialiased=mpl.rcParams['text.antialiased'])
+    d = font.get_descent() / 64.0
+    xo, yo = font.get_bitmap_offset()
+    xo /= 64.0
+    yo /= 64.0
+    xd = d * sin(radians(angle))
+    yd = d * cos(radians(angle))
+    x = round(x + xo + xd)
+    y = round(y + yo + yd)
+    self._renderer.draw_text_image(font, x, y + 1, angle, gc)","[{""var"": ""xo"", ""rename"": ""glyph_x_offset""}, {""var"": ""yd"", ""rename"": ""vertical_text_offset""}, {""var"": ""yo"", ""rename"": ""vertical_bitmap_offset""}, {""var"": ""font"", ""rename"": ""prepared_font_instance""}, {""var"": ""xd"", ""rename"": ""descent_x_offset""}, {""var"": ""d"", ""rename"": ""text_descent_offset""}]"
+./lib/matplotlib/backends/backend_cairo.py,draw_text,render_text_with_rotation,190,214,"def draw_text(self, gc, x, y, s, prop, angle, ismath=False, mtext=None):
+    if ismath:
+        self._draw_mathtext(gc, x, y, s, prop, angle)
+    else:
+        ctx = gc.ctx
+        ctx.new_path()
+        ctx.move_to(x, y)
+        ctx.save()
+        ctx.select_font_face(*_cairo_font_args_from_font_prop(prop))
+        ctx.set_font_size(self.points_to_pixels(prop.get_size_in_points()))
+        opts = cairo.FontOptions()
+        opts.set_antialias(cairo.ANTIALIAS_DEFAULT if mpl.rcParams['text.antialiased'] else cairo.ANTIALIAS_NONE)
+        ctx.set_font_options(opts)
+        if angle:
+            ctx.rotate(np.deg2rad(-angle))
+        ctx.show_text(s)
+        ctx.restore()","def render_text_with_rotation(self, gc, x, y, s, prop, angle, ismath=False, mtext=None):
+    if ismath:
+        self._draw_mathtext(gc, x, y, s, prop, angle)
+    else:
+        ctx = gc.ctx
+        ctx.new_path()
+        ctx.move_to(x, y)
+        ctx.save()
+        ctx.select_font_face(*_cairo_font_args_from_font_prop(prop))
+        ctx.set_font_size(self.points_to_pixels(prop.get_size_in_points()))
+        opts = cairo.FontOptions()
+        opts.set_antialias(cairo.ANTIALIAS_DEFAULT if mpl.rcParams['text.antialiased'] else cairo.ANTIALIAS_NONE)
+        ctx.set_font_options(opts)
+        if angle:
+            ctx.rotate(np.deg2rad(-angle))
+        ctx.show_text(s)
+        ctx.restore()","[{""var"": ""ctx"", ""rename"": ""cairo_context""}, {""var"": ""opts"", ""rename"": ""font_rendering_options""}]"
+./lib/matplotlib/backends/backend_cairo.py,set_antialiased,configure_antialiasing_mode,311,313,"def set_antialiased(self, b):
+    self.ctx.set_antialias(cairo.ANTIALIAS_DEFAULT if b else cairo.ANTIALIAS_NONE)","def configure_antialiasing_mode(self, b):
+    self.ctx.set_antialias(cairo.ANTIALIAS_DEFAULT if b else cairo.ANTIALIAS_NONE)",[]
+./lib/matplotlib/text.py,__init__,initialize_text_instance,104,153,"def __init__(self, x=0, y=0, text='', *, color=None, verticalalignment='baseline', horizontalalignment='left', multialignment=None, fontproperties=None, rotation=None, linespacing=None, rotation_mode=None, usetex=None, wrap=False, transform_rotates_text=False, parse_math=None, **kwargs):
+    """"""
+        Create a `.Text` instance at *x*, *y* with string *text*.
+
+        The text is aligned relative to the anchor point (*x*, *y*) according
+        to ``horizontalalignment`` (default: 'left') and ``verticalalignment``
+        (default: 'bottom'). See also
+        :doc:`/gallery/text_labels_and_annotations/text_alignment`.
+
+        While Text accepts the 'label' keyword argument, by default it is not
+        added to the handles of a legend.
+
+        Valid keyword arguments are:
+
+        %(Text:kwdoc)s
+        """"""
+    super().__init__()
+    self._x, self._y = (x, y)
+    self._text = ''
+    self._reset_visual_defaults(text=text, color=color, fontproperties=fontproperties, usetex=usetex, parse_math=parse_math, wrap=wrap, verticalalignment=verticalalignment, horizontalalignment=horizontalalignment, multialignment=multialignment, rotation=rotation, transform_rotates_text=transform_rotates_text, linespacing=linespacing, rotation_mode=rotation_mode)
+    self.update(kwargs)","def initialize_text_instance(self, x=0, y=0, text='', *, color=None, verticalalignment='baseline', horizontalalignment='left', multialignment=None, fontproperties=None, rotation=None, linespacing=None, rotation_mode=None, usetex=None, wrap=False, transform_rotates_text=False, parse_math=None, **kwargs):
+    """"""
+        Create a `.Text` instance at *x*, *y* with string *text*.
+
+        The text is aligned relative to the anchor point (*x*, *y*) according
+        to ``horizontalalignment`` (default: 'left') and ``verticalalignment``
+        (default: 'bottom'). See also
+        :doc:`/gallery/text_labels_and_annotations/text_alignment`.
+
+        While Text accepts the 'label' keyword argument, by default it is not
+        added to the handles of a legend.
+
+        Valid keyword arguments are:
+
+        %(Text:kwdoc)s
+        """"""
+    super().__init__()
+    self._x, self._y = (x, y)
+    self._text = ''
+    self._reset_visual_defaults(text=text, color=color, fontproperties=fontproperties, usetex=usetex, parse_math=parse_math, wrap=wrap, verticalalignment=verticalalignment, horizontalalignment=horizontalalignment, multialignment=multialignment, rotation=rotation, transform_rotates_text=transform_rotates_text, linespacing=linespacing, rotation_mode=rotation_mode)
+    self.update(kwargs)",[]
+./lib/matplotlib/text.py,_reset_visual_defaults,_initialize_text_visual_properties,155,189,"def _reset_visual_defaults(self, text='', color=None, fontproperties=None, usetex=None, parse_math=None, wrap=False, verticalalignment='baseline', horizontalalignment='left', multialignment=None, rotation=None, transform_rotates_text=False, linespacing=None, rotation_mode=None):
+    self.set_text(text)
+    self.set_color(color if color is not None else mpl.rcParams['text.color'])
+    self.set_fontproperties(fontproperties)
+    self.set_usetex(usetex)
+    self.set_parse_math(parse_math if parse_math is not None else mpl.rcParams['text.parse_math'])
+    self.set_wrap(wrap)
+    self.set_verticalalignment(verticalalignment)
+    self.set_horizontalalignment(horizontalalignment)
+    self._multialignment = multialignment
+    self.set_rotation(rotation)
+    self._transform_rotates_text = transform_rotates_text
+    self._bbox_patch = None
+    self._renderer = None
+    if linespacing is None:
+        linespacing = 1.2
+    self.set_linespacing(linespacing)
+    self.set_rotation_mode(rotation_mode)","def _initialize_text_visual_properties(self, text='', color=None, fontproperties=None, usetex=None, parse_math=None, wrap=False, verticalalignment='baseline', horizontalalignment='left', multialignment=None, rotation=None, transform_rotates_text=False, linespacing=None, rotation_mode=None):
+    self.set_text(text)
+    self.set_color(color if color is not None else mpl.rcParams['text.color'])
+    self.set_fontproperties(fontproperties)
+    self.set_usetex(usetex)
+    self.set_parse_math(parse_math if parse_math is not None else mpl.rcParams['text.parse_math'])
+    self.set_wrap(wrap)
+    self.set_verticalalignment(verticalalignment)
+    self.set_horizontalalignment(horizontalalignment)
+    self._multialignment = multialignment
+    self.set_rotation(rotation)
+    self._transform_rotates_text = transform_rotates_text
+    self._bbox_patch = None
+    self._renderer = None
+    if linespacing is None:
+        linespacing = 1.2
+    self.set_linespacing(linespacing)
+    self.set_rotation_mode(rotation_mode)",[]
+./lib/matplotlib/text.py,update,apply_text_and_box_properties,191,203,"def update(self, kwargs):
+    kwargs = cbook.normalize_kwargs(kwargs, Text)
+    sentinel = object()
+    fontproperties = kwargs.pop('fontproperties', sentinel)
+    if fontproperties is not sentinel:
+        self.set_fontproperties(fontproperties)
+    bbox = kwargs.pop('bbox', sentinel)
+    super().update(kwargs)
+    if bbox is not sentinel:
+        self.set_bbox(bbox)","def apply_text_and_box_properties(self, kwargs):
+    kwargs = cbook.normalize_kwargs(kwargs, Text)
+    sentinel = object()
+    fontproperties = kwargs.pop('fontproperties', sentinel)
+    if fontproperties is not sentinel:
+        self.set_fontproperties(fontproperties)
+    bbox = kwargs.pop('bbox', sentinel)
+    super().update(kwargs)
+    if bbox is not sentinel:
+        self.set_bbox(bbox)","[{""var"": ""fontproperties"", ""rename"": ""specified_font_properties""}, {""var"": ""bbox"", ""rename"": ""bounding_box_parameters""}, {""var"": ""sentinel"", ""rename"": ""placeholder_for_missing_value""}]"
+./lib/matplotlib/text.py,update_from,synchronize_text_attributes,312,325,"def update_from(self, other):
+    super().update_from(other)
+    self._color = other._color
+    self._multialignment = other._multialignment
+    self._verticalalignment = other._verticalalignment
+    self._horizontalalignment = other._horizontalalignment
+    self._fontproperties = other._fontproperties.copy()
+    self._usetex = other._usetex
+    self._rotation = other._rotation
+    self._transform_rotates_text = other._transform_rotates_text
+    self._picker = other._picker
+    self._linespacing = other._linespacing
+    self.stale = True","def synchronize_text_attributes(self, other):
+    super().update_from(other)
+    self._color = other._color
+    self._multialignment = other._multialignment
+    self._verticalalignment = other._verticalalignment
+    self._horizontalalignment = other._horizontalalignment
+    self._fontproperties = other._fontproperties.copy()
+    self._usetex = other._usetex
+    self._rotation = other._rotation
+    self._transform_rotates_text = other._transform_rotates_text
+    self._picker = other._picker
+    self._linespacing = other._linespacing
+    self.stale = True",[]
+./lib/matplotlib/text.py,_get_layout,calculate_rotated_text_layout_and_extent,327,476,"def _get_layout(self, renderer):
+    """"""
+        Return the extent (bbox) of the text together with
+        multiple-alignment information. Note that it returns an extent
+        of a rotated text when necessary.
+        """"""
+    thisx, thisy = (0.0, 0.0)
+    lines = self._get_wrapped_text().split('\n')
+    ws = []
+    hs = []
+    xs = []
+    ys = []
+    _, lp_h, lp_d = _get_text_metrics_with_cache(renderer, 'lp', self._fontproperties, ismath='TeX' if self.get_usetex() else False, dpi=self.figure.dpi)
+    min_dy = (lp_h - lp_d) * self._linespacing
+    for i, line in enumerate(lines):
+        clean_line, ismath = self._preprocess_math(line)
+        if clean_line:
+            w, h, d = _get_text_metrics_with_cache(renderer, clean_line, self._fontproperties, ismath=ismath, dpi=self.figure.dpi)
+        else:
+            w = h = d = 0
+        h = max(h, lp_h)
+        d = max(d, lp_d)
+        ws.append(w)
+        hs.append(h)
+        baseline = h - d - thisy
+        if i == 0:
+            thisy = -(h - d)
+        else:
+            thisy -= max(min_dy, (h - d) * self._linespacing)
+        xs.append(thisx)
+        ys.append(thisy)
+        thisy -= d
+    descent = d
+    width = max(ws)
+    xmin = 0
+    xmax = width
+    ymax = 0
+    ymin = ys[-1] - descent
+    M = Affine2D().rotate_deg(self.get_rotation())
+    malign = self._get_multialignment()
+    if malign == 'left':
+        offset_layout = [(x, y) for x, y in zip(xs, ys)]
+    elif malign == 'center':
+        offset_layout = [(x + width / 2 - w / 2, y) for x, y, w in zip(xs, ys, ws)]
+    elif malign == 'right':
+        offset_layout = [(x + width - w, y) for x, y, w in zip(xs, ys, ws)]
+    corners_horiz = np.array([(xmin, ymin), (xmin, ymax), (xmax, ymax), (xmax, ymin)])
+    corners_rotated = M.transform(corners_horiz)
+    xmin = corners_rotated[:, 0].min()
+    xmax = corners_rotated[:, 0].max()
+    ymin = corners_rotated[:, 1].min()
+    ymax = corners_rotated[:, 1].max()
+    width = xmax - xmin
+    height = ymax - ymin
+    halign = self._horizontalalignment
+    valign = self._verticalalignment
+    rotation_mode = self.get_rotation_mode()
+    if rotation_mode != 'anchor':
+        if halign == 'center':
+            offsetx = (xmin + xmax) / 2
+        elif halign == 'right':
+            offsetx = xmax
+        else:
+            offsetx = xmin
+        if valign == 'center':
+            offsety = (ymin + ymax) / 2
+        elif valign == 'top':
+            offsety = ymax
+        elif valign == 'baseline':
+            offsety = ymin + descent
+        elif valign == 'center_baseline':
+            offsety = ymin + height - baseline / 2.0
+        else:
+            offsety = ymin
+    else:
+        xmin1, ymin1 = corners_horiz[0]
+        xmax1, ymax1 = corners_horiz[2]
+        if halign == 'center':
+            offsetx = (xmin1 + xmax1) / 2.0
+        elif halign == 'right':
+            offsetx = xmax1
+        else:
+            offsetx = xmin1
+        if valign == 'center':
+            offsety = (ymin1 + ymax1) / 2.0
+        elif valign == 'top':
+            offsety = ymax1
+        elif valign == 'baseline':
+            offsety = ymax1 - baseline
+        elif valign == 'center_baseline':
+            offsety = ymax1 - baseline / 2.0
+        else:
+            offsety = ymin1
+        offsetx, offsety = M.transform((offsetx, offsety))
+    xmin -= offsetx
+    ymin -= offsety
+    bbox = Bbox.from_bounds(xmin, ymin, width, height)
+    xys = M.transform(offset_layout) - (offsetx, offsety)
+    return (bbox, list(zip(lines, zip(ws, hs), *xys.T)), descent)","def calculate_rotated_text_layout_and_extent(self, renderer):
+    """"""
+        Return the extent (bbox) of the text together with
+        multiple-alignment information. Note that it returns an extent
+        of a rotated text when necessary.
+        """"""
+    thisx, thisy = (0.0, 0.0)
+    lines = self._get_wrapped_text().split('\n')
+    ws = []
+    hs = []
+    xs = []
+    ys = []
+    _, lp_h, lp_d = _get_text_metrics_with_cache(renderer, 'lp', self._fontproperties, ismath='TeX' if self.get_usetex() else False, dpi=self.figure.dpi)
+    min_dy = (lp_h - lp_d) * self._linespacing
+    for i, line in enumerate(lines):
+        clean_line, ismath = self._preprocess_math(line)
+        if clean_line:
+            w, h, d = _get_text_metrics_with_cache(renderer, clean_line, self._fontproperties, ismath=ismath, dpi=self.figure.dpi)
+        else:
+            w = h = d = 0
+        h = max(h, lp_h)
+        d = max(d, lp_d)
+        ws.append(w)
+        hs.append(h)
+        baseline = h - d - thisy
+        if i == 0:
+            thisy = -(h - d)
+        else:
+            thisy -= max(min_dy, (h - d) * self._linespacing)
+        xs.append(thisx)
+        ys.append(thisy)
+        thisy -= d
+    descent = d
+    width = max(ws)
+    xmin = 0
+    xmax = width
+    ymax = 0
+    ymin = ys[-1] - descent
+    M = Affine2D().rotate_deg(self.get_rotation())
+    malign = self._get_multialignment()
+    if malign == 'left':
+        offset_layout = [(x, y) for x, y in zip(xs, ys)]
+    elif malign == 'center':
+        offset_layout = [(x + width / 2 - w / 2, y) for x, y, w in zip(xs, ys, ws)]
+    elif malign == 'right':
+        offset_layout = [(x + width - w, y) for x, y, w in zip(xs, ys, ws)]
+    corners_horiz = np.array([(xmin, ymin), (xmin, ymax), (xmax, ymax), (xmax, ymin)])
+    corners_rotated = M.transform(corners_horiz)
+    xmin = corners_rotated[:, 0].min()
+    xmax = corners_rotated[:, 0].max()
+    ymin = corners_rotated[:, 1].min()
+    ymax = corners_rotated[:, 1].max()
+    width = xmax - xmin
+    height = ymax - ymin
+    halign = self._horizontalalignment
+    valign = self._verticalalignment
+    rotation_mode = self.get_rotation_mode()
+    if rotation_mode != 'anchor':
+        if halign == 'center':
+            offsetx = (xmin + xmax) / 2
+        elif halign == 'right':
+            offsetx = xmax
+        else:
+            offsetx = xmin
+        if valign == 'center':
+            offsety = (ymin + ymax) / 2
+        elif valign == 'top':
+            offsety = ymax
+        elif valign == 'baseline':
+            offsety = ymin + descent
+        elif valign == 'center_baseline':
+            offsety = ymin + height - baseline / 2.0
+        else:
+            offsety = ymin
+    else:
+        xmin1, ymin1 = corners_horiz[0]
+        xmax1, ymax1 = corners_horiz[2]
+        if halign == 'center':
+            offsetx = (xmin1 + xmax1) / 2.0
+        elif halign == 'right':
+            offsetx = xmax1
+        else:
+            offsetx = xmin1
+        if valign == 'center':
+            offsety = (ymin1 + ymax1) / 2.0
+        elif valign == 'top':
+            offsety = ymax1
+        elif valign == 'baseline':
+            offsety = ymax1 - baseline
+        elif valign == 'center_baseline':
+            offsety = ymax1 - baseline / 2.0
+        else:
+            offsety = ymin1
+        offsetx, offsety = M.transform((offsetx, offsety))
+    xmin -= offsetx
+    ymin -= offsety
+    bbox = Bbox.from_bounds(xmin, ymin, width, height)
+    xys = M.transform(offset_layout) - (offsetx, offsety)
+    return (bbox, list(zip(lines, zip(ws, hs), *xys.T)), descent)","[{""var"": ""descent"", ""rename"": ""text_descent_depth""}, {""var"": ""y"", ""rename"": ""text_vertical_offset""}, {""var"": ""ys"", ""rename"": ""y_offsets""}, {""var"": ""i"", ""rename"": ""line_index""}, {""var"": ""x"", ""rename"": ""horizontal_offset""}, {""var"": ""malign"", ""rename"": ""text_multialignment""}, {""var"": ""halign"", ""rename"": ""horizontalAlignment""}, {""var"": ""ymax"", ""rename"": ""y_max_bound""}, {""var"": ""clean_line"", ""rename"": ""processed_line_text""}, {""var"": ""xs"", ""rename"": ""x_offsets""}, {""var"": ""d"", ""rename"": ""text_descent""}, {""var"": ""lines"", ""rename"": ""wrapped_text_lines""}, {""var"": ""M"", ""rename"": ""rotation_transform""}, {""var"": ""ws"", ""rename"": ""line_widths""}, {""var"": ""ismath"", ""rename"": ""math_processing_flag""}, {""var"": ""xmax1"", ""rename"": ""initial_max_x_coord""}, {""var"": ""xys"", ""rename"": ""transformed_text_coordinates""}, {""var"": ""width"", ""rename"": ""max_text_width""}, {""var"": ""valign"", ""rename"": ""vertical_alignment""}, {""var"": ""w"", ""rename"": ""text_line_width""}, {""var"": ""hs"", ""rename"": ""line_heights""}, {""var"": ""offsetx"", ""rename"": ""horizontal_anchor_offset""}, {""var"": ""corners_rotated"", ""rename"": ""transformed_bounding_box_corners""}, {""var"": ""ymax1"", ""rename"": ""rotated_max_y""}, {""var"": ""xmin"", ""rename"": ""min_x_coordinate""}, {""var"": ""height"", ""rename"": ""bounding_box_height""}, {""var"": ""line"", ""rename"": ""text_line""}, {""var"": ""lp_h"", ""rename"": ""line_prototype_height""}, {""var"": ""lp_d"", ""rename"": ""line_height_descent""}, {""var"": ""rotation_mode"", ""rename"": ""text_rotation_alignment""}, {""var"": ""h"", ""rename"": ""line_height""}, {""var"": ""corners_horiz"", ""rename"": ""bounding_box_corners_unrotated""}, {""var"": ""thisy"", ""rename"": ""current_y_position""}, {""var"": ""ymin1"", ""rename"": ""rotated_text_y_min""}, {""var"": ""offset_layout"", ""rename"": ""aligned_text_positions""}, {""var"": ""baseline"", ""rename"": ""baseline_offset_y""}, {""var"": ""bbox"", ""rename"": ""text_bounding_box""}, {""var"": ""_"", ""rename"": ""get_text_layout_and_extent""}, {""var"": ""offsety"", ""rename"": ""verticalOffset""}, {""var"": ""xmax"", ""rename"": ""text_bounding_box_max_x""}, {""var"": ""xmin1"", ""rename"": ""initial_xmin_anchor""}, {""var"": ""thisx"", ""rename"": ""current_x_position""}, {""var"": ""min_dy"", ""rename"": ""minimum_line_offset""}, {""var"": ""ymin"", ""rename"": ""text_bbox_ymin""}]"
+./lib/matplotlib/text.py,draw,render_text_with_transformations,704,771,"@artist.allow_rasterization
+def draw(self, renderer):
+    if renderer is not None:
+        self._renderer = renderer
+    if not self.get_visible():
+        return
+    if self.get_text() == '':
+        return
+    renderer.open_group('text', self.get_gid())
+    with self._cm_set(text=self._get_wrapped_text()):
+        bbox, info, descent = self._get_layout(renderer)
+        trans = self.get_transform()
+        posx = float(self.convert_xunits(self._x))
+        posy = float(self.convert_yunits(self._y))
+        posx, posy = trans.transform((posx, posy))
+        if not np.isfinite(posx) or not np.isfinite(posy):
+            _log.warning('posx and posy should be finite values')
+            return
+        canvasw, canvash = renderer.get_canvas_width_height()
+        if self._bbox_patch:
+            self.update_bbox_position_size(renderer)
+            self._bbox_patch.draw(renderer)
+        gc = renderer.new_gc()
+        gc.set_foreground(self.get_color())
+        gc.set_alpha(self.get_alpha())
+        gc.set_url(self._url)
+        self._set_gc_clip(gc)
+        angle = self.get_rotation()
+        for line, wh, x, y in info:
+            mtext = self if len(info) == 1 else None
+            x = x + posx
+            y = y + posy
+            if renderer.flipy():
+                y = canvash - y
+            clean_line, ismath = self._preprocess_math(line)
+            if self.get_path_effects():
+                from matplotlib.patheffects import PathEffectRenderer
+                textrenderer = PathEffectRenderer(self.get_path_effects(), renderer)
+            else:
+                textrenderer = renderer
+            if self.get_usetex():
+                textrenderer.draw_tex(gc, x, y, clean_line, self._fontproperties, angle, mtext=mtext)
+            else:
+                textrenderer.draw_text(gc, x, y, clean_line, self._fontproperties, angle, ismath=ismath, mtext=mtext)
+    gc.restore()
+    renderer.close_group('text')
+    self.stale = False","@artist.allow_rasterization
+def render_text_with_transformations(self, renderer):
+    if renderer is not None:
+        self._renderer = renderer
+    if not self.get_visible():
+        return
+    if self.get_text() == '':
+        return
+    renderer.open_group('text', self.get_gid())
+    with self._cm_set(text=self._get_wrapped_text()):
+        bbox, info, descent = self._get_layout(renderer)
+        trans = self.get_transform()
+        posx = float(self.convert_xunits(self._x))
+        posy = float(self.convert_yunits(self._y))
+        posx, posy = trans.transform((posx, posy))
+        if not np.isfinite(posx) or not np.isfinite(posy):
+            _log.warning('posx and posy should be finite values')
+            return
+        canvasw, canvash = renderer.get_canvas_width_height()
+        if self._bbox_patch:
+            self.update_bbox_position_size(renderer)
+            self._bbox_patch.draw(renderer)
+        gc = renderer.new_gc()
+        gc.set_foreground(self.get_color())
+        gc.set_alpha(self.get_alpha())
+        gc.set_url(self._url)
+        self._set_gc_clip(gc)
+        angle = self.get_rotation()
+        for line, wh, x, y in info:
+            mtext = self if len(info) == 1 else None
+            x = x + posx
+            y = y + posy
+            if renderer.flipy():
+                y = canvash - y
+            clean_line, ismath = self._preprocess_math(line)
+            if self.get_path_effects():
+                from matplotlib.patheffects import PathEffectRenderer
+                textrenderer = PathEffectRenderer(self.get_path_effects(), renderer)
+            else:
+                textrenderer = renderer
+            if self.get_usetex():
+                textrenderer.draw_tex(gc, x, y, clean_line, self._fontproperties, angle, mtext=mtext)
+            else:
+                textrenderer.draw_text(gc, x, y, clean_line, self._fontproperties, angle, ismath=ismath, mtext=mtext)
+    gc.restore()
+    renderer.close_group('text')
+    self.stale = False","[{""var"": ""clean_line"", ""rename"": ""processed_text_line""}, {""var"": ""angle"", ""rename"": ""rotation_angle_degrees""}, {""var"": ""descent"", ""rename"": ""text_descent_offset""}, {""var"": ""line"", ""rename"": ""text_line_content""}, {""var"": ""y"", ""rename"": ""y_position_offset""}, {""var"": ""wh"", ""rename"": ""line_metrics""}, {""var"": ""bbox"", ""rename"": ""bounding_box_dimensions""}, {""var"": ""x"", ""rename"": ""rasterization_enabled_renderer""}, {""var"": ""trans"", ""rename"": ""coordinate_transform""}, {""var"": ""posx"", ""rename"": ""transformed_x_position""}, {""var"": ""canvasw"", ""rename"": ""canvas_width""}, {""var"": ""gc"", ""rename"": ""graphics_context""}, {""var"": ""textrenderer"", ""rename"": ""text_effect_renderer""}, {""var"": ""canvash"", ""rename"": ""canvas_height""}, {""var"": ""mtext"", ""rename"": ""single_line_text_context""}, {""var"": ""info"", ""rename"": ""text_layout_info""}, {""var"": ""posy"", ""rename"": ""converted_y_position""}, {""var"": ""ismath"", ""rename"": ""is_math_expression""}]"

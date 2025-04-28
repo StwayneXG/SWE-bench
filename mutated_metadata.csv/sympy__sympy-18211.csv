@@ -1,0 +1,17 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./sympy/core/relational.py,_eval_as_set,solve_inequality_as_set,389,395,"def _eval_as_set(self):
+    from sympy.solvers.inequalities import solve_univariate_inequality
+    syms = self.free_symbols
+    assert len(syms) == 1
+    x = syms.pop()
+    return solve_univariate_inequality(self, x, relational=False)","def solve_inequality_as_set(self):
+    from sympy.solvers.inequalities import solve_univariate_inequality
+    syms = self.free_symbols
+    assert len(syms) == 1
+    x = syms.pop()
+    return solve_univariate_inequality(self, x, relational=False)","[{""var"": ""syms"", ""rename"": ""single_free_symbol""}, {""var"": ""x"", ""rename"": ""primary_free_symbol""}]"
+./sympy/core/relational.py,binary_symbols,generate_empty_symbol_set,398,400,"@property
+def binary_symbols(self):
+    return set()","@property
+def generate_empty_symbol_set(self):
+    return set()",[]

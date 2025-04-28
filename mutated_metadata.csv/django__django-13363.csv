@@ -1,0 +1,19 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/db/models/functions/datetime.py,as_sql,format_date_as_sql,292,297,"def as_sql(self, compiler, connection):
+    lhs, lhs_params = compiler.compile(self.lhs)
+    tzname = timezone.get_current_timezone_name() if settings.USE_TZ else None
+    sql = connection.ops.datetime_cast_date_sql(lhs, tzname)
+    return (sql, lhs_params)","def format_date_as_sql(self, compiler, connection):
+    lhs, lhs_params = compiler.compile(self.lhs)
+    tzname = timezone.get_current_timezone_name() if settings.USE_TZ else None
+    sql = connection.ops.datetime_cast_date_sql(lhs, tzname)
+    return (sql, lhs_params)","[{""var"": ""sql"", ""rename"": ""date_cast_sql_expression""}, {""var"": ""lhs"", ""rename"": ""left_hand_side_expression""}, {""var"": ""tzname"", ""rename"": ""current_timezone_name""}, {""var"": ""lhs_params"", ""rename"": ""compiled_lhs_parameters""}]"
+./django/db/models/functions/datetime.py,as_sql,generate_time_cast_sql,305,310,"def as_sql(self, compiler, connection):
+    lhs, lhs_params = compiler.compile(self.lhs)
+    tzname = timezone.get_current_timezone_name() if settings.USE_TZ else None
+    sql = connection.ops.datetime_cast_time_sql(lhs, tzname)
+    return (sql, lhs_params)","def generate_time_cast_sql(self, compiler, connection):
+    lhs, lhs_params = compiler.compile(self.lhs)
+    tzname = timezone.get_current_timezone_name() if settings.USE_TZ else None
+    sql = connection.ops.datetime_cast_time_sql(lhs, tzname)
+    return (sql, lhs_params)","[{""var"": ""sql"", ""rename"": ""formatted_time_cast_sql""}, {""var"": ""lhs"", ""rename"": ""left_hand_side_expression""}, {""var"": ""tzname"", ""rename"": ""current_timezone_name""}, {""var"": ""lhs_params"", ""rename"": ""left_hand_side_parameters""}]"

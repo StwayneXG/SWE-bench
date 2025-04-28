@@ -1,0 +1,80 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/db/models/deletion.py,delete,cascading_delete_with_dependencies,262,327,"def delete(self):
+    for model, instances in self.data.items():
+        self.data[model] = sorted(instances, key=attrgetter('pk'))
+    self.sort()
+    deleted_counter = Counter()
+    if len(self.data) == 1 and len(instances) == 1:
+        instance = list(instances)[0]
+        if self.can_fast_delete(instance):
+            with transaction.mark_for_rollback_on_error():
+                count = sql.DeleteQuery(model).delete_batch([instance.pk], self.using)
+            return (count, {model._meta.label: count})
+    with transaction.atomic(using=self.using, savepoint=False):
+        for model, obj in self.instances_with_model():
+            if not model._meta.auto_created:
+                signals.pre_delete.send(sender=model, instance=obj, using=self.using)
+        for qs in self.fast_deletes:
+            count = qs._raw_delete(using=self.using)
+            deleted_counter[qs.model._meta.label] += count
+        for model, instances_for_fieldvalues in self.field_updates.items():
+            for (field, value), instances in instances_for_fieldvalues.items():
+                query = sql.UpdateQuery(model)
+                query.update_batch([obj.pk for obj in instances], {field.name: value}, self.using)
+        for instances in self.data.values():
+            instances.reverse()
+        for model, instances in self.data.items():
+            query = sql.DeleteQuery(model)
+            pk_list = [obj.pk for obj in instances]
+            count = query.delete_batch(pk_list, self.using)
+            deleted_counter[model._meta.label] += count
+            if not model._meta.auto_created:
+                for obj in instances:
+                    signals.post_delete.send(sender=model, instance=obj, using=self.using)
+    for instances_for_fieldvalues in self.field_updates.values():
+        for (field, value), instances in instances_for_fieldvalues.items():
+            for obj in instances:
+                setattr(obj, field.attname, value)
+    for model, instances in self.data.items():
+        for instance in instances:
+            setattr(instance, model._meta.pk.attname, None)
+    return (sum(deleted_counter.values()), dict(deleted_counter))","def cascading_delete_with_dependencies(self):
+    for model, instances in self.data.items():
+        self.data[model] = sorted(instances, key=attrgetter('pk'))
+    self.sort()
+    deleted_counter = Counter()
+    if len(self.data) == 1 and len(instances) == 1:
+        instance = list(instances)[0]
+        if self.can_fast_delete(instance):
+            with transaction.mark_for_rollback_on_error():
+                count = sql.DeleteQuery(model).delete_batch([instance.pk], self.using)
+            return (count, {model._meta.label: count})
+    with transaction.atomic(using=self.using, savepoint=False):
+        for model, obj in self.instances_with_model():
+            if not model._meta.auto_created:
+                signals.pre_delete.send(sender=model, instance=obj, using=self.using)
+        for qs in self.fast_deletes:
+            count = qs._raw_delete(using=self.using)
+            deleted_counter[qs.model._meta.label] += count
+        for model, instances_for_fieldvalues in self.field_updates.items():
+            for (field, value), instances in instances_for_fieldvalues.items():
+                query = sql.UpdateQuery(model)
+                query.update_batch([obj.pk for obj in instances], {field.name: value}, self.using)
+        for instances in self.data.values():
+            instances.reverse()
+        for model, instances in self.data.items():
+            query = sql.DeleteQuery(model)
+            pk_list = [obj.pk for obj in instances]
+            count = query.delete_batch(pk_list, self.using)
+            deleted_counter[model._meta.label] += count
+            if not model._meta.auto_created:
+                for obj in instances:
+                    signals.post_delete.send(sender=model, instance=obj, using=self.using)
+    for instances_for_fieldvalues in self.field_updates.values():
+        for (field, value), instances in instances_for_fieldvalues.items():
+            for obj in instances:
+                setattr(obj, field.attname, value)
+    for model, instances in self.data.items():
+        for instance in instances:
+            setattr(instance, model._meta.pk.attname, None)
+    return (sum(deleted_counter.values()), dict(deleted_counter))","[{""var"": ""count"", ""rename"": ""deletion_count""}, {""var"": ""query"", ""rename"": ""model_update_query""}, {""var"": ""instances"", ""rename"": ""instance_list""}, {""var"": ""field"", ""rename"": ""model_field""}, {""var"": ""pk_list"", ""rename"": ""primary_key_list""}, {""var"": ""model"", ""rename"": ""data_model""}, {""var"": ""obj"", ""rename"": ""model_instance""}, {""var"": ""value"", ""rename"": ""field_update_value""}, {""var"": ""qs"", ""rename"": ""querysets_for_fast_deletion""}, {""var"": ""deleted_counter"", ""rename"": ""deletion_record_counter""}, {""var"": ""instance"", ""rename"": ""object_instance""}, {""var"": ""instances_for_fieldvalues"", ""rename"": ""field_value_instance_mapping""}]"

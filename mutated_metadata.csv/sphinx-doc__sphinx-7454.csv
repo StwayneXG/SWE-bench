@@ -1,0 +1,168 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./sphinx/domains/python.py,_parse_annotation,_parse_type_annotation_to_ast_nodes,71,120,"def _parse_annotation(annotation: str) -> List[Node]:
+    """"""Parse type annotation.""""""
+
+    def make_xref(text: str) -> addnodes.pending_xref:
+        return pending_xref('', nodes.Text(text), refdomain='py', reftype='class', reftarget=text)
+
+    def unparse(node: ast.AST) -> List[Node]:
+        if isinstance(node, ast.Attribute):
+            return [nodes.Text('%s.%s' % (unparse(node.value)[0], node.attr))]
+        elif isinstance(node, ast.Expr):
+            return unparse(node.value)
+        elif isinstance(node, ast.Index):
+            return unparse(node.value)
+        elif isinstance(node, ast.List):
+            result = [addnodes.desc_sig_punctuation('', '[')]
+            for elem in node.elts:
+                result.extend(unparse(elem))
+                result.append(addnodes.desc_sig_punctuation('', ', '))
+            result.pop()
+            result.append(addnodes.desc_sig_punctuation('', ']'))
+            return result
+        elif isinstance(node, ast.Module):
+            return sum((unparse(e) for e in node.body), [])
+        elif isinstance(node, ast.Name):
+            return [nodes.Text(node.id)]
+        elif isinstance(node, ast.Subscript):
+            result = unparse(node.value)
+            result.append(addnodes.desc_sig_punctuation('', '['))
+            result.extend(unparse(node.slice))
+            result.append(addnodes.desc_sig_punctuation('', ']'))
+            return result
+        elif isinstance(node, ast.Tuple):
+            result = []
+            for elem in node.elts:
+                result.extend(unparse(elem))
+                result.append(addnodes.desc_sig_punctuation('', ', '))
+            result.pop()
+            return result
+        else:
+            raise SyntaxError
+    try:
+        tree = ast_parse(annotation)
+        result = unparse(tree)
+        for i, node in enumerate(result):
+            if isinstance(node, nodes.Text):
+                result[i] = make_xref(str(node))
+        return result
+    except SyntaxError:
+        return [make_xref(annotation)]","def _parse_type_annotation_to_ast_nodes(annotation: str) -> List[Node]:
+    """"""Parse type annotation.""""""
+
+    def make_xref(text: str) -> addnodes.pending_xref:
+        return pending_xref('', nodes.Text(text), refdomain='py', reftype='class', reftarget=text)
+
+    def unparse(node: ast.AST) -> List[Node]:
+        if isinstance(node, ast.Attribute):
+            return [nodes.Text('%s.%s' % (unparse(node.value)[0], node.attr))]
+        elif isinstance(node, ast.Expr):
+            return unparse(node.value)
+        elif isinstance(node, ast.Index):
+            return unparse(node.value)
+        elif isinstance(node, ast.List):
+            result = [addnodes.desc_sig_punctuation('', '[')]
+            for elem in node.elts:
+                result.extend(unparse(elem))
+                result.append(addnodes.desc_sig_punctuation('', ', '))
+            result.pop()
+            result.append(addnodes.desc_sig_punctuation('', ']'))
+            return result
+        elif isinstance(node, ast.Module):
+            return sum((unparse(e) for e in node.body), [])
+        elif isinstance(node, ast.Name):
+            return [nodes.Text(node.id)]
+        elif isinstance(node, ast.Subscript):
+            result = unparse(node.value)
+            result.append(addnodes.desc_sig_punctuation('', '['))
+            result.extend(unparse(node.slice))
+            result.append(addnodes.desc_sig_punctuation('', ']'))
+            return result
+        elif isinstance(node, ast.Tuple):
+            result = []
+            for elem in node.elts:
+                result.extend(unparse(elem))
+                result.append(addnodes.desc_sig_punctuation('', ', '))
+            result.pop()
+            return result
+        else:
+            raise SyntaxError
+    try:
+        tree = ast_parse(annotation)
+        result = unparse(tree)
+        for i, node in enumerate(result):
+            if isinstance(node, nodes.Text):
+                result[i] = make_xref(str(node))
+        return result
+    except SyntaxError:
+        return [make_xref(annotation)]","[{""var"": ""tree"", ""rename"": ""parsed_ast_tree""}, {""var"": ""i"", ""rename"": ""annotation_node_index""}, {""var"": ""result"", ""rename"": ""annotated_node_list""}, {""var"": ""elem"", ""rename"": ""element_node""}, {""var"": ""e"", ""rename"": ""module_body_element""}]"
+./sphinx/domains/python.py,make_xref,create_python_class_reference,73,75,"def make_xref(text: str) -> addnodes.pending_xref:
+    return pending_xref('', nodes.Text(text), refdomain='py', reftype='class', reftarget=text)","def create_python_class_reference(text: str) -> addnodes.pending_xref:
+    return pending_xref('', nodes.Text(text), refdomain='py', reftype='class', reftarget=text)",[]
+./sphinx/domains/python.py,unparse,convert_ast_to_node_sequence,77,110,"def unparse(node: ast.AST) -> List[Node]:
+    if isinstance(node, ast.Attribute):
+        return [nodes.Text('%s.%s' % (unparse(node.value)[0], node.attr))]
+    elif isinstance(node, ast.Expr):
+        return unparse(node.value)
+    elif isinstance(node, ast.Index):
+        return unparse(node.value)
+    elif isinstance(node, ast.List):
+        result = [addnodes.desc_sig_punctuation('', '[')]
+        for elem in node.elts:
+            result.extend(unparse(elem))
+            result.append(addnodes.desc_sig_punctuation('', ', '))
+        result.pop()
+        result.append(addnodes.desc_sig_punctuation('', ']'))
+        return result
+    elif isinstance(node, ast.Module):
+        return sum((unparse(e) for e in node.body), [])
+    elif isinstance(node, ast.Name):
+        return [nodes.Text(node.id)]
+    elif isinstance(node, ast.Subscript):
+        result = unparse(node.value)
+        result.append(addnodes.desc_sig_punctuation('', '['))
+        result.extend(unparse(node.slice))
+        result.append(addnodes.desc_sig_punctuation('', ']'))
+        return result
+    elif isinstance(node, ast.Tuple):
+        result = []
+        for elem in node.elts:
+            result.extend(unparse(elem))
+            result.append(addnodes.desc_sig_punctuation('', ', '))
+        result.pop()
+        return result
+    else:
+        raise SyntaxError","def convert_ast_to_node_sequence(node: ast.AST) -> List[Node]:
+    if isinstance(node, ast.Attribute):
+        return [nodes.Text('%s.%s' % (unparse(node.value)[0], node.attr))]
+    elif isinstance(node, ast.Expr):
+        return unparse(node.value)
+    elif isinstance(node, ast.Index):
+        return unparse(node.value)
+    elif isinstance(node, ast.List):
+        result = [addnodes.desc_sig_punctuation('', '[')]
+        for elem in node.elts:
+            result.extend(unparse(elem))
+            result.append(addnodes.desc_sig_punctuation('', ', '))
+        result.pop()
+        result.append(addnodes.desc_sig_punctuation('', ']'))
+        return result
+    elif isinstance(node, ast.Module):
+        return sum((unparse(e) for e in node.body), [])
+    elif isinstance(node, ast.Name):
+        return [nodes.Text(node.id)]
+    elif isinstance(node, ast.Subscript):
+        result = unparse(node.value)
+        result.append(addnodes.desc_sig_punctuation('', '['))
+        result.extend(unparse(node.slice))
+        result.append(addnodes.desc_sig_punctuation('', ']'))
+        return result
+    elif isinstance(node, ast.Tuple):
+        result = []
+        for elem in node.elts:
+            result.extend(unparse(elem))
+            result.append(addnodes.desc_sig_punctuation('', ', '))
+        result.pop()
+        return result
+    else:
+        raise SyntaxError","[{""var"": ""elem"", ""rename"": ""list_element_node""}, {""var"": ""e"", ""rename"": ""node_element""}, {""var"": ""result"", ""rename"": ""unparsed_elements""}]"

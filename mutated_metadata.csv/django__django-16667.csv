@@ -1,0 +1,30 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/forms/widgets.py,value_from_datadict,extract_date_from_data_dict,1149,1165,"def value_from_datadict(self, data, files, name):
+    y = data.get(self.year_field % name)
+    m = data.get(self.month_field % name)
+    d = data.get(self.day_field % name)
+    if y == m == d == '':
+        return None
+    if y is not None and m is not None and (d is not None):
+        input_format = get_format('DATE_INPUT_FORMATS')[0]
+        input_format = formats.sanitize_strftime_format(input_format)
+        try:
+            date_value = datetime.date(int(y), int(m), int(d))
+        except ValueError:
+            return '%s-%s-%s' % (y or 0, m or 0, d or 0)
+        return date_value.strftime(input_format)
+    return data.get(name)","def extract_date_from_data_dict(self, data, files, name):
+    y = data.get(self.year_field % name)
+    m = data.get(self.month_field % name)
+    d = data.get(self.day_field % name)
+    if y == m == d == '':
+        return None
+    if y is not None and m is not None and (d is not None):
+        input_format = get_format('DATE_INPUT_FORMATS')[0]
+        input_format = formats.sanitize_strftime_format(input_format)
+        try:
+            date_value = datetime.date(int(y), int(m), int(d))
+        except ValueError:
+            return '%s-%s-%s' % (y or 0, m or 0, d or 0)
+        return date_value.strftime(input_format)
+    return data.get(name)","[{""var"": ""y"", ""rename"": ""year_value""}, {""var"": ""input_format"", ""rename"": ""date_input_format_sanitized""}, {""var"": ""date_value"", ""rename"": ""formatted_date_value""}, {""var"": ""m"", ""rename"": ""month_value""}, {""var"": ""d"", ""rename"": ""day_value""}]"

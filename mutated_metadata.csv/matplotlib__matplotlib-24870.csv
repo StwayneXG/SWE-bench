@@ -1,0 +1,197 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./lib/matplotlib/contour.py,_process_contour_level_args,determine_and_validate_contour_levels,1120,1148,"def _process_contour_level_args(self, args):
+    """"""
+        Determine the contour levels and store in self.levels.
+        """"""
+    if self.levels is None:
+        if len(args) == 0:
+            levels_arg = 7
+        else:
+            levels_arg = args[0]
+    else:
+        levels_arg = self.levels
+    if isinstance(levels_arg, Integral):
+        self.levels = self._autolev(levels_arg)
+    else:
+        self.levels = np.asarray(levels_arg, np.float64)
+    if not self.filled:
+        inside = (self.levels > self.zmin) & (self.levels < self.zmax)
+        levels_in = self.levels[inside]
+        if len(levels_in) == 0:
+            self.levels = [self.zmin]
+            _api.warn_external('No contour levels were found within the data range.')
+    if self.filled and len(self.levels) < 2:
+        raise ValueError('Filled contours require at least 2 levels.')
+    if len(self.levels) > 1 and np.min(np.diff(self.levels)) <= 0.0:
+        raise ValueError('Contour levels must be increasing')","def determine_and_validate_contour_levels(self, args):
+    """"""
+        Determine the contour levels and store in self.levels.
+        """"""
+    if self.levels is None:
+        if len(args) == 0:
+            levels_arg = 7
+        else:
+            levels_arg = args[0]
+    else:
+        levels_arg = self.levels
+    if isinstance(levels_arg, Integral):
+        self.levels = self._autolev(levels_arg)
+    else:
+        self.levels = np.asarray(levels_arg, np.float64)
+    if not self.filled:
+        inside = (self.levels > self.zmin) & (self.levels < self.zmax)
+        levels_in = self.levels[inside]
+        if len(levels_in) == 0:
+            self.levels = [self.zmin]
+            _api.warn_external('No contour levels were found within the data range.')
+    if self.filled and len(self.levels) < 2:
+        raise ValueError('Filled contours require at least 2 levels.')
+    if len(self.levels) > 1 and np.min(np.diff(self.levels)) <= 0.0:
+        raise ValueError('Contour levels must be increasing')","[{""var"": ""levels_in"", ""rename"": ""contour_levels_within_bounds""}, {""var"": ""levels_arg"", ""rename"": ""contour_levels_input""}, {""var"": ""inside"", ""rename"": ""levels_within_bounds""}]"
+./lib/matplotlib/contour.py,_contour_args,process_and_validate_contour_inputs,1443,1466,"def _contour_args(self, args, kwargs):
+    if self.filled:
+        fn = 'contourf'
+    else:
+        fn = 'contour'
+    nargs = len(args)
+    if nargs <= 2:
+        z = ma.asarray(args[0], dtype=np.float64)
+        x, y = self._initialize_x_y(z)
+        args = args[1:]
+    elif nargs <= 4:
+        x, y, z = self._check_xyz(args[:3], kwargs)
+        args = args[3:]
+    else:
+        raise _api.nargs_error(fn, takes='from 1 to 4', given=nargs)
+    z = ma.masked_invalid(z, copy=False)
+    self.zmax = float(z.max())
+    self.zmin = float(z.min())
+    if self.logscale and self.zmin <= 0:
+        z = ma.masked_where(z <= 0, z)
+        _api.warn_external('Log scale: values of z <= 0 have been masked')
+        self.zmin = float(z.min())
+    self._process_contour_level_args(args)
+    return (x, y, z)","def process_and_validate_contour_inputs(self, args, kwargs):
+    if self.filled:
+        fn = 'contourf'
+    else:
+        fn = 'contour'
+    nargs = len(args)
+    if nargs <= 2:
+        z = ma.asarray(args[0], dtype=np.float64)
+        x, y = self._initialize_x_y(z)
+        args = args[1:]
+    elif nargs <= 4:
+        x, y, z = self._check_xyz(args[:3], kwargs)
+        args = args[3:]
+    else:
+        raise _api.nargs_error(fn, takes='from 1 to 4', given=nargs)
+    z = ma.masked_invalid(z, copy=False)
+    self.zmax = float(z.max())
+    self.zmin = float(z.min())
+    if self.logscale and self.zmin <= 0:
+        z = ma.masked_where(z <= 0, z)
+        _api.warn_external('Log scale: values of z <= 0 have been masked')
+        self.zmin = float(z.min())
+    self._process_contour_level_args(args)
+    return (x, y, z)","[{""var"": ""fn"", ""rename"": ""contour_function_type""}, {""var"": ""y"", ""rename"": ""y_coordinates""}, {""var"": ""nargs"", ""rename"": ""num_arguments""}, {""var"": ""x"", ""rename"": ""contour_coordinates_x""}, {""var"": ""z"", ""rename"": ""contour_data_array""}]"
+./lib/matplotlib/contour.py,_check_xyz,validate_and_prepare_meshgrid_inputs,1468,1510,"def _check_xyz(self, args, kwargs):
+    """"""
+        Check that the shapes of the input arrays match; if x and y are 1D,
+        convert them to 2D using meshgrid.
+        """"""
+    x, y = args[:2]
+    x, y = self.axes._process_unit_info([('x', x), ('y', y)], kwargs)
+    x = np.asarray(x, dtype=np.float64)
+    y = np.asarray(y, dtype=np.float64)
+    z = ma.asarray(args[2], dtype=np.float64)
+    if z.ndim != 2:
+        raise TypeError(f'Input z must be 2D, not {z.ndim}D')
+    if z.shape[0] < 2 or z.shape[1] < 2:
+        raise TypeError(f'Input z must be at least a (2, 2) shaped array, but has shape {z.shape}')
+    Ny, Nx = z.shape
+    if x.ndim != y.ndim:
+        raise TypeError(f'Number of dimensions of x ({x.ndim}) and y ({y.ndim}) do not match')
+    if x.ndim == 1:
+        nx, = x.shape
+        ny, = y.shape
+        if nx != Nx:
+            raise TypeError(f'Length of x ({nx}) must match number of columns in z ({Nx})')
+        if ny != Ny:
+            raise TypeError(f'Length of y ({ny}) must match number of rows in z ({Ny})')
+        x, y = np.meshgrid(x, y)
+    elif x.ndim == 2:
+        if x.shape != z.shape:
+            raise TypeError(f'Shapes of x {x.shape} and z {z.shape} do not match')
+        if y.shape != z.shape:
+            raise TypeError(f'Shapes of y {y.shape} and z {z.shape} do not match')
+    else:
+        raise TypeError(f'Inputs x and y must be 1D or 2D, not {x.ndim}D')
+    return (x, y, z)","def validate_and_prepare_meshgrid_inputs(self, args, kwargs):
+    """"""
+        Check that the shapes of the input arrays match; if x and y are 1D,
+        convert them to 2D using meshgrid.
+        """"""
+    x, y = args[:2]
+    x, y = self.axes._process_unit_info([('x', x), ('y', y)], kwargs)
+    x = np.asarray(x, dtype=np.float64)
+    y = np.asarray(y, dtype=np.float64)
+    z = ma.asarray(args[2], dtype=np.float64)
+    if z.ndim != 2:
+        raise TypeError(f'Input z must be 2D, not {z.ndim}D')
+    if z.shape[0] < 2 or z.shape[1] < 2:
+        raise TypeError(f'Input z must be at least a (2, 2) shaped array, but has shape {z.shape}')
+    Ny, Nx = z.shape
+    if x.ndim != y.ndim:
+        raise TypeError(f'Number of dimensions of x ({x.ndim}) and y ({y.ndim}) do not match')
+    if x.ndim == 1:
+        nx, = x.shape
+        ny, = y.shape
+        if nx != Nx:
+            raise TypeError(f'Length of x ({nx}) must match number of columns in z ({Nx})')
+        if ny != Ny:
+            raise TypeError(f'Length of y ({ny}) must match number of rows in z ({Ny})')
+        x, y = np.meshgrid(x, y)
+    elif x.ndim == 2:
+        if x.shape != z.shape:
+            raise TypeError(f'Shapes of x {x.shape} and z {z.shape} do not match')
+        if y.shape != z.shape:
+            raise TypeError(f'Shapes of y {y.shape} and z {z.shape} do not match')
+    else:
+        raise TypeError(f'Inputs x and y must be 1D or 2D, not {x.ndim}D')
+    return (x, y, z)","[{""var"": ""y"", ""rename"": ""y_coordinates""}, {""var"": ""x"", ""rename"": ""input_x_array""}, {""var"": ""z"", ""rename"": ""grid_data""}, {""var"": ""Ny"", ""rename"": ""num_rows_z""}, {""var"": ""nx"", ""rename"": ""x_length_1d""}, {""var"": ""Nx"", ""rename"": ""num_columns""}, {""var"": ""ny"", ""rename"": ""numRowsY""}]"
+./lib/matplotlib/tri/_tricontour.py,_contour_args,validate_and_prepare_contour_data,53,78,"def _contour_args(self, args, kwargs):
+    tri, args, kwargs = Triangulation.get_from_args_and_kwargs(*args, **kwargs)
+    z = np.ma.asarray(args[0])
+    if z.shape != tri.x.shape:
+        raise ValueError('z array must have same length as triangulation x and y arrays')
+    z_check = z[np.unique(tri.get_masked_triangles())]
+    if np.ma.is_masked(z_check):
+        raise ValueError('z must not contain masked points within the triangulation')
+    if not np.isfinite(z_check).all():
+        raise ValueError('z array must not contain non-finite values within the triangulation')
+    z = np.ma.masked_invalid(z, copy=False)
+    self.zmax = float(z_check.max())
+    self.zmin = float(z_check.min())
+    if self.logscale and self.zmin <= 0:
+        func = 'contourf' if self.filled else 'contour'
+        raise ValueError(f'Cannot {func} log of negative values.')
+    self._process_contour_level_args(args[1:])
+    return (tri, z)","def validate_and_prepare_contour_data(self, args, kwargs):
+    tri, args, kwargs = Triangulation.get_from_args_and_kwargs(*args, **kwargs)
+    z = np.ma.asarray(args[0])
+    if z.shape != tri.x.shape:
+        raise ValueError('z array must have same length as triangulation x and y arrays')
+    z_check = z[np.unique(tri.get_masked_triangles())]
+    if np.ma.is_masked(z_check):
+        raise ValueError('z must not contain masked points within the triangulation')
+    if not np.isfinite(z_check).all():
+        raise ValueError('z array must not contain non-finite values within the triangulation')
+    z = np.ma.masked_invalid(z, copy=False)
+    self.zmax = float(z_check.max())
+    self.zmin = float(z_check.min())
+    if self.logscale and self.zmin <= 0:
+        func = 'contourf' if self.filled else 'contour'
+        raise ValueError(f'Cannot {func} log of negative values.')
+    self._process_contour_level_args(args[1:])
+    return (tri, z)","[{""var"": ""tri"", ""rename"": ""triangulation_instance""}, {""var"": ""z"", ""rename"": ""contour_values""}, {""var"": ""func"", ""rename"": ""contour_function_type""}, {""var"": ""z_check"", ""rename"": ""checked_z_values""}]"

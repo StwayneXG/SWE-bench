@@ -1,0 +1,198 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./sympy/combinatorics/permutations.py,__new__,create_permutation_instance,801,929,"def __new__(cls, *args, **kwargs):
+    """"""
+        Constructor for the Permutation object from a list or a
+        list of lists in which all elements of the permutation may
+        appear only once.
+
+        Examples
+        ========
+
+        >>> from sympy.combinatorics.permutations import Permutation
+        >>> Permutation.print_cyclic = False
+
+        Permutations entered in array-form are left unaltered:
+
+        >>> Permutation([0, 2, 1])
+        Permutation([0, 2, 1])
+
+        Permutations entered in cyclic form are converted to array form;
+        singletons need not be entered, but can be entered to indicate the
+        largest element:
+
+        >>> Permutation([[4, 5, 6], [0, 1]])
+        Permutation([1, 0, 2, 3, 5, 6, 4])
+        >>> Permutation([[4, 5, 6], [0, 1], [19]])
+        Permutation([1, 0, 2, 3, 5, 6, 4], size=20)
+
+        All manipulation of permutations assumes that the smallest element
+        is 0 (in keeping with 0-based indexing in Python) so if the 0 is
+        missing when entering a permutation in array form, an error will be
+        raised:
+
+        >>> Permutation([2, 1])
+        Traceback (most recent call last):
+        ...
+        ValueError: Integers 0 through 2 must be present.
+
+        If a permutation is entered in cyclic form, it can be entered without
+        singletons and the ``size`` specified so those values can be filled
+        in, otherwise the array form will only extend to the maximum value
+        in the cycles:
+
+        >>> Permutation([[1, 4], [3, 5, 2]], size=10)
+        Permutation([0, 4, 3, 5, 1, 2], size=10)
+        >>> _.array_form
+        [0, 4, 3, 5, 1, 2, 6, 7, 8, 9]
+        """"""
+    size = kwargs.pop('size', None)
+    if size is not None:
+        size = int(size)
+    ok = True
+    if not args:
+        return _af_new(list(range(size or 0)))
+    elif len(args) > 1:
+        return _af_new(Cycle(*args).list(size))
+    if len(args) == 1:
+        a = args[0]
+        if isinstance(a, Perm):
+            if size is None or size == a.size:
+                return a
+            return Perm(a.array_form, size=size)
+        if isinstance(a, Cycle):
+            return _af_new(a.list(size))
+        if not is_sequence(a):
+            return _af_new(list(range(a + 1)))
+        if has_variety((is_sequence(ai) for ai in a)):
+            ok = False
+    else:
+        ok = False
+    if not ok:
+        raise ValueError('Permutation argument must be a list of ints, a list of lists, Permutation or Cycle.')
+    args = list(args[0])
+    is_cycle = args and is_sequence(args[0])
+    if is_cycle:
+        args = [[int(i) for i in c] for c in args]
+    else:
+        args = [int(i) for i in args]
+    temp = flatten(args)
+    if has_dups(temp):
+        if is_cycle:
+            raise ValueError('there were repeated elements; to resolve cycles use Cycle%s.' % ''.join([str(tuple(c)) for c in args]))
+        else:
+            raise ValueError('there were repeated elements.')
+    temp = set(temp)
+    if not is_cycle and any((i not in temp for i in range(len(temp)))):
+        raise ValueError('Integers 0 through %s must be present.' % max(temp))
+    if is_cycle:
+        c = Cycle()
+        for ci in args:
+            c = c(*ci)
+        aform = c.list()
+    else:
+        aform = list(args)
+    if size and size > len(aform):
+        aform.extend(list(range(len(aform), size)))
+    size = len(aform)
+    obj = Basic.__new__(cls, aform)
+    obj._array_form = aform
+    obj._size = size
+    return obj","def create_permutation_instance(cls, *args, **kwargs):
+    """"""
+        Constructor for the Permutation object from a list or a
+        list of lists in which all elements of the permutation may
+        appear only once.
+
+        Examples
+        ========
+
+        >>> from sympy.combinatorics.permutations import Permutation
+        >>> Permutation.print_cyclic = False
+
+        Permutations entered in array-form are left unaltered:
+
+        >>> Permutation([0, 2, 1])
+        Permutation([0, 2, 1])
+
+        Permutations entered in cyclic form are converted to array form;
+        singletons need not be entered, but can be entered to indicate the
+        largest element:
+
+        >>> Permutation([[4, 5, 6], [0, 1]])
+        Permutation([1, 0, 2, 3, 5, 6, 4])
+        >>> Permutation([[4, 5, 6], [0, 1], [19]])
+        Permutation([1, 0, 2, 3, 5, 6, 4], size=20)
+
+        All manipulation of permutations assumes that the smallest element
+        is 0 (in keeping with 0-based indexing in Python) so if the 0 is
+        missing when entering a permutation in array form, an error will be
+        raised:
+
+        >>> Permutation([2, 1])
+        Traceback (most recent call last):
+        ...
+        ValueError: Integers 0 through 2 must be present.
+
+        If a permutation is entered in cyclic form, it can be entered without
+        singletons and the ``size`` specified so those values can be filled
+        in, otherwise the array form will only extend to the maximum value
+        in the cycles:
+
+        >>> Permutation([[1, 4], [3, 5, 2]], size=10)
+        Permutation([0, 4, 3, 5, 1, 2], size=10)
+        >>> _.array_form
+        [0, 4, 3, 5, 1, 2, 6, 7, 8, 9]
+        """"""
+    size = kwargs.pop('size', None)
+    if size is not None:
+        size = int(size)
+    ok = True
+    if not args:
+        return _af_new(list(range(size or 0)))
+    elif len(args) > 1:
+        return _af_new(Cycle(*args).list(size))
+    if len(args) == 1:
+        a = args[0]
+        if isinstance(a, Perm):
+            if size is None or size == a.size:
+                return a
+            return Perm(a.array_form, size=size)
+        if isinstance(a, Cycle):
+            return _af_new(a.list(size))
+        if not is_sequence(a):
+            return _af_new(list(range(a + 1)))
+        if has_variety((is_sequence(ai) for ai in a)):
+            ok = False
+    else:
+        ok = False
+    if not ok:
+        raise ValueError('Permutation argument must be a list of ints, a list of lists, Permutation or Cycle.')
+    args = list(args[0])
+    is_cycle = args and is_sequence(args[0])
+    if is_cycle:
+        args = [[int(i) for i in c] for c in args]
+    else:
+        args = [int(i) for i in args]
+    temp = flatten(args)
+    if has_dups(temp):
+        if is_cycle:
+            raise ValueError('there were repeated elements; to resolve cycles use Cycle%s.' % ''.join([str(tuple(c)) for c in args]))
+        else:
+            raise ValueError('there were repeated elements.')
+    temp = set(temp)
+    if not is_cycle and any((i not in temp for i in range(len(temp)))):
+        raise ValueError('Integers 0 through %s must be present.' % max(temp))
+    if is_cycle:
+        c = Cycle()
+        for ci in args:
+            c = c(*ci)
+        aform = c.list()
+    else:
+        aform = list(args)
+    if size and size > len(aform):
+        aform.extend(list(range(len(aform), size)))
+    size = len(aform)
+    obj = Basic.__new__(cls, aform)
+    obj._array_form = aform
+    obj._size = size
+    return obj","[{""var"": ""c"", ""rename"": ""cycle_instance""}, {""var"": ""ai"", ""rename"": ""element""}, {""var"": ""is_cycle"", ""rename"": ""is_cyclic_form""}, {""var"": ""ok"", ""rename"": ""is_valid_permutation""}, {""var"": ""i"", ""rename"": ""cycle_element""}, {""var"": ""a"", ""rename"": ""input_argument""}, {""var"": ""obj"", ""rename"": ""permutation_instance""}, {""var"": ""temp"", ""rename"": ""flattened_elements""}, {""var"": ""ci"", ""rename"": ""cycle_elements""}, {""var"": ""size"", ""rename"": ""permutation_length""}, {""var"": ""aform"", ""rename"": ""array_representation""}]"

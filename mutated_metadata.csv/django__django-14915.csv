@@ -1,0 +1,8 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/forms/models.py,__eq__,compare_with_model_choice_value,1169,1172,"def __eq__(self, other):
+    if isinstance(other, ModelChoiceIteratorValue):
+        other = other.value
+    return self.value == other","def compare_with_model_choice_value(self, other):
+    if isinstance(other, ModelChoiceIteratorValue):
+        other = other.value
+    return self.value == other",[]

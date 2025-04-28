@@ -1,0 +1,14 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/db/models/sql/query.py,check_filterable,validate_expression_filterability,1125,1134,"def check_filterable(self, expression):
+    """"""Raise an error if expression cannot be used in a WHERE clause.""""""
+    if not getattr(expression, 'filterable', True):
+        raise NotSupportedError(expression.__class__.__name__ + ' is disallowed in the filter clause.')
+    if hasattr(expression, 'get_source_expressions'):
+        for expr in expression.get_source_expressions():
+            self.check_filterable(expr)","def validate_expression_filterability(self, expression):
+    """"""Raise an error if expression cannot be used in a WHERE clause.""""""
+    if not getattr(expression, 'filterable', True):
+        raise NotSupportedError(expression.__class__.__name__ + ' is disallowed in the filter clause.')
+    if hasattr(expression, 'get_source_expressions'):
+        for expr in expression.get_source_expressions():
+            self.check_filterable(expr)","[{""var"": ""expr"", ""rename"": ""expression_to_check""}]"

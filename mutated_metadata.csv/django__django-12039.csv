@@ -1,0 +1,44 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/db/backends/ddl_references.py,__str__,formatted_column_list_representation,84,91,"def __str__(self):
+
+    def col_str(column, idx):
+        try:
+            return self.quote_name(column) + self.col_suffixes[idx]
+        except IndexError:
+            return self.quote_name(column)
+    return ', '.join((col_str(column, idx) for idx, column in enumerate(self.columns)))","def formatted_column_list_representation(self):
+
+    def col_str(column, idx):
+        try:
+            return self.quote_name(column) + self.col_suffixes[idx]
+        except IndexError:
+            return self.quote_name(column)
+    return ', '.join((col_str(column, idx) for idx, column in enumerate(self.columns)))",[]
+./django/db/backends/ddl_references.py,__str__,formatted_column_list_string,111,122,"def __str__(self):
+
+    def col_str(column, idx):
+        col = '{} {}'.format(self.quote_name(column), self.opclasses[idx])
+        try:
+            col = '{} {}'.format(col, self.col_suffixes[idx])
+        except IndexError:
+            pass
+        return col
+    return ', '.join((col_str(column, idx) for idx, column in enumerate(self.columns)))","def formatted_column_list_string(self):
+
+    def col_str(column, idx):
+        col = '{} {}'.format(self.quote_name(column), self.opclasses[idx])
+        try:
+            col = '{} {}'.format(col, self.col_suffixes[idx])
+        except IndexError:
+            pass
+        return col
+    return ', '.join((col_str(column, idx) for idx, column in enumerate(self.columns)))","[{""var"": ""col"", ""rename"": ""formatted_column_representation""}]"
+./django/db/backends/ddl_references.py,col_str,append_col_suffix_or_quote_column,85,89,"def col_str(column, idx):
+    try:
+        return self.quote_name(column) + self.col_suffixes[idx]
+    except IndexError:
+        return self.quote_name(column)","def append_col_suffix_or_quote_column(column, idx):
+    try:
+        return self.quote_name(column) + self.col_suffixes[idx]
+    except IndexError:
+        return self.quote_name(column)",[]

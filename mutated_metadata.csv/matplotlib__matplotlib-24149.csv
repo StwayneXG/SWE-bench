@@ -1,0 +1,64 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./lib/matplotlib/axes/_axes.py,_convert_dx,convert_width_with_unit_handling,2153,2202,"@staticmethod
+def _convert_dx(dx, x0, xconv, convert):
+    """"""
+        Small helper to do logic of width conversion flexibly.
+
+        *dx* and *x0* have units, but *xconv* has already been converted
+        to unitless (and is an ndarray).  This allows the *dx* to have units
+        that are different from *x0*, but are still accepted by the
+        ``__add__`` operator of *x0*.
+        """"""
+    assert type(xconv) is np.ndarray
+    if xconv.size == 0:
+        return convert(dx)
+    try:
+        try:
+            x0 = cbook._safe_first_finite(x0)
+        except (TypeError, IndexError, KeyError):
+            pass
+        try:
+            x = cbook._safe_first_finite(xconv)
+        except (TypeError, IndexError, KeyError):
+            x = xconv
+        delist = False
+        if not np.iterable(dx):
+            dx = [dx]
+            delist = True
+        dx = [convert(x0 + ddx) - x for ddx in dx]
+        if delist:
+            dx = dx[0]
+    except (ValueError, TypeError, AttributeError):
+        dx = convert(dx)
+    return dx","@staticmethod
+def convert_width_with_unit_handling(dx, x0, xconv, convert):
+    """"""
+        Small helper to do logic of width conversion flexibly.
+
+        *dx* and *x0* have units, but *xconv* has already been converted
+        to unitless (and is an ndarray).  This allows the *dx* to have units
+        that are different from *x0*, but are still accepted by the
+        ``__add__`` operator of *x0*.
+        """"""
+    assert type(xconv) is np.ndarray
+    if xconv.size == 0:
+        return convert(dx)
+    try:
+        try:
+            x0 = cbook._safe_first_finite(x0)
+        except (TypeError, IndexError, KeyError):
+            pass
+        try:
+            x = cbook._safe_first_finite(xconv)
+        except (TypeError, IndexError, KeyError):
+            x = xconv
+        delist = False
+        if not np.iterable(dx):
+            dx = [dx]
+            delist = True
+        dx = [convert(x0 + ddx) - x for ddx in dx]
+        if delist:
+            dx = dx[0]
+    except (ValueError, TypeError, AttributeError):
+        dx = convert(dx)
+    return dx","[{""var"": ""x"", ""rename"": ""converted_x0""}, {""var"": ""delist"", ""rename"": ""single_value_mode""}, {""var"": ""ddx"", ""rename"": ""delta_dx""}]"

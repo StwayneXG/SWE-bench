@@ -1,0 +1,637 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./sympy/core/basic.py,__eq__,compare_symbolic_equality,282,321,"def __eq__(self, other):
+    """"""Return a boolean indicating whether a == b on the basis of
+        their symbolic trees.
+
+        This is the same as a.compare(b) == 0 but faster.
+
+        Notes
+        =====
+
+        If a class that overrides __eq__() needs to retain the
+        implementation of __hash__() from a parent class, the
+        interpreter must be told this explicitly by setting __hash__ =
+        <ParentClass>.__hash__. Otherwise the inheritance of __hash__()
+        will be blocked, just as if __hash__ had been explicitly set to
+        None.
+
+        References
+        ==========
+
+        from http://docs.python.org/dev/reference/datamodel.html#object.__hash__
+        """"""
+    from sympy import Pow
+    if self is other:
+        return True
+    if type(self) is not type(other):
+        if isinstance(self, Pow) and self.exp == 1:
+            return self.base == other
+        if isinstance(other, Pow) and other.exp == 1:
+            return self == other.base
+        try:
+            other = _sympify(other)
+        except SympifyError:
+            return False
+        if type(self) != type(other):
+            return False
+    return self._hashable_content() == other._hashable_content()","def compare_symbolic_equality(self, other):
+    """"""Return a boolean indicating whether a == b on the basis of
+        their symbolic trees.
+
+        This is the same as a.compare(b) == 0 but faster.
+
+        Notes
+        =====
+
+        If a class that overrides __eq__() needs to retain the
+        implementation of __hash__() from a parent class, the
+        interpreter must be told this explicitly by setting __hash__ =
+        <ParentClass>.__hash__. Otherwise the inheritance of __hash__()
+        will be blocked, just as if __hash__ had been explicitly set to
+        None.
+
+        References
+        ==========
+
+        from http://docs.python.org/dev/reference/datamodel.html#object.__hash__
+        """"""
+    from sympy import Pow
+    if self is other:
+        return True
+    if type(self) is not type(other):
+        if isinstance(self, Pow) and self.exp == 1:
+            return self.base == other
+        if isinstance(other, Pow) and other.exp == 1:
+            return self == other.base
+        try:
+            other = _sympify(other)
+        except SympifyError:
+            return False
+        if type(self) != type(other):
+            return False
+    return self._hashable_content() == other._hashable_content()",[]
+./sympy/core/basic.py,__ne__,symbolic_tree_is_different,323,332,"def __ne__(self, other):
+    """"""a != b  -> Compare two symbolic trees and see whether they are different
+
+           this is the same as:
+
+             a.compare(b) != 0
+
+           but faster
+        """"""
+    return not self.__eq__(other)","def symbolic_tree_is_different(self, other):
+    """"""a != b  -> Compare two symbolic trees and see whether they are different
+
+           this is the same as:
+
+             a.compare(b) != 0
+
+           but faster
+        """"""
+    return not self.__eq__(other)",[]
+./sympy/core/basic.py,_has_matcher,get_equality_comparator,1181,1183,"def _has_matcher(self):
+    """"""Helper for .has()""""""
+    return self.__eq__","def get_equality_comparator(self):
+    """"""Helper for .has()""""""
+    return self.__eq__",[]
+./sympy/core/exprtools.py,__ne__,is_not_equal_to,799,800,"def __ne__(self, other):
+    return not self.__eq__(other)","def is_not_equal_to(self, other):
+    return not self.__eq__(other)",[]
+./sympy/core/exprtools.py,__ne__,is_not_equal,911,912,"def __ne__(self, other):
+    return not self.__eq__(other)","def is_not_equal(self, other):
+    return not self.__eq__(other)",[]
+./sympy/core/numbers.py,__eq__,compare_numerical_equality_with_precision,1249,1276,"def __eq__(self, other):
+    if isinstance(other, float):
+        o = Float(other)
+        try:
+            ompf = o._as_mpf_val(self._prec)
+        except ValueError:
+            return False
+        return bool(mlib.mpf_eq(self._mpf_, ompf))
+    try:
+        other = _sympify(other)
+    except SympifyError:
+        return False
+    if isinstance(other, NumberSymbol):
+        if other.is_irrational:
+            return False
+        return other.__eq__(self)
+    if isinstance(other, Float):
+        return bool(mlib.mpf_eq(self._mpf_, other._mpf_))
+    if isinstance(other, Number):
+        ompf = other._as_mpf_val(self._prec)
+        return bool(mlib.mpf_eq(self._mpf_, ompf))
+    return False","def compare_numerical_equality_with_precision(self, other):
+    if isinstance(other, float):
+        o = Float(other)
+        try:
+            ompf = o._as_mpf_val(self._prec)
+        except ValueError:
+            return False
+        return bool(mlib.mpf_eq(self._mpf_, ompf))
+    try:
+        other = _sympify(other)
+    except SympifyError:
+        return False
+    if isinstance(other, NumberSymbol):
+        if other.is_irrational:
+            return False
+        return other.__eq__(self)
+    if isinstance(other, Float):
+        return bool(mlib.mpf_eq(self._mpf_, other._mpf_))
+    if isinstance(other, Number):
+        ompf = other._as_mpf_val(self._prec)
+        return bool(mlib.mpf_eq(self._mpf_, ompf))
+    return False","[{""var"": ""ompf"", ""rename"": ""other_mpf_value""}, {""var"": ""o"", ""rename"": ""converted_float""}]"
+./sympy/core/numbers.py,__ne__,is_not_equal_to,1278,1279,"def __ne__(self, other):
+    return not self.__eq__(other)","def is_not_equal_to(self, other):
+    return not self.__eq__(other)",[]
+./sympy/core/numbers.py,__gt__,perform_symbolic_greater_than_comparison,1281,1293,"def __gt__(self, other):
+    try:
+        other = _sympify(other)
+    except SympifyError:
+        raise TypeError('Invalid comparison %s > %s' % (self, other))
+    if isinstance(other, NumberSymbol):
+        return other.__le__(self)
+    if other.is_comparable:
+        other = other.evalf()
+    if isinstance(other, Number) and other is not S.NaN:
+        return _sympify(bool(mlib.mpf_gt(self._mpf_, other._as_mpf_val(self._prec))))
+    return Expr.__gt__(self, other)","def perform_symbolic_greater_than_comparison(self, other):
+    try:
+        other = _sympify(other)
+    except SympifyError:
+        raise TypeError('Invalid comparison %s > %s' % (self, other))
+    if isinstance(other, NumberSymbol):
+        return other.__le__(self)
+    if other.is_comparable:
+        other = other.evalf()
+    if isinstance(other, Number) and other is not S.NaN:
+        return _sympify(bool(mlib.mpf_gt(self._mpf_, other._as_mpf_val(self._prec))))
+    return Expr.__gt__(self, other)",[]
+./sympy/core/numbers.py,__ge__,compare_with_greater_equal_logic,1295,1307,"def __ge__(self, other):
+    try:
+        other = _sympify(other)
+    except SympifyError:
+        raise TypeError('Invalid comparison %s >= %s' % (self, other))
+    if isinstance(other, NumberSymbol):
+        return other.__lt__(self)
+    if other.is_comparable:
+        other = other.evalf()
+    if isinstance(other, Number) and other is not S.NaN:
+        return _sympify(bool(mlib.mpf_ge(self._mpf_, other._as_mpf_val(self._prec))))
+    return Expr.__ge__(self, other)","def compare_with_greater_equal_logic(self, other):
+    try:
+        other = _sympify(other)
+    except SympifyError:
+        raise TypeError('Invalid comparison %s >= %s' % (self, other))
+    if isinstance(other, NumberSymbol):
+        return other.__lt__(self)
+    if other.is_comparable:
+        other = other.evalf()
+    if isinstance(other, Number) and other is not S.NaN:
+        return _sympify(bool(mlib.mpf_ge(self._mpf_, other._as_mpf_val(self._prec))))
+    return Expr.__ge__(self, other)",[]
+./sympy/core/numbers.py,__lt__,compare_less_than_expr_or_number,1309,1321,"def __lt__(self, other):
+    try:
+        other = _sympify(other)
+    except SympifyError:
+        raise TypeError('Invalid comparison %s < %s' % (self, other))
+    if isinstance(other, NumberSymbol):
+        return other.__ge__(self)
+    if other.is_real and other.is_number:
+        other = other.evalf()
+    if isinstance(other, Number) and other is not S.NaN:
+        return _sympify(bool(mlib.mpf_lt(self._mpf_, other._as_mpf_val(self._prec))))
+    return Expr.__lt__(self, other)","def compare_less_than_expr_or_number(self, other):
+    try:
+        other = _sympify(other)
+    except SympifyError:
+        raise TypeError('Invalid comparison %s < %s' % (self, other))
+    if isinstance(other, NumberSymbol):
+        return other.__ge__(self)
+    if other.is_real and other.is_number:
+        other = other.evalf()
+    if isinstance(other, Number) and other is not S.NaN:
+        return _sympify(bool(mlib.mpf_lt(self._mpf_, other._as_mpf_val(self._prec))))
+    return Expr.__lt__(self, other)",[]
+./sympy/core/numbers.py,__le__,compare_or_evaluate_less_than_or_equal,1323,1335,"def __le__(self, other):
+    try:
+        other = _sympify(other)
+    except SympifyError:
+        raise TypeError('Invalid comparison %s <= %s' % (self, other))
+    if isinstance(other, NumberSymbol):
+        return other.__gt__(self)
+    if other.is_real and other.is_number:
+        other = other.evalf()
+    if isinstance(other, Number) and other is not S.NaN:
+        return _sympify(bool(mlib.mpf_le(self._mpf_, other._as_mpf_val(self._prec))))
+    return Expr.__le__(self, other)","def compare_or_evaluate_less_than_or_equal(self, other):
+    try:
+        other = _sympify(other)
+    except SympifyError:
+        raise TypeError('Invalid comparison %s <= %s' % (self, other))
+    if isinstance(other, NumberSymbol):
+        return other.__gt__(self)
+    if other.is_real and other.is_number:
+        other = other.evalf()
+    if isinstance(other, Number) and other is not S.NaN:
+        return _sympify(bool(mlib.mpf_le(self._mpf_, other._as_mpf_val(self._prec))))
+    return Expr.__le__(self, other)",[]
+./sympy/core/numbers.py,__eq__,compare_number_symbol_equality,1718,1734,"def __eq__(self, other):
+    try:
+        other = _sympify(other)
+    except SympifyError:
+        return False
+    if isinstance(other, NumberSymbol):
+        if other.is_irrational:
+            return False
+        return other.__eq__(self)
+    if isinstance(other, Number):
+        if isinstance(other, Rational):
+            return self.p == other.p and self.q == other.q
+        if isinstance(other, Float):
+            return mlib.mpf_eq(self._as_mpf_val(other._prec), other._mpf_)
+    return False","def compare_number_symbol_equality(self, other):
+    try:
+        other = _sympify(other)
+    except SympifyError:
+        return False
+    if isinstance(other, NumberSymbol):
+        if other.is_irrational:
+            return False
+        return other.__eq__(self)
+    if isinstance(other, Number):
+        if isinstance(other, Rational):
+            return self.p == other.p and self.q == other.q
+        if isinstance(other, Float):
+            return mlib.mpf_eq(self._as_mpf_val(other._prec), other._mpf_)
+    return False",[]
+./sympy/core/numbers.py,__ne__,is_not_equal_to,1736,1737,"def __ne__(self, other):
+    return not self.__eq__(other)","def is_not_equal_to(self, other):
+    return not self.__eq__(other)",[]
+./sympy/core/numbers.py,__gt__,compare_greater_than_sym,1739,1755,"def __gt__(self, other):
+    try:
+        other = _sympify(other)
+    except SympifyError:
+        raise TypeError('Invalid comparison %s > %s' % (self, other))
+    if isinstance(other, NumberSymbol):
+        return other.__le__(self)
+    expr = self
+    if isinstance(other, Number):
+        if isinstance(other, Rational):
+            return _sympify(bool(self.p * other.q > self.q * other.p))
+        if isinstance(other, Float):
+            return _sympify(bool(mlib.mpf_gt(self._as_mpf_val(other._prec), other._mpf_)))
+    elif other.is_number and other.is_real:
+        expr, other = (Integer(self.p), self.q * other)
+    return Expr.__gt__(expr, other)","def compare_greater_than_sym(self, other):
+    try:
+        other = _sympify(other)
+    except SympifyError:
+        raise TypeError('Invalid comparison %s > %s' % (self, other))
+    if isinstance(other, NumberSymbol):
+        return other.__le__(self)
+    expr = self
+    if isinstance(other, Number):
+        if isinstance(other, Rational):
+            return _sympify(bool(self.p * other.q > self.q * other.p))
+        if isinstance(other, Float):
+            return _sympify(bool(mlib.mpf_gt(self._as_mpf_val(other._prec), other._mpf_)))
+    elif other.is_number and other.is_real:
+        expr, other = (Integer(self.p), self.q * other)
+    return Expr.__gt__(expr, other)","[{""var"": ""expr"", ""rename"": ""expression_to_compare""}]"
+./sympy/core/numbers.py,__ge__,greater_than_or_equal_comparator,1757,1773,"def __ge__(self, other):
+    try:
+        other = _sympify(other)
+    except SympifyError:
+        raise TypeError('Invalid comparison %s >= %s' % (self, other))
+    if isinstance(other, NumberSymbol):
+        return other.__lt__(self)
+    expr = self
+    if isinstance(other, Number):
+        if isinstance(other, Rational):
+            return _sympify(bool(self.p * other.q >= self.q * other.p))
+        if isinstance(other, Float):
+            return _sympify(bool(mlib.mpf_ge(self._as_mpf_val(other._prec), other._mpf_)))
+    elif other.is_number and other.is_real:
+        expr, other = (Integer(self.p), self.q * other)
+    return Expr.__ge__(expr, other)","def greater_than_or_equal_comparator(self, other):
+    try:
+        other = _sympify(other)
+    except SympifyError:
+        raise TypeError('Invalid comparison %s >= %s' % (self, other))
+    if isinstance(other, NumberSymbol):
+        return other.__lt__(self)
+    expr = self
+    if isinstance(other, Number):
+        if isinstance(other, Rational):
+            return _sympify(bool(self.p * other.q >= self.q * other.p))
+        if isinstance(other, Float):
+            return _sympify(bool(mlib.mpf_ge(self._as_mpf_val(other._prec), other._mpf_)))
+    elif other.is_number and other.is_real:
+        expr, other = (Integer(self.p), self.q * other)
+    return Expr.__ge__(expr, other)","[{""var"": ""expr"", ""rename"": ""current_expression""}]"
+./sympy/core/numbers.py,__lt__,compare_less_than_sympy_expr,1775,1791,"def __lt__(self, other):
+    try:
+        other = _sympify(other)
+    except SympifyError:
+        raise TypeError('Invalid comparison %s < %s' % (self, other))
+    if isinstance(other, NumberSymbol):
+        return other.__ge__(self)
+    expr = self
+    if isinstance(other, Number):
+        if isinstance(other, Rational):
+            return _sympify(bool(self.p * other.q < self.q * other.p))
+        if isinstance(other, Float):
+            return _sympify(bool(mlib.mpf_lt(self._as_mpf_val(other._prec), other._mpf_)))
+    elif other.is_number and other.is_real:
+        expr, other = (Integer(self.p), self.q * other)
+    return Expr.__lt__(expr, other)","def compare_less_than_sympy_expr(self, other):
+    try:
+        other = _sympify(other)
+    except SympifyError:
+        raise TypeError('Invalid comparison %s < %s' % (self, other))
+    if isinstance(other, NumberSymbol):
+        return other.__ge__(self)
+    expr = self
+    if isinstance(other, Number):
+        if isinstance(other, Rational):
+            return _sympify(bool(self.p * other.q < self.q * other.p))
+        if isinstance(other, Float):
+            return _sympify(bool(mlib.mpf_lt(self._as_mpf_val(other._prec), other._mpf_)))
+    elif other.is_number and other.is_real:
+        expr, other = (Integer(self.p), self.q * other)
+    return Expr.__lt__(expr, other)","[{""var"": ""expr"", ""rename"": ""expression_to_compare""}]"
+./sympy/core/numbers.py,__le__,compare_as_less_than_or_equal,1793,1809,"def __le__(self, other):
+    try:
+        other = _sympify(other)
+    except SympifyError:
+        raise TypeError('Invalid comparison %s <= %s' % (self, other))
+    expr = self
+    if isinstance(other, NumberSymbol):
+        return other.__gt__(self)
+    elif isinstance(other, Number):
+        if isinstance(other, Rational):
+            return _sympify(bool(self.p * other.q <= self.q * other.p))
+        if isinstance(other, Float):
+            return _sympify(bool(mlib.mpf_le(self._as_mpf_val(other._prec), other._mpf_)))
+    elif other.is_number and other.is_real:
+        expr, other = (Integer(self.p), self.q * other)
+    return Expr.__le__(expr, other)","def compare_as_less_than_or_equal(self, other):
+    try:
+        other = _sympify(other)
+    except SympifyError:
+        raise TypeError('Invalid comparison %s <= %s' % (self, other))
+    expr = self
+    if isinstance(other, NumberSymbol):
+        return other.__gt__(self)
+    elif isinstance(other, Number):
+        if isinstance(other, Rational):
+            return _sympify(bool(self.p * other.q <= self.q * other.p))
+        if isinstance(other, Float):
+            return _sympify(bool(mlib.mpf_le(self._as_mpf_val(other._prec), other._mpf_)))
+    elif other.is_number and other.is_real:
+        expr, other = (Integer(self.p), self.q * other)
+    return Expr.__le__(expr, other)","[{""var"": ""expr"", ""rename"": ""expression_representation""}]"
+./sympy/core/numbers.py,__ne__,is_not_equal_to,2114,2115,"def __ne__(self, other):
+    return not self.__eq__(other)","def is_not_equal_to(self, other):
+    return not self.__eq__(other)",[]
+./sympy/core/numbers.py,__eq__,compare_with_sympified_other,3338,3348,"def __eq__(self, other):
+    try:
+        other = _sympify(other)
+    except SympifyError:
+        return False
+    if self is other:
+        return True
+    if isinstance(other, Number) and self.is_irrational:
+        return False
+    return False","def compare_with_sympified_other(self, other):
+    try:
+        other = _sympify(other)
+    except SympifyError:
+        return False
+    if self is other:
+        return True
+    if isinstance(other, Number) and self.is_irrational:
+        return False
+    return False",[]
+./sympy/core/numbers.py,__ne__,is_not_equal,3350,3351,"def __ne__(self, other):
+    return not self.__eq__(other)","def is_not_equal(self, other):
+    return not self.__eq__(other)",[]
+./sympy/geometry/entity.py,__ne__,test_geometrical_inequality,105,107,"def __ne__(self, o):
+    """"""Test inequality of two geometrical entities.""""""
+    return not self.__eq__(o)","def test_geometrical_inequality(self, o):
+    """"""Test inequality of two geometrical entities.""""""
+    return not self.__eq__(o)",[]
+./sympy/physics/optics/medium.py,__gt__,is_not_less_than,185,186,"def __gt__(self, other):
+    return not self.__lt__(other)","def is_not_less_than(self, other):
+    return not self.__lt__(other)",[]
+./sympy/physics/optics/medium.py,__ne__,is_not_equal_to,191,192,"def __ne__(self, other):
+    return not self.__eq__(other)","def is_not_equal_to(self, other):
+    return not self.__eq__(other)",[]
+./sympy/physics/vector/dyadic.py,__ne__,is_not_equal_to,149,150,"def __ne__(self, other):
+    return not self.__eq__(other)","def is_not_equal_to(self, other):
+    return not self.__eq__(other)",[]
+./sympy/physics/vector/frame.py,__ne__,is_not_equal_to,72,73,"def __ne__(self, other):
+    return not self.__eq__(other)","def is_not_equal_to(self, other):
+    return not self.__eq__(other)",[]
+./sympy/physics/vector/vector.py,__ne__,is_not_equal_to,168,169,"def __ne__(self, other):
+    return not self.__eq__(other)","def is_not_equal_to(self, other):
+    return not self.__eq__(other)",[]
+./sympy/polys/agca/modules.py,__ne__,is_not_equal_to,252,253,"def __ne__(self, om):
+    return not self.__eq__(om)","def is_not_equal_to(self, om):
+    return not self.__eq__(om)",[]
+./sympy/polys/domains/domain.py,__ne__,not_equivalent_domains_check,344,346,"def __ne__(self, other):
+    """"""Returns ``False`` if two domains are equivalent. """"""
+    return not self.__eq__(other)","def not_equivalent_domains_check(self, other):
+    """"""Returns ``False`` if two domains are equivalent. """"""
+    return not self.__eq__(other)",[]
+./sympy/polys/domains/expressiondomain.py,__ne__,is_not_equal,121,122,"def __ne__(f, g):
+    return not f.__eq__(g)","def is_not_equal(f, g):
+    return not f.__eq__(g)",[]
+./sympy/polys/domains/pythonrational.py,__ne__,is_not_equal_to,250,251,"def __ne__(self, other):
+    return not self.__eq__(other)","def is_not_equal_to(self, other):
+    return not self.__eq__(other)",[]
+./sympy/polys/domains/quotientring.py,__ne__,is_not_equal_to,87,88,"def __ne__(self, om):
+    return not self.__eq__(om)","def is_not_equal_to(self, om):
+    return not self.__eq__(om)",[]
+./sympy/polys/fields.py,__ne__,is_not_equal,153,154,"def __ne__(self, other):
+    return not self.__eq__(other)","def is_not_equal(self, other):
+    return not self.__eq__(other)",[]
+./sympy/polys/fields.py,__ne__,is_not_equal,304,305,"def __ne__(f, g):
+    return not f.__eq__(g)","def is_not_equal(f, g):
+    return not f.__eq__(g)",[]
+./sympy/polys/monomials.py,__ne__,is_not_equal_to,448,449,"def __ne__(self, other):
+    return not self.__eq__(other)","def is_not_equal_to(self, other):
+    return not self.__eq__(other)",[]
+./sympy/polys/polyclasses.py,__ne__,is_not_equal_to,1002,1003,"def __ne__(f, g):
+    return not f.__eq__(g)","def is_not_equal_to(f, g):
+    return not f.__eq__(g)",[]
+./sympy/polys/polyclasses.py,eq,compare_objects_with_optional_strictness,1005,1009,"def eq(f, g, strict=False):
+    if not strict:
+        return f.__eq__(g)
+    else:
+        return f._strict_eq(g)","def compare_objects_with_optional_strictness(f, g, strict=False):
+    if not strict:
+        return f.__eq__(g)
+    else:
+        return f._strict_eq(g)",[]
+./sympy/polys/polyclasses.py,__lt__,unified_less_than_comparison,1019,1021,"def __lt__(f, g):
+    _, _, _, F, G = f.unify(g)
+    return F.__lt__(G)","def unified_less_than_comparison(f, g):
+    _, _, _, F, G = f.unify(g)
+    return F.__lt__(G)","[{""var"": ""G"", ""rename"": ""unified_expression_g""}, {""var"": ""_"", ""rename"": ""comparison_result""}, {""var"": ""F"", ""rename"": ""unified_object_comparison_first""}]"
+./sympy/polys/polyclasses.py,__le__,unify_and_le_compare,1023,1025,"def __le__(f, g):
+    _, _, _, F, G = f.unify(g)
+    return F.__le__(G)","def unify_and_le_compare(f, g):
+    _, _, _, F, G = f.unify(g)
+    return F.__le__(G)","[{""var"": ""G"", ""rename"": ""unified_expression_G""}, {""var"": ""_"", ""rename"": ""unified_terms_result""}, {""var"": ""F"", ""rename"": ""unified_result_function""}]"
+./sympy/polys/polyclasses.py,__gt__,is_uniformly_greater_than,1027,1029,"def __gt__(f, g):
+    _, _, _, F, G = f.unify(g)
+    return F.__gt__(G)","def is_uniformly_greater_than(f, g):
+    _, _, _, F, G = f.unify(g)
+    return F.__gt__(G)","[{""var"": ""G"", ""rename"": ""unified_greater_component""}, {""var"": ""_"", ""rename"": ""unified_components_placeholder""}, {""var"": ""F"", ""rename"": ""unified_left_operand""}]"
+./sympy/polys/polyclasses.py,__ge__,generalized_comparison_ge,1031,1033,"def __ge__(f, g):
+    _, _, _, F, G = f.unify(g)
+    return F.__ge__(G)","def generalized_comparison_ge(f, g):
+    _, _, _, F, G = f.unify(g)
+    return F.__ge__(G)","[{""var"": ""G"", ""rename"": ""unified_right_term""}, {""var"": ""_"", ""rename"": ""unified_components""}, {""var"": ""F"", ""rename"": ""unified_lhs_object""}]"
+./sympy/polys/polyclasses.py,__lt__,compare_fraction_units,1466,1468,"def __lt__(f, g):
+    _, _, _, F, G = f.frac_unify(g)
+    return F.__lt__(G)","def compare_fraction_units(f, g):
+    _, _, _, F, G = f.frac_unify(g)
+    return F.__lt__(G)","[{""var"": ""G"", ""rename"": ""unified_denominator_g""}, {""var"": ""_"", ""rename"": ""unified_fractions""}, {""var"": ""F"", ""rename"": ""unified_fraction_F""}]"
+./sympy/polys/polyclasses.py,__le__,fraction_less_than_or_equal,1470,1472,"def __le__(f, g):
+    _, _, _, F, G = f.frac_unify(g)
+    return F.__le__(G)","def fraction_less_than_or_equal(f, g):
+    _, _, _, F, G = f.frac_unify(g)
+    return F.__le__(G)","[{""var"": ""G"", ""rename"": ""second_fraction""}, {""var"": ""_"", ""rename"": ""unified_numerator_denominator_pairs""}, {""var"": ""F"", ""rename"": ""unified_fraction_numerator""}]"
+./sympy/polys/polyclasses.py,__gt__,compare_fractional_representation,1474,1476,"def __gt__(f, g):
+    _, _, _, F, G = f.frac_unify(g)
+    return F.__gt__(G)","def compare_fractional_representation(f, g):
+    _, _, _, F, G = f.frac_unify(g)
+    return F.__gt__(G)","[{""var"": ""G"", ""rename"": ""unified_denominator""}, {""var"": ""_"", ""rename"": ""unified_fractions""}, {""var"": ""F"", ""rename"": ""unified_numerator_F""}]"
+./sympy/polys/polyclasses.py,__ge__,compare_fraction_unified_ge,1478,1480,"def __ge__(f, g):
+    _, _, _, F, G = f.frac_unify(g)
+    return F.__ge__(G)","def compare_fraction_unified_ge(f, g):
+    _, _, _, F, G = f.frac_unify(g)
+    return F.__ge__(G)","[{""var"": ""G"", ""rename"": ""unified_fraction_g""}, {""var"": ""_"", ""rename"": ""unified_fraction_components""}, {""var"": ""F"", ""rename"": ""unified_fraction_F""}]"
+./sympy/polys/polyclasses.py,__lt__,unify_and_compare_less_than,1731,1733,"def __lt__(f, g):
+    _, _, F, G, _ = f.unify(g)
+    return F.__lt__(G)","def unify_and_compare_less_than(f, g):
+    _, _, F, G, _ = f.unify(g)
+    return F.__lt__(G)","[{""var"": ""G"", ""rename"": ""unified_output_g""}, {""var"": ""_"", ""rename"": ""unification_results""}, {""var"": ""F"", ""rename"": ""unification_result_f""}]"
+./sympy/polys/polyclasses.py,__le__,unified_less_than_or_equal,1735,1737,"def __le__(f, g):
+    _, _, F, G, _ = f.unify(g)
+    return F.__le__(G)","def unified_less_than_or_equal(f, g):
+    _, _, F, G, _ = f.unify(g)
+    return F.__le__(G)","[{""var"": ""G"", ""rename"": ""unified_right""}, {""var"": ""_"", ""rename"": ""unification_result_placeholder""}, {""var"": ""F"", ""rename"": ""unified_expression_F""}]"
+./sympy/polys/polyclasses.py,__gt__,compare_unified_objects_greater_than,1739,1741,"def __gt__(f, g):
+    _, _, F, G, _ = f.unify(g)
+    return F.__gt__(G)","def compare_unified_objects_greater_than(f, g):
+    _, _, F, G, _ = f.unify(g)
+    return F.__gt__(G)","[{""var"": ""G"", ""rename"": ""unified_component_g""}, {""var"": ""_"", ""rename"": ""unification_placeholder""}, {""var"": ""F"", ""rename"": ""left_unified_expr""}]"
+./sympy/polys/polyclasses.py,__ge__,greater_than_equal_after_unification,1743,1745,"def __ge__(f, g):
+    _, _, F, G, _ = f.unify(g)
+    return F.__ge__(G)","def greater_than_equal_after_unification(f, g):
+    _, _, F, G, _ = f.unify(g)
+    return F.__ge__(G)","[{""var"": ""G"", ""rename"": ""unified_target_value""}, {""var"": ""_"", ""rename"": ""unification_placeholders""}, {""var"": ""F"", ""rename"": ""unified_self_value""}]"
+./sympy/polys/polytools.py,__ne__,is_not_equal_to,4111,4112,"@_sympifyit('g', NotImplemented)
+def __ne__(f, g):
+    return not f.__eq__(g)","@_sympifyit('g', NotImplemented)
+def is_not_equal_to(f, g):
+    return not f.__eq__(g)",[]
+./sympy/polys/polytools.py,eq,evaluate_equality_with_option,4119,4123,"def eq(f, g, strict=False):
+    if not strict:
+        return f.__eq__(g)
+    else:
+        return f._strict_eq(sympify(g))","def evaluate_equality_with_option(f, g, strict=False):
+    if not strict:
+        return f.__eq__(g)
+    else:
+        return f._strict_eq(sympify(g))",[]
+./sympy/polys/polytools.py,__ne__,is_not_equivalent,6702,6703,"def __ne__(self, other):
+    return not self.__eq__(other)","def is_not_equivalent(self, other):
+    return not self.__eq__(other)",[]
+./sympy/polys/rings.py,__ne__,is_not_equal_to,288,289,"def __ne__(self, other):
+    return not self.__eq__(other)","def is_not_equal_to(self, other):
+    return not self.__eq__(other)",[]
+./sympy/polys/rings.py,__ne__,is_not_equal_to,667,668,"def __ne__(p1, p2):
+    return not p1.__eq__(p2)","def is_not_equal_to(p1, p2):
+    return not p1.__eq__(p2)",[]
+./sympy/polys/rootoftools.py,_eval_Eq,evaluate_equality_to_other,706,748,"def _eval_Eq(self, other):
+    if type(self) == type(other):
+        return sympify(self.__eq__(other))
+    if not (other.is_number and (not other.has(AppliedUndef))):
+        return S.false
+    if not other.is_finite:
+        return S.false
+    z = self.expr.subs(self.expr.free_symbols.pop(), other).is_zero
+    if z is False:
+        return S.false
+    o = (other.is_real, other.is_imaginary)
+    s = (self.is_real, self.is_imaginary)
+    if o != s and None not in o and (None not in s):
+        return S.false
+    i = self._get_interval()
+    was = (i.a, i.b)
+    need = [True] * 2
+    while any(need):
+        i = i.refine()
+        a, b = (i.a, i.b)
+        if need[0] and a != was[0]:
+            need[0] = False
+        if need[1] and b != was[1]:
+            need[1] = False
+    re, im = other.as_real_imag()
+    if not im:
+        if self.is_real:
+            a, b = [Rational(str(i)) for i in (a, b)]
+            return sympify(a < other and other < b)
+        return S.false
+    if self.is_real:
+        return S.false
+    z = r1, r2, i1, i2 = [Rational(str(j)) for j in (i.ax, i.bx, i.ay, i.by)]
+    return sympify((r1 < re and re < r2) and (i1 < im and im < i2))","def evaluate_equality_to_other(self, other):
+    if type(self) == type(other):
+        return sympify(self.__eq__(other))
+    if not (other.is_number and (not other.has(AppliedUndef))):
+        return S.false
+    if not other.is_finite:
+        return S.false
+    z = self.expr.subs(self.expr.free_symbols.pop(), other).is_zero
+    if z is False:
+        return S.false
+    o = (other.is_real, other.is_imaginary)
+    s = (self.is_real, self.is_imaginary)
+    if o != s and None not in o and (None not in s):
+        return S.false
+    i = self._get_interval()
+    was = (i.a, i.b)
+    need = [True] * 2
+    while any(need):
+        i = i.refine()
+        a, b = (i.a, i.b)
+        if need[0] and a != was[0]:
+            need[0] = False
+        if need[1] and b != was[1]:
+            need[1] = False
+    re, im = other.as_real_imag()
+    if not im:
+        if self.is_real:
+            a, b = [Rational(str(i)) for i in (a, b)]
+            return sympify(a < other and other < b)
+        return S.false
+    if self.is_real:
+        return S.false
+    z = r1, r2, i1, i2 = [Rational(str(j)) for j in (i.ax, i.bx, i.ay, i.by)]
+    return sympify((r1 < re and re < r2) and (i1 < im and im < i2))","[{""var"": ""r1"", ""rename"": ""real_interval_start""}, {""var"": ""s"", ""rename"": ""self_imaginary_real_status""}, {""var"": ""o"", ""rename"": ""other_properties""}, {""var"": ""i"", ""rename"": ""interval_variable""}, {""var"": ""a"", ""rename"": ""main_interval_start""}, {""var"": ""z"", ""rename"": ""is_zero_check""}, {""var"": ""j"", ""rename"": ""interval_bound""}, {""var"": ""re"", ""rename"": ""real_component""}, {""var"": ""im"", ""rename"": ""imaginary_component""}, {""var"": ""i2"", ""rename"": ""imaginaryIntervalUpperBound""}, {""var"": ""need"", ""rename"": ""interval_refinement_needed""}, {""var"": ""i1"", ""rename"": ""imaginary_lower_bound""}, {""var"": ""r2"", ""rename"": ""real_part_upper_bound""}, {""var"": ""was"", ""rename"": ""interval_bounds_initial""}, {""var"": ""b"", ""rename"": ""interval_upper_bound""}]"
+./sympy/tensor/array/ndim_array.py,__ne__,is_not_equal_to,369,370,"def __ne__(self, other):
+    return not self.__eq__(other)","def is_not_equal_to(self, other):
+    return not self.__eq__(other)",[]
+./sympy/utilities/enumerative.py,__ne__,is_not_equal_to,130,132,"def __ne__(self, other):
+    """"""Defined for consistency with __eq__""""""
+    return not self.__eq__(other)","def is_not_equal_to(self, other):
+    """"""Defined for consistency with __eq__""""""
+    return not self.__eq__(other)",[]

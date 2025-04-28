@@ -1,0 +1,106 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./sympy/printing/conventions.py,split_super_sub,decompose_symbol_to_name_super_sub,13,70,"def split_super_sub(text):
+    """"""Split a symbol name into a name, superscripts and subscripts
+
+    The first part of the symbol name is considered to be its actual
+    'name', followed by super- and subscripts. Each superscript is
+    preceded with a ""^"" character or by ""__"". Each subscript is preceded
+    by a ""_"" character.  The three return values are the actual name, a
+    list with superscripts and a list with subscripts.
+
+    Examples
+    ========
+
+    >>> from sympy.printing.conventions import split_super_sub
+    >>> split_super_sub('a_x^1')
+    ('a', ['1'], ['x'])
+    >>> split_super_sub('var_sub1__sup_sub2')
+    ('var', ['sup'], ['sub1', 'sub2'])
+
+    """"""
+    if not text:
+        return (text, [], [])
+    pos = 0
+    name = None
+    supers = []
+    subs = []
+    while pos < len(text):
+        start = pos + 1
+        if text[pos:pos + 2] == '__':
+            start += 1
+        pos_hat = text.find('^', start)
+        if pos_hat < 0:
+            pos_hat = len(text)
+        pos_usc = text.find('_', start)
+        if pos_usc < 0:
+            pos_usc = len(text)
+        pos_next = min(pos_hat, pos_usc)
+        part = text[pos:pos_next]
+        pos = pos_next
+        if name is None:
+            name = part
+        elif part.startswith('^'):
+            supers.append(part[1:])
+        elif part.startswith('__'):
+            supers.append(part[2:])
+        elif part.startswith('_'):
+            subs.append(part[1:])
+        else:
+            raise RuntimeError('This should never happen.')
+    m = _name_with_digits_p.match(name)
+    if m:
+        name, sub = m.groups()
+        subs.insert(0, sub)
+    return (name, supers, subs)","def decompose_symbol_to_name_super_sub(text):
+    """"""Split a symbol name into a name, superscripts and subscripts
+
+    The first part of the symbol name is considered to be its actual
+    'name', followed by super- and subscripts. Each superscript is
+    preceded with a ""^"" character or by ""__"". Each subscript is preceded
+    by a ""_"" character.  The three return values are the actual name, a
+    list with superscripts and a list with subscripts.
+
+    Examples
+    ========
+
+    >>> from sympy.printing.conventions import split_super_sub
+    >>> split_super_sub('a_x^1')
+    ('a', ['1'], ['x'])
+    >>> split_super_sub('var_sub1__sup_sub2')
+    ('var', ['sup'], ['sub1', 'sub2'])
+
+    """"""
+    if not text:
+        return (text, [], [])
+    pos = 0
+    name = None
+    supers = []
+    subs = []
+    while pos < len(text):
+        start = pos + 1
+        if text[pos:pos + 2] == '__':
+            start += 1
+        pos_hat = text.find('^', start)
+        if pos_hat < 0:
+            pos_hat = len(text)
+        pos_usc = text.find('_', start)
+        if pos_usc < 0:
+            pos_usc = len(text)
+        pos_next = min(pos_hat, pos_usc)
+        part = text[pos:pos_next]
+        pos = pos_next
+        if name is None:
+            name = part
+        elif part.startswith('^'):
+            supers.append(part[1:])
+        elif part.startswith('__'):
+            supers.append(part[2:])
+        elif part.startswith('_'):
+            subs.append(part[1:])
+        else:
+            raise RuntimeError('This should never happen.')
+    m = _name_with_digits_p.match(name)
+    if m:
+        name, sub = m.groups()
+        subs.insert(0, sub)
+    return (name, supers, subs)","[{""var"": ""pos_usc"", ""rename"": ""underscore_position""}, {""var"": ""pos"", ""rename"": ""current_position""}, {""var"": ""pos_next"", ""rename"": ""position_next_delimiter""}, {""var"": ""name"", ""rename"": ""base_symbol_name""}, {""var"": ""part"", ""rename"": ""symbol_segment""}, {""var"": ""pos_hat"", ""rename"": ""super_script_pos""}, {""var"": ""sub"", ""rename"": ""subscripts_list""}, {""var"": ""m"", ""rename"": ""name_digit_match""}, {""var"": ""subs"", ""rename"": ""subscript_list""}, {""var"": ""start"", ""rename"": ""current_position""}, {""var"": ""supers"", ""rename"": ""superscripts""}]"

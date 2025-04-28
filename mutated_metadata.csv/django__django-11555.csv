@@ -1,0 +1,44 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/db/models/sql/compiler.py,find_ordering_name,determine_ordering_alias_and_column,700,729,"def find_ordering_name(self, name, opts, alias=None, default_order='ASC', already_seen=None):
+    """"""
+        Return the table alias (the name might be ambiguous, the alias will
+        not be) and column name for ordering by the given 'name' parameter.
+        The 'name' is of the form 'field1__field2__...__fieldN'.
+        """"""
+    name, order = get_order_dir(name, default_order)
+    descending = order == 'DESC'
+    pieces = name.split(LOOKUP_SEP)
+    field, targets, alias, joins, path, opts, transform_function = self._setup_joins(pieces, opts, alias)
+    if field.is_relation and opts.ordering and (getattr(field, 'attname', None) != name):
+        already_seen = already_seen or set()
+        join_tuple = tuple((getattr(self.query.alias_map[j], 'join_cols', None) for j in joins))
+        if join_tuple in already_seen:
+            raise FieldError('Infinite loop caused by ordering.')
+        already_seen.add(join_tuple)
+        results = []
+        for item in opts.ordering:
+            results.extend(self.find_ordering_name(item, opts, alias, order, already_seen))
+        return results
+    targets, alias, _ = self.query.trim_joins(targets, joins, path)
+    return [(OrderBy(transform_function(t, alias), descending=descending), False) for t in targets]","def determine_ordering_alias_and_column(self, name, opts, alias=None, default_order='ASC', already_seen=None):
+    """"""
+        Return the table alias (the name might be ambiguous, the alias will
+        not be) and column name for ordering by the given 'name' parameter.
+        The 'name' is of the form 'field1__field2__...__fieldN'.
+        """"""
+    name, order = get_order_dir(name, default_order)
+    descending = order == 'DESC'
+    pieces = name.split(LOOKUP_SEP)
+    field, targets, alias, joins, path, opts, transform_function = self._setup_joins(pieces, opts, alias)
+    if field.is_relation and opts.ordering and (getattr(field, 'attname', None) != name):
+        already_seen = already_seen or set()
+        join_tuple = tuple((getattr(self.query.alias_map[j], 'join_cols', None) for j in joins))
+        if join_tuple in already_seen:
+            raise FieldError('Infinite loop caused by ordering.')
+        already_seen.add(join_tuple)
+        results = []
+        for item in opts.ordering:
+            results.extend(self.find_ordering_name(item, opts, alias, order, already_seen))
+        return results
+    targets, alias, _ = self.query.trim_joins(targets, joins, path)
+    return [(OrderBy(transform_function(t, alias), descending=descending), False) for t in targets]","[{""var"": ""pieces"", ""rename"": ""ordering_name_components""}, {""var"": ""transform_function"", ""rename"": ""apply_transformation_to_alias""}, {""var"": ""field"", ""rename"": ""ordering_field""}, {""var"": ""path"", ""rename"": ""join_path_structure""}, {""var"": ""results"", ""rename"": ""ordering_results_list""}, {""var"": ""_"", ""rename"": ""trimmed_joins_result""}, {""var"": ""item"", ""rename"": ""ordering_criteria""}, {""var"": ""order"", ""rename"": ""order_direction""}, {""var"": ""j"", ""rename"": ""join_alias""}, {""var"": ""t"", ""rename"": ""target_column""}, {""var"": ""join_tuple"", ""rename"": ""join_paths_tuple""}, {""var"": ""joins"", ""rename"": ""join_paths""}, {""var"": ""descending"", ""rename"": ""is_order_descending""}, {""var"": ""targets"", ""rename"": ""ordering_targets""}]"

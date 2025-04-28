@@ -1,0 +1,18 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./lib/matplotlib/figure.py,__getstate__,extract_serializable_plot_state,3015,3033,"def __getstate__(self):
+    state = super().__getstate__()
+    state.pop('canvas')
+    state['_cachedRenderer'] = None
+    state['__mpl_version__'] = mpl.__version__
+    from matplotlib import _pylab_helpers
+    if self.canvas.manager in _pylab_helpers.Gcf.figs.values():
+        state['_restore_to_pylab'] = True
+    return state","def extract_serializable_plot_state(self):
+    state = super().__getstate__()
+    state.pop('canvas')
+    state['_cachedRenderer'] = None
+    state['__mpl_version__'] = mpl.__version__
+    from matplotlib import _pylab_helpers
+    if self.canvas.manager in _pylab_helpers.Gcf.figs.values():
+        state['_restore_to_pylab'] = True
+    return state","[{""var"": ""state"", ""rename"": ""filtered_object_state""}]"

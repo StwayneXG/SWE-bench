@@ -1,0 +1,299 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/contrib/admin/utils.py,related_objects,selective_related_queryset,185,187,"def related_objects(self, related, objs):
+    qs = super().related_objects(related, objs)
+    return qs.select_related(related.field.name)","def selective_related_queryset(self, related, objs):
+    qs = super().related_objects(related, objs)
+    return qs.select_related(related.field.name)","[{""var"": ""qs"", ""rename"": ""related_objects_queryset""}]"
+./django/db/models/deletion.py,__init__,initialize_data_structures,65,79,"def __init__(self, using):
+    self.using = using
+    self.data = {}
+    self.field_updates = {}
+    self.fast_deletes = []
+    self.dependencies = {}","def initialize_data_structures(self, using):
+    self.using = using
+    self.data = {}
+    self.field_updates = {}
+    self.fast_deletes = []
+    self.dependencies = {}",[]
+./django/db/models/deletion.py,add,register_objects_for_deletion,81,106,"def add(self, objs, source=None, nullable=False, reverse_dependency=False):
+    """"""
+        Add 'objs' to the collection of objects to be deleted.  If the call is
+        the result of a cascade, 'source' should be the model that caused it,
+        and 'nullable' should be set to True if the relation can be null.
+
+        Return a list of all objects that were not already collected.
+        """"""
+    if not objs:
+        return []
+    new_objs = []
+    model = objs[0].__class__
+    instances = self.data.setdefault(model, set())
+    for obj in objs:
+        if obj not in instances:
+            new_objs.append(obj)
+    instances.update(new_objs)
+    if source is not None and (not nullable):
+        if reverse_dependency:
+            source, model = (model, source)
+        self.dependencies.setdefault(source._meta.concrete_model, set()).add(model._meta.concrete_model)
+    return new_objs","def register_objects_for_deletion(self, objs, source=None, nullable=False, reverse_dependency=False):
+    """"""
+        Add 'objs' to the collection of objects to be deleted.  If the call is
+        the result of a cascade, 'source' should be the model that caused it,
+        and 'nullable' should be set to True if the relation can be null.
+
+        Return a list of all objects that were not already collected.
+        """"""
+    if not objs:
+        return []
+    new_objs = []
+    model = objs[0].__class__
+    instances = self.data.setdefault(model, set())
+    for obj in objs:
+        if obj not in instances:
+            new_objs.append(obj)
+    instances.update(new_objs)
+    if source is not None and (not nullable):
+        if reverse_dependency:
+            source, model = (model, source)
+        self.dependencies.setdefault(source._meta.concrete_model, set()).add(model._meta.concrete_model)
+    return new_objs","[{""var"": ""model"", ""rename"": ""object_model_class""}, {""var"": ""new_objs"", ""rename"": ""uncollected_objects""}, {""var"": ""instances"", ""rename"": ""collected_instances_set""}, {""var"": ""obj"", ""rename"": ""object_to_add_or_delete""}]"
+./django/db/models/deletion.py,add_field_update,schedule_batch_field_update,108,118,"def add_field_update(self, field, value, objs):
+    """"""
+        Schedule a field update. 'objs' must be a homogeneous iterable
+        collection of model instances (e.g. a QuerySet).
+        """"""
+    if not objs:
+        return
+    model = objs[0].__class__
+    self.field_updates.setdefault(model, {}).setdefault((field, value), set()).update(objs)","def schedule_batch_field_update(self, field, value, objs):
+    """"""
+        Schedule a field update. 'objs' must be a homogeneous iterable
+        collection of model instances (e.g. a QuerySet).
+        """"""
+    if not objs:
+        return
+    model = objs[0].__class__
+    self.field_updates.setdefault(model, {}).setdefault((field, value), set()).update(objs)","[{""var"": ""model"", ""rename"": ""model_class_instances""}]"
+./django/db/models/deletion.py,can_fast_delete,check_eligibility_for_fast_deletion,126,160,"def can_fast_delete(self, objs, from_field=None):
+    """"""
+        Determine if the objects in the given queryset-like or single object
+        can be fast-deleted. This can be done if there are no cascades, no
+        parents and no signal listeners for the object class.
+
+        The 'from_field' tells where we are coming from - we need this to
+        determine if the objects are in fact to be deleted. Allow also
+        skipping parent -> child -> parent chain preventing fast delete of
+        the child.
+        """"""
+    if from_field and from_field.remote_field.on_delete is not CASCADE:
+        return False
+    if hasattr(objs, '_meta'):
+        model = type(objs)
+    elif hasattr(objs, 'model') and hasattr(objs, '_raw_delete'):
+        model = objs.model
+    else:
+        return False
+    if self._has_signal_listeners(model):
+        return False
+    opts = model._meta
+    return all((link == from_field for link in opts.concrete_model._meta.parents.values())) and all((related.field.remote_field.on_delete is DO_NOTHING for related in get_candidate_relations_to_delete(opts))) and (not any((hasattr(field, 'bulk_related_objects') for field in opts.private_fields)))","def check_eligibility_for_fast_deletion(self, objs, from_field=None):
+    """"""
+        Determine if the objects in the given queryset-like or single object
+        can be fast-deleted. This can be done if there are no cascades, no
+        parents and no signal listeners for the object class.
+
+        The 'from_field' tells where we are coming from - we need this to
+        determine if the objects are in fact to be deleted. Allow also
+        skipping parent -> child -> parent chain preventing fast delete of
+        the child.
+        """"""
+    if from_field and from_field.remote_field.on_delete is not CASCADE:
+        return False
+    if hasattr(objs, '_meta'):
+        model = type(objs)
+    elif hasattr(objs, 'model') and hasattr(objs, '_raw_delete'):
+        model = objs.model
+    else:
+        return False
+    if self._has_signal_listeners(model):
+        return False
+    opts = model._meta
+    return all((link == from_field for link in opts.concrete_model._meta.parents.values())) and all((related.field.remote_field.on_delete is DO_NOTHING for related in get_candidate_relations_to_delete(opts))) and (not any((hasattr(field, 'bulk_related_objects') for field in opts.private_fields)))","[{""var"": ""link"", ""rename"": ""parent_link""}, {""var"": ""field"", ""rename"": ""originating_relation""}, {""var"": ""related"", ""rename"": ""candidate_relations""}, {""var"": ""model"", ""rename"": ""target_model_class""}, {""var"": ""opts"", ""rename"": ""model_metadata_options""}]"
+./django/db/models/deletion.py,get_del_batches,partition_objects_by_connection_batch_size,162,172,"def get_del_batches(self, objs, field):
+    """"""
+        Return the objs in suitably sized batches for the used connection.
+        """"""
+    conn_batch_size = max(connections[self.using].ops.bulk_batch_size([field.name], objs), 1)
+    if len(objs) > conn_batch_size:
+        return [objs[i:i + conn_batch_size] for i in range(0, len(objs), conn_batch_size)]
+    else:
+        return [objs]","def partition_objects_by_connection_batch_size(self, objs, field):
+    """"""
+        Return the objs in suitably sized batches for the used connection.
+        """"""
+    conn_batch_size = max(connections[self.using].ops.bulk_batch_size([field.name], objs), 1)
+    if len(objs) > conn_batch_size:
+        return [objs[i:i + conn_batch_size] for i in range(0, len(objs), conn_batch_size)]
+    else:
+        return [objs]","[{""var"": ""conn_batch_size"", ""rename"": ""connection_optimized_batch_size""}, {""var"": ""i"", ""rename"": ""batch_start_index""}]"
+./django/db/models/deletion.py,collect,gather_objects_for_deletion,174,250,"def collect(self, objs, source=None, nullable=False, collect_related=True, source_attr=None, reverse_dependency=False, keep_parents=False):
+    """"""
+        Add 'objs' to the collection of objects to be deleted as well as all
+        parent instances.  'objs' must be a homogeneous iterable collection of
+        model instances (e.g. a QuerySet).  If 'collect_related' is True,
+        related objects will be handled by their respective on_delete handler.
+
+        If the call is the result of a cascade, 'source' should be the model
+        that caused it and 'nullable' should be set to True, if the relation
+        can be null.
+
+        If 'reverse_dependency' is True, 'source' will be deleted before the
+        current model, rather than after. (Needed for cascading to parent
+        models, the one case in which the cascade follows the forwards
+        direction of an FK rather than the reverse direction.)
+
+        If 'keep_parents' is True, data of parent model's will be not deleted.
+        """"""
+    if self.can_fast_delete(objs):
+        self.fast_deletes.append(objs)
+        return
+    new_objs = self.add(objs, source, nullable, reverse_dependency=reverse_dependency)
+    if not new_objs:
+        return
+    model = new_objs[0].__class__
+    if not keep_parents:
+        concrete_model = model._meta.concrete_model
+        for ptr in concrete_model._meta.parents.values():
+            if ptr:
+                parent_objs = [getattr(obj, ptr.name) for obj in new_objs]
+                self.collect(parent_objs, source=model, source_attr=ptr.remote_field.related_name, collect_related=False, reverse_dependency=True)
+    if collect_related:
+        if keep_parents:
+            parents = set(model._meta.get_parent_list())
+        for related in get_candidate_relations_to_delete(model._meta):
+            if keep_parents and related.model in parents:
+                continue
+            field = related.field
+            if field.remote_field.on_delete == DO_NOTHING:
+                continue
+            batches = self.get_del_batches(new_objs, field)
+            for batch in batches:
+                sub_objs = self.related_objects(related, batch)
+                if self.can_fast_delete(sub_objs, from_field=field):
+                    self.fast_deletes.append(sub_objs)
+                else:
+                    related_model = related.related_model
+                    if not (sub_objs.query.select_related or self._has_signal_listeners(related_model)):
+                        referenced_fields = set(chain.from_iterable(((rf.attname for rf in rel.field.foreign_related_fields) for rel in get_candidate_relations_to_delete(related_model._meta))))
+                        sub_objs = sub_objs.only(*tuple(referenced_fields))
+                    if sub_objs:
+                        field.remote_field.on_delete(self, field, sub_objs, self.using)
+        for field in model._meta.private_fields:
+            if hasattr(field, 'bulk_related_objects'):
+                sub_objs = field.bulk_related_objects(new_objs, self.using)
+                self.collect(sub_objs, source=model, nullable=True)","def gather_objects_for_deletion(self, objs, source=None, nullable=False, collect_related=True, source_attr=None, reverse_dependency=False, keep_parents=False):
+    """"""
+        Add 'objs' to the collection of objects to be deleted as well as all
+        parent instances.  'objs' must be a homogeneous iterable collection of
+        model instances (e.g. a QuerySet).  If 'collect_related' is True,
+        related objects will be handled by their respective on_delete handler.
+
+        If the call is the result of a cascade, 'source' should be the model
+        that caused it and 'nullable' should be set to True, if the relation
+        can be null.
+
+        If 'reverse_dependency' is True, 'source' will be deleted before the
+        current model, rather than after. (Needed for cascading to parent
+        models, the one case in which the cascade follows the forwards
+        direction of an FK rather than the reverse direction.)
+
+        If 'keep_parents' is True, data of parent model's will be not deleted.
+        """"""
+    if self.can_fast_delete(objs):
+        self.fast_deletes.append(objs)
+        return
+    new_objs = self.add(objs, source, nullable, reverse_dependency=reverse_dependency)
+    if not new_objs:
+        return
+    model = new_objs[0].__class__
+    if not keep_parents:
+        concrete_model = model._meta.concrete_model
+        for ptr in concrete_model._meta.parents.values():
+            if ptr:
+                parent_objs = [getattr(obj, ptr.name) for obj in new_objs]
+                self.collect(parent_objs, source=model, source_attr=ptr.remote_field.related_name, collect_related=False, reverse_dependency=True)
+    if collect_related:
+        if keep_parents:
+            parents = set(model._meta.get_parent_list())
+        for related in get_candidate_relations_to_delete(model._meta):
+            if keep_parents and related.model in parents:
+                continue
+            field = related.field
+            if field.remote_field.on_delete == DO_NOTHING:
+                continue
+            batches = self.get_del_batches(new_objs, field)
+            for batch in batches:
+                sub_objs = self.related_objects(related, batch)
+                if self.can_fast_delete(sub_objs, from_field=field):
+                    self.fast_deletes.append(sub_objs)
+                else:
+                    related_model = related.related_model
+                    if not (sub_objs.query.select_related or self._has_signal_listeners(related_model)):
+                        referenced_fields = set(chain.from_iterable(((rf.attname for rf in rel.field.foreign_related_fields) for rel in get_candidate_relations_to_delete(related_model._meta))))
+                        sub_objs = sub_objs.only(*tuple(referenced_fields))
+                    if sub_objs:
+                        field.remote_field.on_delete(self, field, sub_objs, self.using)
+        for field in model._meta.private_fields:
+            if hasattr(field, 'bulk_related_objects'):
+                sub_objs = field.bulk_related_objects(new_objs, self.using)
+                self.collect(sub_objs, source=model, nullable=True)","[{""var"": ""rel"", ""rename"": ""related_objects_to_delete""}, {""var"": ""new_objs"", ""rename"": ""added_objects""}, {""var"": ""ptr"", ""rename"": ""parent_relationship""}, {""var"": ""concrete_model"", ""rename"": ""base_concrete_model""}, {""var"": ""related"", ""rename"": ""related_entities""}, {""var"": ""field"", ""rename"": ""related_field""}, {""var"": ""model"", ""rename"": ""model_class""}, {""var"": ""referenced_fields"", ""rename"": ""dependent_reference_fields""}, {""var"": ""obj"", ""rename"": ""object_to_collect""}, {""var"": ""parent_objs"", ""rename"": ""parent_instances_to_delete""}, {""var"": ""related_model"", ""rename"": ""associated_model_class""}, {""var"": ""batch"", ""rename"": ""object_batch_group""}, {""var"": ""parents"", ""rename"": ""involved_parent_models""}, {""var"": ""sub_objs"", ""rename"": ""related_sub_objects""}, {""var"": ""batches"", ""rename"": ""deletion_batches""}, {""var"": ""rf"", ""rename"": ""related_field""}]"
+./django/db/models/deletion.py,related_objects,get_queryset_of_related_objects,252,258,"def related_objects(self, related, objs):
+    """"""
+        Get a QuerySet of objects related to `objs` via the relation `related`.
+        """"""
+    return related.related_model._base_manager.using(self.using).filter(**{'%s__in' % related.field.name: objs})","def get_queryset_of_related_objects(self, related, objs):
+    """"""
+        Get a QuerySet of objects related to `objs` via the relation `related`.
+        """"""
+    return related.related_model._base_manager.using(self.using).filter(**{'%s__in' % related.field.name: objs})",[]
+./django/db/models/deletion.py,instances_with_model,iterate_model_instance_pairs,260,263,"def instances_with_model(self):
+    for model, instances in self.data.items():
+        for obj in instances:
+            yield (model, obj)","def iterate_model_instance_pairs(self):
+    for model, instances in self.data.items():
+        for obj in instances:
+            yield (model, obj)","[{""var"": ""model"", ""rename"": ""model_type""}, {""var"": ""instances"", ""rename"": ""model_instance_pairs""}, {""var"": ""obj"", ""rename"": ""instance_object""}]"
+./django/db/models/deletion.py,sort,resolve_and_sort_models_by_dependencies,265,281,"def sort(self):
+    sorted_models = []
+    concrete_models = set()
+    models = list(self.data)
+    while len(sorted_models) < len(models):
+        found = False
+        for model in models:
+            if model in sorted_models:
+                continue
+            dependencies = self.dependencies.get(model._meta.concrete_model)
+            if not (dependencies and dependencies.difference(concrete_models)):
+                sorted_models.append(model)
+                concrete_models.add(model._meta.concrete_model)
+                found = True
+        if not found:
+            return
+    self.data = {model: self.data[model] for model in sorted_models}","def resolve_and_sort_models_by_dependencies(self):
+    sorted_models = []
+    concrete_models = set()
+    models = list(self.data)
+    while len(sorted_models) < len(models):
+        found = False
+        for model in models:
+            if model in sorted_models:
+                continue
+            dependencies = self.dependencies.get(model._meta.concrete_model)
+            if not (dependencies and dependencies.difference(concrete_models)):
+                sorted_models.append(model)
+                concrete_models.add(model._meta.concrete_model)
+                found = True
+        if not found:
+            return
+    self.data = {model: self.data[model] for model in sorted_models}","[{""var"": ""sorted_models"", ""rename"": ""dependency_resolved_models""}, {""var"": ""model"", ""rename"": ""database_table""}, {""var"": ""models"", ""rename"": ""unsorted_models_list""}, {""var"": ""dependencies"", ""rename"": ""model_dependencies""}, {""var"": ""concrete_models"", ""rename"": ""processed_concrete_model_types""}, {""var"": ""found"", ""rename"": ""progress_made""}]"

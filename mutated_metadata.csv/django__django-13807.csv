@@ -1,0 +1,66 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/db/backends/sqlite3/base.py,check_constraints,validate_foreign_key_integrity,316,385,"def check_constraints(self, table_names=None):
+    """"""
+        Check each table name in `table_names` for rows with invalid foreign
+        key references. This method is intended to be used in conjunction with
+        `disable_constraint_checking()` and `enable_constraint_checking()`, to
+        determine if rows with invalid references were entered while constraint
+        checks were off.
+        """"""
+    if self.features.supports_pragma_foreign_key_check:
+        with self.cursor() as cursor:
+            if table_names is None:
+                violations = cursor.execute('PRAGMA foreign_key_check').fetchall()
+            else:
+                violations = chain.from_iterable((cursor.execute('PRAGMA foreign_key_check(%s)' % table_name).fetchall() for table_name in table_names))
+            for table_name, rowid, referenced_table_name, foreign_key_index in violations:
+                foreign_key = cursor.execute('PRAGMA foreign_key_list(%s)' % table_name).fetchall()[foreign_key_index]
+                column_name, referenced_column_name = foreign_key[3:5]
+                primary_key_column_name = self.introspection.get_primary_key_column(cursor, table_name)
+                primary_key_value, bad_value = cursor.execute('SELECT %s, %s FROM %s WHERE rowid = %%s' % (primary_key_column_name, column_name, table_name), (rowid,)).fetchone()
+                raise IntegrityError(""The row in table '%s' with primary key '%s' has an invalid foreign key: %s.%s contains a value '%s' that does not have a corresponding value in %s.%s."" % (table_name, primary_key_value, table_name, column_name, bad_value, referenced_table_name, referenced_column_name))
+    else:
+        with self.cursor() as cursor:
+            if table_names is None:
+                table_names = self.introspection.table_names(cursor)
+            for table_name in table_names:
+                primary_key_column_name = self.introspection.get_primary_key_column(cursor, table_name)
+                if not primary_key_column_name:
+                    continue
+                key_columns = self.introspection.get_key_columns(cursor, table_name)
+                for column_name, referenced_table_name, referenced_column_name in key_columns:
+                    cursor.execute('\n                            SELECT REFERRING.`%s`, REFERRING.`%s` FROM `%s` as REFERRING\n                            LEFT JOIN `%s` as REFERRED\n                            ON (REFERRING.`%s` = REFERRED.`%s`)\n                            WHERE REFERRING.`%s` IS NOT NULL AND REFERRED.`%s` IS NULL\n                            ' % (primary_key_column_name, column_name, table_name, referenced_table_name, column_name, referenced_column_name, column_name, referenced_column_name))
+                    for bad_row in cursor.fetchall():
+                        raise IntegrityError(""The row in table '%s' with primary key '%s' has an invalid foreign key: %s.%s contains a value '%s' that does not have a corresponding value in %s.%s."" % (table_name, bad_row[0], table_name, column_name, bad_row[1], referenced_table_name, referenced_column_name))","def validate_foreign_key_integrity(self, table_names=None):
+    """"""
+        Check each table name in `table_names` for rows with invalid foreign
+        key references. This method is intended to be used in conjunction with
+        `disable_constraint_checking()` and `enable_constraint_checking()`, to
+        determine if rows with invalid references were entered while constraint
+        checks were off.
+        """"""
+    if self.features.supports_pragma_foreign_key_check:
+        with self.cursor() as cursor:
+            if table_names is None:
+                violations = cursor.execute('PRAGMA foreign_key_check').fetchall()
+            else:
+                violations = chain.from_iterable((cursor.execute('PRAGMA foreign_key_check(%s)' % table_name).fetchall() for table_name in table_names))
+            for table_name, rowid, referenced_table_name, foreign_key_index in violations:
+                foreign_key = cursor.execute('PRAGMA foreign_key_list(%s)' % table_name).fetchall()[foreign_key_index]
+                column_name, referenced_column_name = foreign_key[3:5]
+                primary_key_column_name = self.introspection.get_primary_key_column(cursor, table_name)
+                primary_key_value, bad_value = cursor.execute('SELECT %s, %s FROM %s WHERE rowid = %%s' % (primary_key_column_name, column_name, table_name), (rowid,)).fetchone()
+                raise IntegrityError(""The row in table '%s' with primary key '%s' has an invalid foreign key: %s.%s contains a value '%s' that does not have a corresponding value in %s.%s."" % (table_name, primary_key_value, table_name, column_name, bad_value, referenced_table_name, referenced_column_name))
+    else:
+        with self.cursor() as cursor:
+            if table_names is None:
+                table_names = self.introspection.table_names(cursor)
+            for table_name in table_names:
+                primary_key_column_name = self.introspection.get_primary_key_column(cursor, table_name)
+                if not primary_key_column_name:
+                    continue
+                key_columns = self.introspection.get_key_columns(cursor, table_name)
+                for column_name, referenced_table_name, referenced_column_name in key_columns:
+                    cursor.execute('\n                            SELECT REFERRING.`%s`, REFERRING.`%s` FROM `%s` as REFERRING\n                            LEFT JOIN `%s` as REFERRED\n                            ON (REFERRING.`%s` = REFERRED.`%s`)\n                            WHERE REFERRING.`%s` IS NOT NULL AND REFERRED.`%s` IS NULL\n                            ' % (primary_key_column_name, column_name, table_name, referenced_table_name, column_name, referenced_column_name, column_name, referenced_column_name))
+                    for bad_row in cursor.fetchall():
+                        raise IntegrityError(""The row in table '%s' with primary key '%s' has an invalid foreign key: %s.%s contains a value '%s' that does not have a corresponding value in %s.%s."" % (table_name, bad_row[0], table_name, column_name, bad_row[1], referenced_table_name, referenced_column_name))","[{""var"": ""column_name"", ""rename"": ""foreign_key_column_name""}, {""var"": ""key_columns"", ""rename"": ""foreign_key_pairs""}, {""var"": ""rowid"", ""rename"": ""invalid_foreign_key_rowid""}, {""var"": ""referenced_table_name"", ""rename"": ""related_table_name""}, {""var"": ""cursor"", ""rename"": ""db_cursor""}, {""var"": ""foreign_key"", ""rename"": ""invalid_foreign_key_details""}, {""var"": ""primary_key_column_name"", ""rename"": ""table_primary_key_column""}, {""var"": ""violations"", ""rename"": ""invalid_foreign_key_entries""}, {""var"": ""primary_key_value"", ""rename"": ""table_primary_key_value""}, {""var"": ""table_name"", ""rename"": ""table_names_to_check""}, {""var"": ""bad_value"", ""rename"": ""invalid_foreign_key_value""}, {""var"": ""bad_row"", ""rename"": ""invalid_foreign_key_row""}, {""var"": ""foreign_key_index"", ""rename"": ""referenced_constraint_index""}, {""var"": ""referenced_column_name"", ""rename"": ""target_column_name""}]"

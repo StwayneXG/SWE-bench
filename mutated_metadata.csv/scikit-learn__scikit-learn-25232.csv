@@ -1,0 +1,276 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./sklearn/impute/_iterative.py,__init__,configure_missing_value_imputer,294,330,"def __init__(self, estimator=None, *, missing_values=np.nan, sample_posterior=False, max_iter=10, tol=0.001, n_nearest_features=None, initial_strategy='mean', imputation_order='ascending', skip_complete=False, min_value=-np.inf, max_value=np.inf, verbose=0, random_state=None, add_indicator=False, keep_empty_features=False):
+    super().__init__(missing_values=missing_values, add_indicator=add_indicator, keep_empty_features=keep_empty_features)
+    self.estimator = estimator
+    self.sample_posterior = sample_posterior
+    self.max_iter = max_iter
+    self.tol = tol
+    self.n_nearest_features = n_nearest_features
+    self.initial_strategy = initial_strategy
+    self.imputation_order = imputation_order
+    self.skip_complete = skip_complete
+    self.min_value = min_value
+    self.max_value = max_value
+    self.verbose = verbose
+    self.random_state = random_state","def configure_missing_value_imputer(self, estimator=None, *, missing_values=np.nan, sample_posterior=False, max_iter=10, tol=0.001, n_nearest_features=None, initial_strategy='mean', imputation_order='ascending', skip_complete=False, min_value=-np.inf, max_value=np.inf, verbose=0, random_state=None, add_indicator=False, keep_empty_features=False):
+    super().__init__(missing_values=missing_values, add_indicator=add_indicator, keep_empty_features=keep_empty_features)
+    self.estimator = estimator
+    self.sample_posterior = sample_posterior
+    self.max_iter = max_iter
+    self.tol = tol
+    self.n_nearest_features = n_nearest_features
+    self.initial_strategy = initial_strategy
+    self.imputation_order = imputation_order
+    self.skip_complete = skip_complete
+    self.min_value = min_value
+    self.max_value = max_value
+    self.verbose = verbose
+    self.random_state = random_state",[]
+./sklearn/impute/_iterative.py,_impute_one_feature,impute_feature_via_neighbors,332,449,"def _impute_one_feature(self, X_filled, mask_missing_values, feat_idx, neighbor_feat_idx, estimator=None, fit_mode=True):
+    """"""Impute a single feature from the others provided.
+
+        This function predicts the missing values of one of the features using
+        the current estimates of all the other features. The `estimator` must
+        support `return_std=True` in its `predict` method for this function
+        to work.
+
+        Parameters
+        ----------
+        X_filled : ndarray
+            Input data with the most recent imputations.
+
+        mask_missing_values : ndarray
+            Input data's missing indicator matrix.
+
+        feat_idx : int
+            Index of the feature currently being imputed.
+
+        neighbor_feat_idx : ndarray
+            Indices of the features to be used in imputing `feat_idx`.
+
+        estimator : object
+            The estimator to use at this step of the round-robin imputation.
+            If `sample_posterior=True`, the estimator must support
+            `return_std` in its `predict` method.
+            If None, it will be cloned from self._estimator.
+
+        fit_mode : boolean, default=True
+            Whether to fit and predict with the estimator or just predict.
+
+        Returns
+        -------
+        X_filled : ndarray
+            Input data with `X_filled[missing_row_mask, feat_idx]` updated.
+
+        estimator : estimator with sklearn API
+            The fitted estimator used to impute
+            `X_filled[missing_row_mask, feat_idx]`.
+        """"""
+    if estimator is None and fit_mode is False:
+        raise ValueError('If fit_mode is False, then an already-fitted estimator should be passed in.')
+    if estimator is None:
+        estimator = clone(self._estimator)
+    missing_row_mask = mask_missing_values[:, feat_idx]
+    if fit_mode:
+        X_train = _safe_indexing(_safe_indexing(X_filled, neighbor_feat_idx, axis=1), ~missing_row_mask, axis=0)
+        y_train = _safe_indexing(_safe_indexing(X_filled, feat_idx, axis=1), ~missing_row_mask, axis=0)
+        estimator.fit(X_train, y_train)
+    if np.sum(missing_row_mask) == 0:
+        return (X_filled, estimator)
+    X_test = _safe_indexing(_safe_indexing(X_filled, neighbor_feat_idx, axis=1), missing_row_mask, axis=0)
+    if self.sample_posterior:
+        mus, sigmas = estimator.predict(X_test, return_std=True)
+        imputed_values = np.zeros(mus.shape, dtype=X_filled.dtype)
+        positive_sigmas = sigmas > 0
+        imputed_values[~positive_sigmas] = mus[~positive_sigmas]
+        mus_too_low = mus < self._min_value[feat_idx]
+        imputed_values[mus_too_low] = self._min_value[feat_idx]
+        mus_too_high = mus > self._max_value[feat_idx]
+        imputed_values[mus_too_high] = self._max_value[feat_idx]
+        inrange_mask = positive_sigmas & ~mus_too_low & ~mus_too_high
+        mus = mus[inrange_mask]
+        sigmas = sigmas[inrange_mask]
+        a = (self._min_value[feat_idx] - mus) / sigmas
+        b = (self._max_value[feat_idx] - mus) / sigmas
+        truncated_normal = stats.truncnorm(a=a, b=b, loc=mus, scale=sigmas)
+        imputed_values[inrange_mask] = truncated_normal.rvs(random_state=self.random_state_)
+    else:
+        imputed_values = estimator.predict(X_test)
+        imputed_values = np.clip(imputed_values, self._min_value[feat_idx], self._max_value[feat_idx])
+    _safe_assign(X_filled, imputed_values, row_indexer=missing_row_mask, column_indexer=feat_idx)
+    return (X_filled, estimator)","def impute_feature_via_neighbors(self, X_filled, mask_missing_values, feat_idx, neighbor_feat_idx, estimator=None, fit_mode=True):
+    """"""Impute a single feature from the others provided.
+
+        This function predicts the missing values of one of the features using
+        the current estimates of all the other features. The `estimator` must
+        support `return_std=True` in its `predict` method for this function
+        to work.
+
+        Parameters
+        ----------
+        X_filled : ndarray
+            Input data with the most recent imputations.
+
+        mask_missing_values : ndarray
+            Input data's missing indicator matrix.
+
+        feat_idx : int
+            Index of the feature currently being imputed.
+
+        neighbor_feat_idx : ndarray
+            Indices of the features to be used in imputing `feat_idx`.
+
+        estimator : object
+            The estimator to use at this step of the round-robin imputation.
+            If `sample_posterior=True`, the estimator must support
+            `return_std` in its `predict` method.
+            If None, it will be cloned from self._estimator.
+
+        fit_mode : boolean, default=True
+            Whether to fit and predict with the estimator or just predict.
+
+        Returns
+        -------
+        X_filled : ndarray
+            Input data with `X_filled[missing_row_mask, feat_idx]` updated.
+
+        estimator : estimator with sklearn API
+            The fitted estimator used to impute
+            `X_filled[missing_row_mask, feat_idx]`.
+        """"""
+    if estimator is None and fit_mode is False:
+        raise ValueError('If fit_mode is False, then an already-fitted estimator should be passed in.')
+    if estimator is None:
+        estimator = clone(self._estimator)
+    missing_row_mask = mask_missing_values[:, feat_idx]
+    if fit_mode:
+        X_train = _safe_indexing(_safe_indexing(X_filled, neighbor_feat_idx, axis=1), ~missing_row_mask, axis=0)
+        y_train = _safe_indexing(_safe_indexing(X_filled, feat_idx, axis=1), ~missing_row_mask, axis=0)
+        estimator.fit(X_train, y_train)
+    if np.sum(missing_row_mask) == 0:
+        return (X_filled, estimator)
+    X_test = _safe_indexing(_safe_indexing(X_filled, neighbor_feat_idx, axis=1), missing_row_mask, axis=0)
+    if self.sample_posterior:
+        mus, sigmas = estimator.predict(X_test, return_std=True)
+        imputed_values = np.zeros(mus.shape, dtype=X_filled.dtype)
+        positive_sigmas = sigmas > 0
+        imputed_values[~positive_sigmas] = mus[~positive_sigmas]
+        mus_too_low = mus < self._min_value[feat_idx]
+        imputed_values[mus_too_low] = self._min_value[feat_idx]
+        mus_too_high = mus > self._max_value[feat_idx]
+        imputed_values[mus_too_high] = self._max_value[feat_idx]
+        inrange_mask = positive_sigmas & ~mus_too_low & ~mus_too_high
+        mus = mus[inrange_mask]
+        sigmas = sigmas[inrange_mask]
+        a = (self._min_value[feat_idx] - mus) / sigmas
+        b = (self._max_value[feat_idx] - mus) / sigmas
+        truncated_normal = stats.truncnorm(a=a, b=b, loc=mus, scale=sigmas)
+        imputed_values[inrange_mask] = truncated_normal.rvs(random_state=self.random_state_)
+    else:
+        imputed_values = estimator.predict(X_test)
+        imputed_values = np.clip(imputed_values, self._min_value[feat_idx], self._max_value[feat_idx])
+    _safe_assign(X_filled, imputed_values, row_indexer=missing_row_mask, column_indexer=feat_idx)
+    return (X_filled, estimator)","[{""var"": ""X_train"", ""rename"": ""training_features_subset""}, {""var"": ""y_train"", ""rename"": ""observed_target_values""}, {""var"": ""inrange_mask"", ""rename"": ""valid_prediction_mask""}, {""var"": ""a"", ""rename"": ""truncation_lower_bound""}, {""var"": ""sigmas"", ""rename"": ""prediction_std_devs""}, {""var"": ""mus"", ""rename"": ""predicted_means""}, {""var"": ""positive_sigmas"", ""rename"": ""has_positive_standard_deviation""}, {""var"": ""missing_row_mask"", ""rename"": ""feature_missing_indicator""}, {""var"": ""imputed_values"", ""rename"": ""predicted_missing_values""}, {""var"": ""X_test"", ""rename"": ""X_neighborhood_missing""}, {""var"": ""mus_too_high"", ""rename"": ""python\npredicted_values_exceeding_max""}, {""var"": ""mus_too_low"", ""rename"": ""predicted_values_below_min_threshold""}, {""var"": ""truncated_normal"", ""rename"": ""truncated_normal_distribution""}, {""var"": ""b"", ""rename"": ""upper_bound""}]"
+./sklearn/impute/_iterative.py,_initial_imputation,perform_initial_data_imputation,565,636,"def _initial_imputation(self, X, in_fit=False):
+    """"""Perform initial imputation for input `X`.
+
+        Parameters
+        ----------
+        X : ndarray of shape (n_samples, n_features)
+            Input data, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
+
+        in_fit : bool, default=False
+            Whether function is called in :meth:`fit`.
+
+        Returns
+        -------
+        Xt : ndarray of shape (n_samples, n_features)
+            Input data, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
+
+        X_filled : ndarray of shape (n_samples, n_features)
+            Input data with the most recent imputations.
+
+        mask_missing_values : ndarray of shape (n_samples, n_features)
+            Input data's missing indicator matrix, where `n_samples` is the
+            number of samples and `n_features` is the number of features,
+            masked by non-missing features.
+
+        X_missing_mask : ndarray, shape (n_samples, n_features)
+            Input data's mask matrix indicating missing datapoints, where
+            `n_samples` is the number of samples and `n_features` is the
+            number of features.
+        """"""
+    if is_scalar_nan(self.missing_values):
+        force_all_finite = 'allow-nan'
+    else:
+        force_all_finite = True
+    X = self._validate_data(X, dtype=FLOAT_DTYPES, order='F', reset=in_fit, force_all_finite=force_all_finite)
+    _check_inputs_dtype(X, self.missing_values)
+    X_missing_mask = _get_mask(X, self.missing_values)
+    mask_missing_values = X_missing_mask.copy()
+    if self.initial_imputer_ is None:
+        self.initial_imputer_ = SimpleImputer(missing_values=self.missing_values, strategy=self.initial_strategy, keep_empty_features=self.keep_empty_features)
+        X_filled = self.initial_imputer_.fit_transform(X)
+    else:
+        X_filled = self.initial_imputer_.transform(X)
+    valid_mask = np.flatnonzero(np.logical_not(np.isnan(self.initial_imputer_.statistics_)))
+    if not self.keep_empty_features:
+        Xt = X[:, valid_mask]
+        mask_missing_values = mask_missing_values[:, valid_mask]
+    else:
+        mask_missing_values[:, valid_mask] = True
+        Xt = X
+    return (Xt, X_filled, mask_missing_values, X_missing_mask)","def perform_initial_data_imputation(self, X, in_fit=False):
+    """"""Perform initial imputation for input `X`.
+
+        Parameters
+        ----------
+        X : ndarray of shape (n_samples, n_features)
+            Input data, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
+
+        in_fit : bool, default=False
+            Whether function is called in :meth:`fit`.
+
+        Returns
+        -------
+        Xt : ndarray of shape (n_samples, n_features)
+            Input data, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
+
+        X_filled : ndarray of shape (n_samples, n_features)
+            Input data with the most recent imputations.
+
+        mask_missing_values : ndarray of shape (n_samples, n_features)
+            Input data's missing indicator matrix, where `n_samples` is the
+            number of samples and `n_features` is the number of features,
+            masked by non-missing features.
+
+        X_missing_mask : ndarray, shape (n_samples, n_features)
+            Input data's mask matrix indicating missing datapoints, where
+            `n_samples` is the number of samples and `n_features` is the
+            number of features.
+        """"""
+    if is_scalar_nan(self.missing_values):
+        force_all_finite = 'allow-nan'
+    else:
+        force_all_finite = True
+    X = self._validate_data(X, dtype=FLOAT_DTYPES, order='F', reset=in_fit, force_all_finite=force_all_finite)
+    _check_inputs_dtype(X, self.missing_values)
+    X_missing_mask = _get_mask(X, self.missing_values)
+    mask_missing_values = X_missing_mask.copy()
+    if self.initial_imputer_ is None:
+        self.initial_imputer_ = SimpleImputer(missing_values=self.missing_values, strategy=self.initial_strategy, keep_empty_features=self.keep_empty_features)
+        X_filled = self.initial_imputer_.fit_transform(X)
+    else:
+        X_filled = self.initial_imputer_.transform(X)
+    valid_mask = np.flatnonzero(np.logical_not(np.isnan(self.initial_imputer_.statistics_)))
+    if not self.keep_empty_features:
+        Xt = X[:, valid_mask]
+        mask_missing_values = mask_missing_values[:, valid_mask]
+    else:
+        mask_missing_values[:, valid_mask] = True
+        Xt = X
+    return (Xt, X_filled, mask_missing_values, X_missing_mask)","[{""var"": ""Xt"", ""rename"": ""validated_data_output""}, {""var"": ""mask_missing_values"", ""rename"": ""missing_indicator_matrix""}, {""var"": ""X_filled"", ""rename"": ""X_imputed_initial""}, {""var"": ""X_missing_mask"", ""rename"": ""input_missing_indicator_mask""}, {""var"": ""force_all_finite"", ""rename"": ""allow_nan_in_data""}, {""var"": ""valid_mask"", ""rename"": ""valid_features_mask""}]"

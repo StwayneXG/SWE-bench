@@ -1,0 +1,20 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/forms/formsets.py,add_fields,enhance_form_with_dynamic_fields,475,498,"def add_fields(self, form, index):
+    """"""A hook for adding extra fields on to each form instance.""""""
+    initial_form_count = self.initial_form_count()
+    if self.can_order:
+        if index is not None and index < initial_form_count:
+            form.fields[ORDERING_FIELD_NAME] = IntegerField(label=_('Order'), initial=index + 1, required=False, widget=self.get_ordering_widget())
+        else:
+            form.fields[ORDERING_FIELD_NAME] = IntegerField(label=_('Order'), required=False, widget=self.get_ordering_widget())
+    if self.can_delete and (self.can_delete_extra or index < initial_form_count):
+        form.fields[DELETION_FIELD_NAME] = BooleanField(label=_('Delete'), required=False, widget=self.get_deletion_widget())","def enhance_form_with_dynamic_fields(self, form, index):
+    """"""A hook for adding extra fields on to each form instance.""""""
+    initial_form_count = self.initial_form_count()
+    if self.can_order:
+        if index is not None and index < initial_form_count:
+            form.fields[ORDERING_FIELD_NAME] = IntegerField(label=_('Order'), initial=index + 1, required=False, widget=self.get_ordering_widget())
+        else:
+            form.fields[ORDERING_FIELD_NAME] = IntegerField(label=_('Order'), required=False, widget=self.get_ordering_widget())
+    if self.can_delete and (self.can_delete_extra or index < initial_form_count):
+        form.fields[DELETION_FIELD_NAME] = BooleanField(label=_('Delete'), required=False, widget=self.get_deletion_widget())","[{""var"": ""initial_form_count"", ""rename"": ""total_initial_forms""}]"

@@ -1,0 +1,36 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./seaborn/_core/plot.py,_finalize_figure,adjust_subplot_limits_and_layout,1628,1649,"def _finalize_figure(self, p: Plot) -> None:
+    for sub in self._subplots:
+        ax = sub['ax']
+        for axis in 'xy':
+            axis_key = sub[axis]
+            if axis_key in p._limits:
+                convert_units = getattr(ax, f'{axis}axis').convert_units
+                a, b = p._limits[axis_key]
+                lo = a if a is None else convert_units(a)
+                hi = b if b is None else convert_units(b)
+                if isinstance(a, str):
+                    lo = cast(float, lo) - 0.5
+                if isinstance(b, str):
+                    hi = cast(float, hi) + 0.5
+                ax.set(**{f'{axis}lim': (lo, hi)})
+    engine_default = None if p._target is not None else 'tight'
+    layout_engine = p._layout_spec.get('engine', engine_default)
+    set_layout_engine(self._figure, layout_engine)","def adjust_subplot_limits_and_layout(self, p: Plot) -> None:
+    for sub in self._subplots:
+        ax = sub['ax']
+        for axis in 'xy':
+            axis_key = sub[axis]
+            if axis_key in p._limits:
+                convert_units = getattr(ax, f'{axis}axis').convert_units
+                a, b = p._limits[axis_key]
+                lo = a if a is None else convert_units(a)
+                hi = b if b is None else convert_units(b)
+                if isinstance(a, str):
+                    lo = cast(float, lo) - 0.5
+                if isinstance(b, str):
+                    hi = cast(float, hi) + 0.5
+                ax.set(**{f'{axis}lim': (lo, hi)})
+    engine_default = None if p._target is not None else 'tight'
+    layout_engine = p._layout_spec.get('engine', engine_default)
+    set_layout_engine(self._figure, layout_engine)","[{""var"": ""engine_default"", ""rename"": ""fallback_layout_engine""}, {""var"": ""hi"", ""rename"": ""upper_limit_converted""}, {""var"": ""layout_engine"", ""rename"": ""plot_layout_strategy""}, {""var"": ""a"", ""rename"": ""lower_limit""}, {""var"": ""sub"", ""rename"": ""subplot_details""}, {""var"": ""axis"", ""rename"": ""axis_type""}, {""var"": ""convert_units"", ""rename"": ""unit_converter_function""}, {""var"": ""lo"", ""rename"": ""lower_bound""}, {""var"": ""axis_key"", ""rename"": ""axis_limit_key""}, {""var"": ""ax"", ""rename"": ""axis_subplot""}, {""var"": ""b"", ""rename"": ""upper_limit""}]"

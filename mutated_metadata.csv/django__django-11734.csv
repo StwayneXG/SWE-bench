@@ -1,0 +1,105 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/db/models/fields/related_lookups.py,get_prep_lookup,prepare_rhs_for_lookup,103,117,"def get_prep_lookup(self):
+    if not isinstance(self.lhs, MultiColSource) and self.rhs_is_direct_value():
+        self.rhs = get_normalized_value(self.rhs, self.lhs)[0]
+        if self.prepare_rhs and hasattr(self.lhs.output_field, 'get_path_info'):
+            target_field = self.lhs.output_field.get_path_info()[-1].target_fields[-1]
+            self.rhs = target_field.get_prep_value(self.rhs)
+    return super().get_prep_lookup()","def prepare_rhs_for_lookup(self):
+    if not isinstance(self.lhs, MultiColSource) and self.rhs_is_direct_value():
+        self.rhs = get_normalized_value(self.rhs, self.lhs)[0]
+        if self.prepare_rhs and hasattr(self.lhs.output_field, 'get_path_info'):
+            target_field = self.lhs.output_field.get_path_info()[-1].target_fields[-1]
+            self.rhs = target_field.get_prep_value(self.rhs)
+    return super().get_prep_lookup()","[{""var"": ""target_field"", ""rename"": ""final_target_output_field""}]"
+./django/db/models/sql/query.py,split_exclude,construct_exclude_subquery,1685,1754,"def split_exclude(self, filter_expr, can_reuse, names_with_path):
+    """"""
+        When doing an exclude against any kind of N-to-many relation, we need
+        to use a subquery. This method constructs the nested query, given the
+        original exclude filter (filter_expr) and the portion up to the first
+        N-to-many relation field.
+
+        For example, if the origin filter is ~Q(child__name='foo'), filter_expr
+        is ('child__name', 'foo') and can_reuse is a set of joins usable for
+        filters in the original query.
+
+        We will turn this into equivalent of:
+            WHERE NOT (pk IN (SELECT parent_id FROM thetable
+                              WHERE name = 'foo' AND parent_id IS NOT NULL))
+
+        It might be worth it to consider using WHERE NOT EXISTS as that has
+        saner null handling, and is easier for the backend's optimizer to
+        handle.
+        """"""
+    filter_lhs, filter_rhs = filter_expr
+    if isinstance(filter_rhs, F):
+        filter_expr = (filter_lhs, OuterRef(filter_rhs.name))
+    query = Query(self.model)
+    query._filtered_relations = self._filtered_relations
+    query.add_filter(filter_expr)
+    query.clear_ordering(True)
+    trimmed_prefix, contains_louter = query.trim_start(names_with_path)
+    col = query.select[0]
+    select_field = col.target
+    alias = col.alias
+    if self.is_nullable(select_field):
+        lookup_class = select_field.get_lookup('isnull')
+        lookup = lookup_class(select_field.get_col(alias), False)
+        query.where.add(lookup, AND)
+    if alias in can_reuse:
+        pk = select_field.model._meta.pk
+        query.bump_prefix(self)
+        lookup_class = select_field.get_lookup('exact')
+        lookup = lookup_class(pk.get_col(query.select[0].alias), pk.get_col(alias))
+        query.where.add(lookup, AND)
+        query.external_aliases.add(alias)
+    condition, needed_inner = self.build_filter(('%s__in' % trimmed_prefix, query), current_negated=True, branch_negated=True, can_reuse=can_reuse)
+    if contains_louter:
+        or_null_condition, _ = self.build_filter(('%s__isnull' % trimmed_prefix, True), current_negated=True, branch_negated=True, can_reuse=can_reuse)
+        condition.add(or_null_condition, OR)
+    return (condition, needed_inner)","def construct_exclude_subquery(self, filter_expr, can_reuse, names_with_path):
+    """"""
+        When doing an exclude against any kind of N-to-many relation, we need
+        to use a subquery. This method constructs the nested query, given the
+        original exclude filter (filter_expr) and the portion up to the first
+        N-to-many relation field.
+
+        For example, if the origin filter is ~Q(child__name='foo'), filter_expr
+        is ('child__name', 'foo') and can_reuse is a set of joins usable for
+        filters in the original query.
+
+        We will turn this into equivalent of:
+            WHERE NOT (pk IN (SELECT parent_id FROM thetable
+                              WHERE name = 'foo' AND parent_id IS NOT NULL))
+
+        It might be worth it to consider using WHERE NOT EXISTS as that has
+        saner null handling, and is easier for the backend's optimizer to
+        handle.
+        """"""
+    filter_lhs, filter_rhs = filter_expr
+    if isinstance(filter_rhs, F):
+        filter_expr = (filter_lhs, OuterRef(filter_rhs.name))
+    query = Query(self.model)
+    query._filtered_relations = self._filtered_relations
+    query.add_filter(filter_expr)
+    query.clear_ordering(True)
+    trimmed_prefix, contains_louter = query.trim_start(names_with_path)
+    col = query.select[0]
+    select_field = col.target
+    alias = col.alias
+    if self.is_nullable(select_field):
+        lookup_class = select_field.get_lookup('isnull')
+        lookup = lookup_class(select_field.get_col(alias), False)
+        query.where.add(lookup, AND)
+    if alias in can_reuse:
+        pk = select_field.model._meta.pk
+        query.bump_prefix(self)
+        lookup_class = select_field.get_lookup('exact')
+        lookup = lookup_class(pk.get_col(query.select[0].alias), pk.get_col(alias))
+        query.where.add(lookup, AND)
+        query.external_aliases.add(alias)
+    condition, needed_inner = self.build_filter(('%s__in' % trimmed_prefix, query), current_negated=True, branch_negated=True, can_reuse=can_reuse)
+    if contains_louter:
+        or_null_condition, _ = self.build_filter(('%s__isnull' % trimmed_prefix, True), current_negated=True, branch_negated=True, can_reuse=can_reuse)
+        condition.add(or_null_condition, OR)
+    return (condition, needed_inner)","[{""var"": ""select_field"", ""rename"": ""selected_column_target""}, {""var"": ""condition"", ""rename"": ""exclude_condition""}, {""var"": ""query"", ""rename"": ""exclude_subquery""}, {""var"": ""contains_louter"", ""rename"": ""contains_left_outer_join""}, {""var"": ""filter_lhs"", ""rename"": ""filter_left_hand_side""}, {""var"": ""or_null_condition"", ""rename"": ""optional_null_filter_condition""}, {""var"": ""col"", ""rename"": ""selected_column""}, {""var"": ""trimmed_prefix"", ""rename"": ""relation_path_prefix""}, {""var"": ""lookup"", ""rename"": ""lookup_condition""}, {""var"": ""_"", ""rename"": ""exclude_subquery_condition""}, {""var"": ""filter_rhs"", ""rename"": ""filter_condition_value""}, {""var"": ""alias"", ""rename"": ""column_alias""}, {""var"": ""lookup_class"", ""rename"": ""field_lookup_class""}, {""var"": ""needed_inner"", ""rename"": ""required_inner_conditions""}, {""var"": ""pk"", ""rename"": ""primary_key_column""}]"

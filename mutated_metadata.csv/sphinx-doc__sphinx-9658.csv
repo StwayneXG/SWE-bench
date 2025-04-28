@@ -1,0 +1,8 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./sphinx/ext/autodoc/mock.py,_make_subclass,create_custom_subclass_with_attributes,72,79,"def _make_subclass(name: str, module: str, superclass: Any=_MockObject, attributes: Any=None, decorator_args: Tuple=()) -> Any:
+    attrs = {'__module__': module, '__display_name__': module + '.' + name, '__sphinx_decorator_args__': decorator_args}
+    attrs.update(attributes or {})
+    return type(name, (superclass,), attrs)","def create_custom_subclass_with_attributes(name: str, module: str, superclass: Any=_MockObject, attributes: Any=None, decorator_args: Tuple=()) -> Any:
+    attrs = {'__module__': module, '__display_name__': module + '.' + name, '__sphinx_decorator_args__': decorator_args}
+    attrs.update(attributes or {})
+    return type(name, (superclass,), attrs)","[{""var"": ""attrs"", ""rename"": ""class_attribute_dict""}]"

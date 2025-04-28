@@ -1,0 +1,36 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/db/models/sql/query.py,_add_q,integrate_condition_into_filter,1327,1353,"def _add_q(self, q_object, used_aliases, branch_negated=False, current_negated=False, allow_joins=True, split_subq=True, simple_col=False):
+    """"""Add a Q-object to the current filter.""""""
+    connector = q_object.connector
+    current_negated = current_negated ^ q_object.negated
+    branch_negated = branch_negated or q_object.negated
+    target_clause = self.where_class(connector=connector, negated=q_object.negated)
+    joinpromoter = JoinPromoter(q_object.connector, len(q_object.children), current_negated)
+    for child in q_object.children:
+        if isinstance(child, Node):
+            child_clause, needed_inner = self._add_q(child, used_aliases, branch_negated, current_negated, allow_joins, split_subq)
+            joinpromoter.add_votes(needed_inner)
+        else:
+            child_clause, needed_inner = self.build_filter(child, can_reuse=used_aliases, branch_negated=branch_negated, current_negated=current_negated, allow_joins=allow_joins, split_subq=split_subq, simple_col=simple_col)
+            joinpromoter.add_votes(needed_inner)
+        if child_clause:
+            target_clause.add(child_clause, connector)
+    needed_inner = joinpromoter.update_join_types(self)
+    return (target_clause, needed_inner)","def integrate_condition_into_filter(self, q_object, used_aliases, branch_negated=False, current_negated=False, allow_joins=True, split_subq=True, simple_col=False):
+    """"""Add a Q-object to the current filter.""""""
+    connector = q_object.connector
+    current_negated = current_negated ^ q_object.negated
+    branch_negated = branch_negated or q_object.negated
+    target_clause = self.where_class(connector=connector, negated=q_object.negated)
+    joinpromoter = JoinPromoter(q_object.connector, len(q_object.children), current_negated)
+    for child in q_object.children:
+        if isinstance(child, Node):
+            child_clause, needed_inner = self._add_q(child, used_aliases, branch_negated, current_negated, allow_joins, split_subq)
+            joinpromoter.add_votes(needed_inner)
+        else:
+            child_clause, needed_inner = self.build_filter(child, can_reuse=used_aliases, branch_negated=branch_negated, current_negated=current_negated, allow_joins=allow_joins, split_subq=split_subq, simple_col=simple_col)
+            joinpromoter.add_votes(needed_inner)
+        if child_clause:
+            target_clause.add(child_clause, connector)
+    needed_inner = joinpromoter.update_join_types(self)
+    return (target_clause, needed_inner)","[{""var"": ""joinpromoter"", ""rename"": ""JoinStrategyEvaluator""}, {""var"": ""child_clause"", ""rename"": ""subquery_clause""}, {""var"": ""connector"", ""rename"": ""logical_connector""}, {""var"": ""target_clause"", ""rename"": ""filter_expression_clause""}, {""var"": ""needed_inner"", ""rename"": ""required_inner_joins""}, {""var"": ""child"", ""rename"": ""query_subexpression""}]"

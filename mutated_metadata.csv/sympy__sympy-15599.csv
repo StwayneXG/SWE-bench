@@ -1,0 +1,365 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./sympy/core/mod.py,eval,compute_modulo_expression,27,197,"@classmethod
+def eval(cls, p, q):
+    from sympy.core.add import Add
+    from sympy.core.mul import Mul
+    from sympy.core.singleton import S
+    from sympy.core.exprtools import gcd_terms
+    from sympy.polys.polytools import gcd
+
+    def doit(p, q):
+        """"""Try to return p % q if both are numbers or +/-p is known
+            to be less than or equal q.
+            """"""
+        if q == S.Zero:
+            raise ZeroDivisionError('Modulo by zero')
+        if p.is_infinite or q.is_infinite or p is nan or (q is nan):
+            return nan
+        if p == S.Zero or p == q or p == -q or (p.is_integer and q == 1):
+            return S.Zero
+        if q.is_Number:
+            if p.is_Number:
+                return p % q
+            if q == 2:
+                if p.is_even:
+                    return S.Zero
+                elif p.is_odd:
+                    return S.One
+        if hasattr(p, '_eval_Mod'):
+            rv = getattr(p, '_eval_Mod')(q)
+            if rv is not None:
+                return rv
+        r = p / q
+        try:
+            d = int(r)
+        except TypeError:
+            pass
+        else:
+            if type(d) is int:
+                rv = p - d * q
+                if (rv * q < 0) == True:
+                    rv += q
+                return rv
+        d = abs(p)
+        for _ in range(2):
+            d -= abs(q)
+            if d.is_negative:
+                if q.is_positive:
+                    if p.is_positive:
+                        return d + q
+                    elif p.is_negative:
+                        return -d
+                elif q.is_negative:
+                    if p.is_positive:
+                        return d
+                    elif p.is_negative:
+                        return -d + q
+                break
+    rv = doit(p, q)
+    if rv is not None:
+        return rv
+    if isinstance(p, cls):
+        qinner = p.args[1]
+        if qinner % q == 0:
+            return cls(p.args[0], q)
+        elif (qinner * (q - qinner)).is_nonnegative:
+            return p
+    elif isinstance(-p, cls):
+        qinner = (-p).args[1]
+        if qinner % q == 0:
+            return cls(-(-p).args[0], q)
+        elif (qinner * (q + qinner)).is_nonpositive:
+            return p
+    elif isinstance(p, Add):
+        both_l = non_mod_l, mod_l = ([], [])
+        for arg in p.args:
+            both_l[isinstance(arg, cls)].append(arg)
+        if mod_l and all((inner.args[1] == q for inner in mod_l)):
+            net = Add(*non_mod_l) + Add(*[i.args[0] for i in mod_l])
+            return cls(net, q)
+    elif isinstance(p, Mul):
+        both_l = non_mod_l, mod_l = ([], [])
+        for arg in p.args:
+            both_l[isinstance(arg, cls)].append(arg)
+        if mod_l and all((inner.args[1] == q for inner in mod_l)):
+            non_mod_l = [cls(x, q) for x in non_mod_l]
+            mod = []
+            non_mod = []
+            for j in non_mod_l:
+                if isinstance(j, cls):
+                    mod.append(j.args[0])
+                else:
+                    non_mod.append(j)
+            prod_mod = Mul(*mod)
+            prod_non_mod = Mul(*non_mod)
+            prod_mod1 = Mul(*[i.args[0] for i in mod_l])
+            net = prod_mod1 * prod_mod
+            return prod_non_mod * cls(net, q)
+    G = gcd(p, q)
+    if G != 1:
+        p, q = [gcd_terms(i / G, clear=False, fraction=False) for i in (p, q)]
+    pwas, qwas = (p, q)
+    if p.is_Add:
+        args = []
+        for i in p.args:
+            a = cls(i, q)
+            if a.count(cls) > i.count(cls):
+                args.append(i)
+            else:
+                args.append(a)
+        if args != list(p.args):
+            p = Add(*args)
+    else:
+        cp, p = p.as_coeff_Mul()
+        cq, q = q.as_coeff_Mul()
+        ok = False
+        if not cp.is_Rational or not cq.is_Rational:
+            r = cp % cq
+            if r == 0:
+                G *= cq
+                p *= int(cp / cq)
+                ok = True
+        if not ok:
+            p = cp * p
+            q = cq * q
+    if p.could_extract_minus_sign() and q.could_extract_minus_sign():
+        G, p, q = [-i for i in (G, p, q)]
+    rv = doit(p, q)
+    if rv is not None:
+        return rv * G
+    if G.is_Float and G == 1:
+        p *= G
+        return cls(p, q, evaluate=False)
+    elif G.is_Mul and G.args[0].is_Float and (G.args[0] == 1):
+        p = G.args[0] * p
+        G = Mul._from_args(G.args[1:])
+    return G * cls(p, q, evaluate=(p, q) != (pwas, qwas))","@classmethod
+def compute_modulo_expression(cls, p, q):
+    from sympy.core.add import Add
+    from sympy.core.mul import Mul
+    from sympy.core.singleton import S
+    from sympy.core.exprtools import gcd_terms
+    from sympy.polys.polytools import gcd
+
+    def doit(p, q):
+        """"""Try to return p % q if both are numbers or +/-p is known
+            to be less than or equal q.
+            """"""
+        if q == S.Zero:
+            raise ZeroDivisionError('Modulo by zero')
+        if p.is_infinite or q.is_infinite or p is nan or (q is nan):
+            return nan
+        if p == S.Zero or p == q or p == -q or (p.is_integer and q == 1):
+            return S.Zero
+        if q.is_Number:
+            if p.is_Number:
+                return p % q
+            if q == 2:
+                if p.is_even:
+                    return S.Zero
+                elif p.is_odd:
+                    return S.One
+        if hasattr(p, '_eval_Mod'):
+            rv = getattr(p, '_eval_Mod')(q)
+            if rv is not None:
+                return rv
+        r = p / q
+        try:
+            d = int(r)
+        except TypeError:
+            pass
+        else:
+            if type(d) is int:
+                rv = p - d * q
+                if (rv * q < 0) == True:
+                    rv += q
+                return rv
+        d = abs(p)
+        for _ in range(2):
+            d -= abs(q)
+            if d.is_negative:
+                if q.is_positive:
+                    if p.is_positive:
+                        return d + q
+                    elif p.is_negative:
+                        return -d
+                elif q.is_negative:
+                    if p.is_positive:
+                        return d
+                    elif p.is_negative:
+                        return -d + q
+                break
+    rv = doit(p, q)
+    if rv is not None:
+        return rv
+    if isinstance(p, cls):
+        qinner = p.args[1]
+        if qinner % q == 0:
+            return cls(p.args[0], q)
+        elif (qinner * (q - qinner)).is_nonnegative:
+            return p
+    elif isinstance(-p, cls):
+        qinner = (-p).args[1]
+        if qinner % q == 0:
+            return cls(-(-p).args[0], q)
+        elif (qinner * (q + qinner)).is_nonpositive:
+            return p
+    elif isinstance(p, Add):
+        both_l = non_mod_l, mod_l = ([], [])
+        for arg in p.args:
+            both_l[isinstance(arg, cls)].append(arg)
+        if mod_l and all((inner.args[1] == q for inner in mod_l)):
+            net = Add(*non_mod_l) + Add(*[i.args[0] for i in mod_l])
+            return cls(net, q)
+    elif isinstance(p, Mul):
+        both_l = non_mod_l, mod_l = ([], [])
+        for arg in p.args:
+            both_l[isinstance(arg, cls)].append(arg)
+        if mod_l and all((inner.args[1] == q for inner in mod_l)):
+            non_mod_l = [cls(x, q) for x in non_mod_l]
+            mod = []
+            non_mod = []
+            for j in non_mod_l:
+                if isinstance(j, cls):
+                    mod.append(j.args[0])
+                else:
+                    non_mod.append(j)
+            prod_mod = Mul(*mod)
+            prod_non_mod = Mul(*non_mod)
+            prod_mod1 = Mul(*[i.args[0] for i in mod_l])
+            net = prod_mod1 * prod_mod
+            return prod_non_mod * cls(net, q)
+    G = gcd(p, q)
+    if G != 1:
+        p, q = [gcd_terms(i / G, clear=False, fraction=False) for i in (p, q)]
+    pwas, qwas = (p, q)
+    if p.is_Add:
+        args = []
+        for i in p.args:
+            a = cls(i, q)
+            if a.count(cls) > i.count(cls):
+                args.append(i)
+            else:
+                args.append(a)
+        if args != list(p.args):
+            p = Add(*args)
+    else:
+        cp, p = p.as_coeff_Mul()
+        cq, q = q.as_coeff_Mul()
+        ok = False
+        if not cp.is_Rational or not cq.is_Rational:
+            r = cp % cq
+            if r == 0:
+                G *= cq
+                p *= int(cp / cq)
+                ok = True
+        if not ok:
+            p = cp * p
+            q = cq * q
+    if p.could_extract_minus_sign() and q.could_extract_minus_sign():
+        G, p, q = [-i for i in (G, p, q)]
+    rv = doit(p, q)
+    if rv is not None:
+        return rv * G
+    if G.is_Float and G == 1:
+        p *= G
+        return cls(p, q, evaluate=False)
+    elif G.is_Mul and G.args[0].is_Float and (G.args[0] == 1):
+        p = G.args[0] * p
+        G = Mul._from_args(G.args[1:])
+    return G * cls(p, q, evaluate=(p, q) != (pwas, qwas))","[{""var"": ""pwas"", ""rename"": ""previous_p_and_q""}, {""var"": ""qwas"", ""rename"": ""evaluate_modulo_expression""}, {""var"": ""i"", ""rename"": ""gcd_term_index""}, {""var"": ""x"", ""rename"": ""gcd_factor""}, {""var"": ""j"", ""rename"": ""non_mod_item""}, {""var"": ""inner"", ""rename"": ""inner_term_modifications""}, {""var"": ""d"", ""rename"": ""absolute_difference""}, {""var"": ""both_l"", ""rename"": ""separated_mod_and_non_mod_elements""}, {""var"": ""non_mod_l"", ""rename"": ""non_modifiable_list""}, {""var"": ""arg"", ""rename"": ""expression_argument""}, {""var"": ""non_mod"", ""rename"": ""non_modular_terms""}, {""var"": ""mod"", ""rename"": ""modulus_evaluator""}, {""var"": ""G"", ""rename"": ""greatest_common_divisor""}, {""var"": ""args"", ""rename"": ""term_list""}, {""var"": ""cq"", ""rename"": ""coefficient_quotient""}, {""var"": ""prod_non_mod"", ""rename"": ""non_mod_factor_product""}, {""var"": ""a"", ""rename"": ""greatest_common_factor""}, {""var"": ""prod_mod"", ""rename"": ""product_of_modulo_terms""}, {""var"": ""rv"", ""rename"": ""remainder_value""}, {""var"": ""qinner"", ""rename"": ""internal_quotient""}, {""var"": ""ok"", ""rename"": ""reduction_successful""}, {""var"": ""r"", ""rename"": ""quotient""}, {""var"": ""_"", ""rename"": ""The original variable name `_` is likely referring to an unnamed loop variable used within loop iterations, primarily for its side effects rather than its value. For clarity and better code readability, a more meaningful name based on its usage can be assigned. \n\nThe""}, {""var"": ""net"", ""rename"": ""calculated_modulus""}, {""var"": ""cp"", ""rename"": ""normalized_expression""}, {""var"": ""mod_l"", ""rename"": ""modular_terms_list""}, {""var"": ""prod_mod1"", ""rename"": ""mod_term_product""}]"
+./sympy/core/mod.py,doit,compute_modulo_or_bound_check,34,89,"def doit(p, q):
+    """"""Try to return p % q if both are numbers or +/-p is known
+            to be less than or equal q.
+            """"""
+    if q == S.Zero:
+        raise ZeroDivisionError('Modulo by zero')
+    if p.is_infinite or q.is_infinite or p is nan or (q is nan):
+        return nan
+    if p == S.Zero or p == q or p == -q or (p.is_integer and q == 1):
+        return S.Zero
+    if q.is_Number:
+        if p.is_Number:
+            return p % q
+        if q == 2:
+            if p.is_even:
+                return S.Zero
+            elif p.is_odd:
+                return S.One
+    if hasattr(p, '_eval_Mod'):
+        rv = getattr(p, '_eval_Mod')(q)
+        if rv is not None:
+            return rv
+    r = p / q
+    try:
+        d = int(r)
+    except TypeError:
+        pass
+    else:
+        if type(d) is int:
+            rv = p - d * q
+            if (rv * q < 0) == True:
+                rv += q
+            return rv
+    d = abs(p)
+    for _ in range(2):
+        d -= abs(q)
+        if d.is_negative:
+            if q.is_positive:
+                if p.is_positive:
+                    return d + q
+                elif p.is_negative:
+                    return -d
+            elif q.is_negative:
+                if p.is_positive:
+                    return d
+                elif p.is_negative:
+                    return -d + q
+            break","def compute_modulo_or_bound_check(p, q):
+    """"""Try to return p % q if both are numbers or +/-p is known
+            to be less than or equal q.
+            """"""
+    if q == S.Zero:
+        raise ZeroDivisionError('Modulo by zero')
+    if p.is_infinite or q.is_infinite or p is nan or (q is nan):
+        return nan
+    if p == S.Zero or p == q or p == -q or (p.is_integer and q == 1):
+        return S.Zero
+    if q.is_Number:
+        if p.is_Number:
+            return p % q
+        if q == 2:
+            if p.is_even:
+                return S.Zero
+            elif p.is_odd:
+                return S.One
+    if hasattr(p, '_eval_Mod'):
+        rv = getattr(p, '_eval_Mod')(q)
+        if rv is not None:
+            return rv
+    r = p / q
+    try:
+        d = int(r)
+    except TypeError:
+        pass
+    else:
+        if type(d) is int:
+            rv = p - d * q
+            if (rv * q < 0) == True:
+                rv += q
+            return rv
+    d = abs(p)
+    for _ in range(2):
+        d -= abs(q)
+        if d.is_negative:
+            if q.is_positive:
+                if p.is_positive:
+                    return d + q
+                elif p.is_negative:
+                    return -d
+            elif q.is_negative:
+                if p.is_positive:
+                    return d
+                elif p.is_negative:
+                    return -d + q
+            break","[{""var"": ""d"", ""rename"": ""resultant_difference""}, {""var"": ""_"", ""rename"": ""modulus_remainder""}, {""var"": ""rv"", ""rename"": ""mod_result""}, {""var"": ""r"", ""rename"": ""quotient""}]"

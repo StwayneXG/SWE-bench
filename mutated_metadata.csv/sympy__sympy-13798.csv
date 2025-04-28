@@ -1,0 +1,56 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./sympy/printing/latex.py,__init__,initialize_printer_settings,138,165,"def __init__(self, settings=None):
+    Printer.__init__(self, settings)
+    if 'mode' in self._settings:
+        valid_modes = ['inline', 'plain', 'equation', 'equation*']
+        if self._settings['mode'] not in valid_modes:
+            raise ValueError(""'mode' must be one of 'inline', 'plain', 'equation' or 'equation*'"")
+    if self._settings['fold_short_frac'] is None and self._settings['mode'] == 'inline':
+        self._settings['fold_short_frac'] = True
+    mul_symbol_table = {None: ' ', 'ldot': ' \\,.\\, ', 'dot': ' \\cdot ', 'times': ' \\times '}
+    self._settings['mul_symbol_latex'] = mul_symbol_table[self._settings['mul_symbol']]
+    self._settings['mul_symbol_latex_numbers'] = mul_symbol_table[self._settings['mul_symbol'] or 'dot']
+    self._delim_dict = {'(': ')', '[': ']'}","def initialize_printer_settings(self, settings=None):
+    Printer.__init__(self, settings)
+    if 'mode' in self._settings:
+        valid_modes = ['inline', 'plain', 'equation', 'equation*']
+        if self._settings['mode'] not in valid_modes:
+            raise ValueError(""'mode' must be one of 'inline', 'plain', 'equation' or 'equation*'"")
+    if self._settings['fold_short_frac'] is None and self._settings['mode'] == 'inline':
+        self._settings['fold_short_frac'] = True
+    mul_symbol_table = {None: ' ', 'ldot': ' \\,.\\, ', 'dot': ' \\cdot ', 'times': ' \\times '}
+    self._settings['mul_symbol_latex'] = mul_symbol_table[self._settings['mul_symbol']]
+    self._settings['mul_symbol_latex_numbers'] = mul_symbol_table[self._settings['mul_symbol'] or 'dot']
+    self._delim_dict = {'(': ')', '[': ']'}","[{""var"": ""mul_symbol_table"", ""rename"": ""multiplication_symbol_mapping""}, {""var"": ""valid_modes"", ""rename"": ""supported_mode_types""}]"
+./sympy/printing/latex.py,parenthesize,format_with_parentheses_based_on_precedence,167,172,"def parenthesize(self, item, level, strict=False):
+    prec_val = precedence_traditional(item)
+    if prec_val < level or (not strict and prec_val <= level):
+        return '\\left(%s\\right)' % self._print(item)
+    else:
+        return self._print(item)","def format_with_parentheses_based_on_precedence(self, item, level, strict=False):
+    prec_val = precedence_traditional(item)
+    if prec_val < level or (not strict and prec_val <= level):
+        return '\\left(%s\\right)' % self._print(item)
+    else:
+        return self._print(item)","[{""var"": ""prec_val"", ""rename"": ""item_precedence_value""}]"
+./sympy/printing/latex.py,doprint,format_expression_as_tex,174,185,"def doprint(self, expr):
+    tex = Printer.doprint(self, expr)
+    if self._settings['mode'] == 'plain':
+        return tex
+    elif self._settings['mode'] == 'inline':
+        return '$%s$' % tex
+    elif self._settings['itex']:
+        return '$$%s$$' % tex
+    else:
+        env_str = self._settings['mode']
+        return '\\begin{%s}%s\\end{%s}' % (env_str, tex, env_str)","def format_expression_as_tex(self, expr):
+    tex = Printer.doprint(self, expr)
+    if self._settings['mode'] == 'plain':
+        return tex
+    elif self._settings['mode'] == 'inline':
+        return '$%s$' % tex
+    elif self._settings['itex']:
+        return '$$%s$$' % tex
+    else:
+        env_str = self._settings['mode']
+        return '\\begin{%s}%s\\end{%s}' % (env_str, tex, env_str)","[{""var"": ""env_str"", ""rename"": ""latex_environment""}, {""var"": ""tex"", ""rename"": ""formatted_expression""}]"

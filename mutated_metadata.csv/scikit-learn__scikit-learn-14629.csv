@@ -1,0 +1,149 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./sklearn/multioutput.py,predict_proba,compute_class_probabilities,328,355,"def predict_proba(self, X):
+    """"""Probability estimates.
+        Returns prediction probabilities for each class of each output.
+
+        This method will raise a ``ValueError`` if any of the
+        estimators do not have ``predict_proba``.
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+            Data
+
+        Returns
+        -------
+        p : array of shape = [n_samples, n_classes], or a list of n_outputs             such arrays if n_outputs > 1.
+            The class probabilities of the input samples. The order of the
+            classes corresponds to that in the attribute `classes_`.
+        """"""
+    check_is_fitted(self)
+    if not all([hasattr(estimator, 'predict_proba') for estimator in self.estimators_]):
+        raise ValueError('The base estimator should implement predict_proba method')
+    results = [estimator.predict_proba(X) for estimator in self.estimators_]
+    return results","def compute_class_probabilities(self, X):
+    """"""Probability estimates.
+        Returns prediction probabilities for each class of each output.
+
+        This method will raise a ``ValueError`` if any of the
+        estimators do not have ``predict_proba``.
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+            Data
+
+        Returns
+        -------
+        p : array of shape = [n_samples, n_classes], or a list of n_outputs             such arrays if n_outputs > 1.
+            The class probabilities of the input samples. The order of the
+            classes corresponds to that in the attribute `classes_`.
+        """"""
+    check_is_fitted(self)
+    if not all([hasattr(estimator, 'predict_proba') for estimator in self.estimators_]):
+        raise ValueError('The base estimator should implement predict_proba method')
+    results = [estimator.predict_proba(X) for estimator in self.estimators_]
+    return results","[{""var"": ""results"", ""rename"": ""class_probability_estimates""}, {""var"": ""estimator"", ""rename"": ""base_model""}]"
+./sklearn/multioutput.py,fit,sequential_fit_with_ordering,398,459,"@abstractmethod
+def fit(self, X, Y):
+    """"""Fit the model to data matrix X and targets Y.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+            The input data.
+        Y : array-like, shape (n_samples, n_classes)
+            The target values.
+
+        Returns
+        -------
+        self : object
+        """"""
+    X, Y = check_X_y(X, Y, multi_output=True, accept_sparse=True)
+    random_state = check_random_state(self.random_state)
+    check_array(X, accept_sparse=True)
+    self.order_ = self.order
+    if self.order_ is None:
+        self.order_ = np.array(range(Y.shape[1]))
+    elif isinstance(self.order_, str):
+        if self.order_ == 'random':
+            self.order_ = random_state.permutation(Y.shape[1])
+    elif sorted(self.order_) != list(range(Y.shape[1])):
+        raise ValueError('invalid order')
+    self.estimators_ = [clone(self.base_estimator) for _ in range(Y.shape[1])]
+    if self.cv is None:
+        Y_pred_chain = Y[:, self.order_]
+        if sp.issparse(X):
+            X_aug = sp.hstack((X, Y_pred_chain), format='lil')
+            X_aug = X_aug.tocsr()
+        else:
+            X_aug = np.hstack((X, Y_pred_chain))
+    elif sp.issparse(X):
+        Y_pred_chain = sp.lil_matrix((X.shape[0], Y.shape[1]))
+        X_aug = sp.hstack((X, Y_pred_chain), format='lil')
+    else:
+        Y_pred_chain = np.zeros((X.shape[0], Y.shape[1]))
+        X_aug = np.hstack((X, Y_pred_chain))
+    del Y_pred_chain
+    for chain_idx, estimator in enumerate(self.estimators_):
+        y = Y[:, self.order_[chain_idx]]
+        estimator.fit(X_aug[:, :X.shape[1] + chain_idx], y)
+        if self.cv is not None and chain_idx < len(self.estimators_) - 1:
+            col_idx = X.shape[1] + chain_idx
+            cv_result = cross_val_predict(self.base_estimator, X_aug[:, :col_idx], y=y, cv=self.cv)
+            if sp.issparse(X_aug):
+                X_aug[:, col_idx] = np.expand_dims(cv_result, 1)
+            else:
+                X_aug[:, col_idx] = cv_result
+    return self","@abstractmethod
+def sequential_fit_with_ordering(self, X, Y):
+    """"""Fit the model to data matrix X and targets Y.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+            The input data.
+        Y : array-like, shape (n_samples, n_classes)
+            The target values.
+
+        Returns
+        -------
+        self : object
+        """"""
+    X, Y = check_X_y(X, Y, multi_output=True, accept_sparse=True)
+    random_state = check_random_state(self.random_state)
+    check_array(X, accept_sparse=True)
+    self.order_ = self.order
+    if self.order_ is None:
+        self.order_ = np.array(range(Y.shape[1]))
+    elif isinstance(self.order_, str):
+        if self.order_ == 'random':
+            self.order_ = random_state.permutation(Y.shape[1])
+    elif sorted(self.order_) != list(range(Y.shape[1])):
+        raise ValueError('invalid order')
+    self.estimators_ = [clone(self.base_estimator) for _ in range(Y.shape[1])]
+    if self.cv is None:
+        Y_pred_chain = Y[:, self.order_]
+        if sp.issparse(X):
+            X_aug = sp.hstack((X, Y_pred_chain), format='lil')
+            X_aug = X_aug.tocsr()
+        else:
+            X_aug = np.hstack((X, Y_pred_chain))
+    elif sp.issparse(X):
+        Y_pred_chain = sp.lil_matrix((X.shape[0], Y.shape[1]))
+        X_aug = sp.hstack((X, Y_pred_chain), format='lil')
+    else:
+        Y_pred_chain = np.zeros((X.shape[0], Y.shape[1]))
+        X_aug = np.hstack((X, Y_pred_chain))
+    del Y_pred_chain
+    for chain_idx, estimator in enumerate(self.estimators_):
+        y = Y[:, self.order_[chain_idx]]
+        estimator.fit(X_aug[:, :X.shape[1] + chain_idx], y)
+        if self.cv is not None and chain_idx < len(self.estimators_) - 1:
+            col_idx = X.shape[1] + chain_idx
+            cv_result = cross_val_predict(self.base_estimator, X_aug[:, :col_idx], y=y, cv=self.cv)
+            if sp.issparse(X_aug):
+                X_aug[:, col_idx] = np.expand_dims(cv_result, 1)
+            else:
+                X_aug[:, col_idx] = cv_result
+    return self","[{""var"": ""cv_result"", ""rename"": ""cross_validated_predictions""}, {""var"": ""estimator"", ""rename"": ""model_fitter""}, {""var"": ""y"", ""rename"": ""target_variable""}, {""var"": ""chain_idx"", ""rename"": ""label_chain_index""}, {""var"": ""col_idx"", ""rename"": ""current_label_col_index""}, {""var"": ""_"", ""rename"": ""fit_model_to_data""}, {""var"": ""X_aug"", ""rename"": ""augmented_features_matrix""}, {""var"": ""random_state"", ""rename"": ""randomness_controller""}, {""var"": ""Y_pred_chain"", ""rename"": ""target_predictions_chain""}]"

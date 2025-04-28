@@ -1,0 +1,148 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/contrib/messages/storage/cookie.py,_update_cookie,manage_session_cookie,81,95,"def _update_cookie(self, encoded_data, response):
+    """"""
+        Either set the cookie with the encoded data if there is any data to
+        store, or delete the cookie.
+        """"""
+    if encoded_data:
+        response.set_cookie(self.cookie_name, encoded_data, domain=settings.SESSION_COOKIE_DOMAIN, secure=settings.SESSION_COOKIE_SECURE or None, httponly=settings.SESSION_COOKIE_HTTPONLY or None, samesite=settings.SESSION_COOKIE_SAMESITE)
+    else:
+        response.delete_cookie(self.cookie_name, domain=settings.SESSION_COOKIE_DOMAIN)","def manage_session_cookie(self, encoded_data, response):
+    """"""
+        Either set the cookie with the encoded data if there is any data to
+        store, or delete the cookie.
+        """"""
+    if encoded_data:
+        response.set_cookie(self.cookie_name, encoded_data, domain=settings.SESSION_COOKIE_DOMAIN, secure=settings.SESSION_COOKIE_SECURE or None, httponly=settings.SESSION_COOKIE_HTTPONLY or None, samesite=settings.SESSION_COOKIE_SAMESITE)
+    else:
+        response.delete_cookie(self.cookie_name, domain=settings.SESSION_COOKIE_DOMAIN)",[]
+./django/contrib/messages/storage/cookie.py,_store,store_messages_in_cookie,97,124,"def _store(self, messages, response, remove_oldest=True, *args, **kwargs):
+    """"""
+        Store the messages to a cookie and return a list of any messages which
+        could not be stored.
+
+        If the encoded data is larger than ``max_cookie_size``, remove
+        messages until the data fits (these are the messages which are
+        returned), and add the not_finished sentinel value to indicate as much.
+        """"""
+    unstored_messages = []
+    encoded_data = self._encode(messages)
+    if self.max_cookie_size:
+        cookie = SimpleCookie()
+
+        def stored_length(val):
+            return len(cookie.value_encode(val)[1])
+        while encoded_data and stored_length(encoded_data) > self.max_cookie_size:
+            if remove_oldest:
+                unstored_messages.append(messages.pop(0))
+            else:
+                unstored_messages.insert(0, messages.pop())
+            encoded_data = self._encode(messages + [self.not_finished], encode_empty=unstored_messages)
+    self._update_cookie(encoded_data, response)
+    return unstored_messages","def store_messages_in_cookie(self, messages, response, remove_oldest=True, *args, **kwargs):
+    """"""
+        Store the messages to a cookie and return a list of any messages which
+        could not be stored.
+
+        If the encoded data is larger than ``max_cookie_size``, remove
+        messages until the data fits (these are the messages which are
+        returned), and add the not_finished sentinel value to indicate as much.
+        """"""
+    unstored_messages = []
+    encoded_data = self._encode(messages)
+    if self.max_cookie_size:
+        cookie = SimpleCookie()
+
+        def stored_length(val):
+            return len(cookie.value_encode(val)[1])
+        while encoded_data and stored_length(encoded_data) > self.max_cookie_size:
+            if remove_oldest:
+                unstored_messages.append(messages.pop(0))
+            else:
+                unstored_messages.insert(0, messages.pop())
+            encoded_data = self._encode(messages + [self.not_finished], encode_empty=unstored_messages)
+    self._update_cookie(encoded_data, response)
+    return unstored_messages","[{""var"": ""cookie"", ""rename"": ""message_storage_cookie""}, {""var"": ""encoded_data"", ""rename"": ""compressed_message_data""}, {""var"": ""unstored_messages"", ""rename"": ""excess_messages_unable_to_store""}]"
+./django/contrib/sessions/middleware.py,process_response,handle_session_persistence_and_cookies,26,78,"def process_response(self, request, response):
+    """"""
+        If request.session was modified, or if the configuration is to save the
+        session every time, save the changes and set a session cookie or delete
+        the session cookie if the session has been emptied.
+        """"""
+    try:
+        accessed = request.session.accessed
+        modified = request.session.modified
+        empty = request.session.is_empty()
+    except AttributeError:
+        return response
+    if settings.SESSION_COOKIE_NAME in request.COOKIES and empty:
+        response.delete_cookie(settings.SESSION_COOKIE_NAME, path=settings.SESSION_COOKIE_PATH, domain=settings.SESSION_COOKIE_DOMAIN)
+        patch_vary_headers(response, ('Cookie',))
+    else:
+        if accessed:
+            patch_vary_headers(response, ('Cookie',))
+        if (modified or settings.SESSION_SAVE_EVERY_REQUEST) and (not empty):
+            if request.session.get_expire_at_browser_close():
+                max_age = None
+                expires = None
+            else:
+                max_age = request.session.get_expiry_age()
+                expires_time = time.time() + max_age
+                expires = http_date(expires_time)
+            if response.status_code != 500:
+                try:
+                    request.session.save()
+                except UpdateError:
+                    raise SuspiciousOperation(""The request's session was deleted before the request completed. The user may have logged out in a concurrent request, for example."")
+                response.set_cookie(settings.SESSION_COOKIE_NAME, request.session.session_key, max_age=max_age, expires=expires, domain=settings.SESSION_COOKIE_DOMAIN, path=settings.SESSION_COOKIE_PATH, secure=settings.SESSION_COOKIE_SECURE or None, httponly=settings.SESSION_COOKIE_HTTPONLY or None, samesite=settings.SESSION_COOKIE_SAMESITE)
+    return response","def handle_session_persistence_and_cookies(self, request, response):
+    """"""
+        If request.session was modified, or if the configuration is to save the
+        session every time, save the changes and set a session cookie or delete
+        the session cookie if the session has been emptied.
+        """"""
+    try:
+        accessed = request.session.accessed
+        modified = request.session.modified
+        empty = request.session.is_empty()
+    except AttributeError:
+        return response
+    if settings.SESSION_COOKIE_NAME in request.COOKIES and empty:
+        response.delete_cookie(settings.SESSION_COOKIE_NAME, path=settings.SESSION_COOKIE_PATH, domain=settings.SESSION_COOKIE_DOMAIN)
+        patch_vary_headers(response, ('Cookie',))
+    else:
+        if accessed:
+            patch_vary_headers(response, ('Cookie',))
+        if (modified or settings.SESSION_SAVE_EVERY_REQUEST) and (not empty):
+            if request.session.get_expire_at_browser_close():
+                max_age = None
+                expires = None
+            else:
+                max_age = request.session.get_expiry_age()
+                expires_time = time.time() + max_age
+                expires = http_date(expires_time)
+            if response.status_code != 500:
+                try:
+                    request.session.save()
+                except UpdateError:
+                    raise SuspiciousOperation(""The request's session was deleted before the request completed. The user may have logged out in a concurrent request, for example."")
+                response.set_cookie(settings.SESSION_COOKIE_NAME, request.session.session_key, max_age=max_age, expires=expires, domain=settings.SESSION_COOKIE_DOMAIN, path=settings.SESSION_COOKIE_PATH, secure=settings.SESSION_COOKIE_SECURE or None, httponly=settings.SESSION_COOKIE_HTTPONLY or None, samesite=settings.SESSION_COOKIE_SAMESITE)
+    return response","[{""var"": ""empty"", ""rename"": ""is_session_empty""}, {""var"": ""expires_time"", ""rename"": ""session_cookie_expiry_timestamp""}, {""var"": ""modified"", ""rename"": ""session_was_modified""}, {""var"": ""accessed"", ""rename"": ""session_accessed""}, {""var"": ""expires"", ""rename"": ""session_cookie_expiry""}, {""var"": ""max_age"", ""rename"": ""session_max_age_seconds""}]"
+./django/http/response.py,delete_cookie,remove_expired_cookie,213,220,"def delete_cookie(self, key, path='/', domain=None):
+    secure = key.startswith(('__Secure-', '__Host-'))
+    self.set_cookie(key, max_age=0, path=path, domain=domain, secure=secure, expires='Thu, 01 Jan 1970 00:00:00 GMT')","def remove_expired_cookie(self, key, path='/', domain=None):
+    secure = key.startswith(('__Secure-', '__Host-'))
+    self.set_cookie(key, max_age=0, path=path, domain=domain, secure=secure, expires='Thu, 01 Jan 1970 00:00:00 GMT')","[{""var"": ""secure"", ""rename"": ""is_secure_cookie""}]"
+./django/http/response.py,make_bytes,convert_to_bytestring_with_charset,224,238,"def make_bytes(self, value):
+    """"""Turn a value into a bytestring encoded in the output charset.""""""
+    if isinstance(value, (bytes, memoryview)):
+        return bytes(value)
+    if isinstance(value, str):
+        return bytes(value.encode(self.charset))
+    return str(value).encode(self.charset)","def convert_to_bytestring_with_charset(self, value):
+    """"""Turn a value into a bytestring encoded in the output charset.""""""
+    if isinstance(value, (bytes, memoryview)):
+        return bytes(value)
+    if isinstance(value, str):
+        return bytes(value.encode(self.charset))
+    return str(value).encode(self.charset)",[]

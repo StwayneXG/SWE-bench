@@ -1,0 +1,19 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./pylint/config/__init__.py,_get_pdata_path,generate_unique_stats_filepath,69,71,"def _get_pdata_path(base_name, recurs):
+    base_name = base_name.replace(os.sep, '_')
+    return os.path.join(PYLINT_HOME, f'{base_name}{recurs}.stats')","def generate_unique_stats_filepath(base_name, recurs):
+    base_name = base_name.replace(os.sep, '_')
+    return os.path.join(PYLINT_HOME, f'{base_name}{recurs}.stats')",[]
+./pylint/config/__init__.py,load_results,deserialize_data_from_file,74,80,"def load_results(base):
+    data_file = _get_pdata_path(base, 1)
+    try:
+        with open(data_file, 'rb') as stream:
+            return pickle.load(stream)
+    except Exception:
+        return {}","def deserialize_data_from_file(base):
+    data_file = _get_pdata_path(base, 1)
+    try:
+        with open(data_file, 'rb') as stream:
+            return pickle.load(stream)
+    except Exception:
+        return {}","[{""var"": ""data_file"", ""rename"": ""results_file_path""}, {""var"": ""stream"", ""rename"": ""results_data_stream""}]"

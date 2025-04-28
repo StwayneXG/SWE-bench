@@ -1,0 +1,36 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/db/models/sql/query.py,resolve_lookup_value,evaluate_and_resolve_expression,1053,1077,"def resolve_lookup_value(self, value, can_reuse, allow_joins, simple_col):
+    if hasattr(value, 'resolve_expression'):
+        kwargs = {'reuse': can_reuse, 'allow_joins': allow_joins}
+        if isinstance(value, F):
+            kwargs['simple_col'] = simple_col
+        value = value.resolve_expression(self, **kwargs)
+    elif isinstance(value, (list, tuple)):
+        resolved_values = []
+        for sub_value in value:
+            if hasattr(sub_value, 'resolve_expression'):
+                if isinstance(sub_value, F):
+                    resolved_values.append(sub_value.resolve_expression(self, reuse=can_reuse, allow_joins=allow_joins, simple_col=simple_col))
+                else:
+                    resolved_values.append(sub_value.resolve_expression(self, reuse=can_reuse, allow_joins=allow_joins))
+            else:
+                resolved_values.append(sub_value)
+        value = tuple(resolved_values)
+    return value","def evaluate_and_resolve_expression(self, value, can_reuse, allow_joins, simple_col):
+    if hasattr(value, 'resolve_expression'):
+        kwargs = {'reuse': can_reuse, 'allow_joins': allow_joins}
+        if isinstance(value, F):
+            kwargs['simple_col'] = simple_col
+        value = value.resolve_expression(self, **kwargs)
+    elif isinstance(value, (list, tuple)):
+        resolved_values = []
+        for sub_value in value:
+            if hasattr(sub_value, 'resolve_expression'):
+                if isinstance(sub_value, F):
+                    resolved_values.append(sub_value.resolve_expression(self, reuse=can_reuse, allow_joins=allow_joins, simple_col=simple_col))
+                else:
+                    resolved_values.append(sub_value.resolve_expression(self, reuse=can_reuse, allow_joins=allow_joins))
+            else:
+                resolved_values.append(sub_value)
+        value = tuple(resolved_values)
+    return value","[{""var"": ""resolved_values"", ""rename"": ""evaluated_expressions""}, {""var"": ""kwargs"", ""rename"": ""expression_resolution_params""}, {""var"": ""sub_value"", ""rename"": ""item_to_resolve""}]"

@@ -1,0 +1,411 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/db/models/expressions.py,copy,deep_copy_instance,408,409,"def copy(self):
+    return copy.copy(self)","def deep_copy_instance(self):
+    return copy.copy(self)",[]
+./django/db/models/expressions.py,prefix_references,add_prefix_to_source_expressions,411,421,"def prefix_references(self, prefix):
+    clone = self.copy()
+    clone.set_source_expressions([F(f'{prefix}{expr.name}') if isinstance(expr, F) else expr.prefix_references(prefix) for expr in self.get_source_expressions()])
+    return clone","def add_prefix_to_source_expressions(self, prefix):
+    clone = self.copy()
+    clone.set_source_expressions([F(f'{prefix}{expr.name}') if isinstance(expr, F) else expr.prefix_references(prefix) for expr in self.get_source_expressions()])
+    return clone","[{""var"": ""clone"", ""rename"": ""prefixed_expression_clone""}, {""var"": ""expr"", ""rename"": ""source_expression""}]"
+./django/db/models/expressions.py,get_group_by_cols,retrieve_self_as_list,1176,1177,"def get_group_by_cols(self):
+    return [self]","def retrieve_self_as_list(self):
+    return [self]",[]
+./django/db/models/query_utils.py,refs_expression,check_annotation_references_in_lookup_parts,353,363,"def refs_expression(lookup_parts, annotations):
+    """"""
+    Check if the lookup_parts contains references to the given annotations set.
+    Because the LOOKUP_SEP is contained in the default annotation names, check
+    each prefix of the lookup_parts for a match.
+    """"""
+    for n in range(1, len(lookup_parts) + 1):
+        level_n_lookup = LOOKUP_SEP.join(lookup_parts[0:n])
+        if level_n_lookup in annotations and annotations[level_n_lookup]:
+            return (annotations[level_n_lookup], lookup_parts[n:])
+    return (False, ())","def check_annotation_references_in_lookup_parts(lookup_parts, annotations):
+    """"""
+    Check if the lookup_parts contains references to the given annotations set.
+    Because the LOOKUP_SEP is contained in the default annotation names, check
+    each prefix of the lookup_parts for a match.
+    """"""
+    for n in range(1, len(lookup_parts) + 1):
+        level_n_lookup = LOOKUP_SEP.join(lookup_parts[0:n])
+        if level_n_lookup in annotations and annotations[level_n_lookup]:
+            return (annotations[level_n_lookup], lookup_parts[n:])
+    return (False, ())","[{""var"": ""n"", ""rename"": ""lookup_depth""}, {""var"": ""level_n_lookup"", ""rename"": ""combined_prefix_lookup""}]"
+./django/db/models/query_utils.py,resolve_expression,evaluate_and_integrate_query_expression,82,95,"def resolve_expression(self, query=None, allow_joins=True, reuse=None, summarize=False, for_save=False):
+    clause, joins = query._add_q(self, reuse, allow_joins=allow_joins, split_subq=False, check_filterable=False)
+    query.promote_joins(joins)
+    return clause","def evaluate_and_integrate_query_expression(self, query=None, allow_joins=True, reuse=None, summarize=False, for_save=False):
+    clause, joins = query._add_q(self, reuse, allow_joins=allow_joins, split_subq=False, check_filterable=False)
+    query.promote_joins(joins)
+    return clause","[{""var"": ""clause"", ""rename"": ""resolved_query_clause""}, {""var"": ""joins"", ""rename"": ""required_query_joins""}]"
+./django/db/models/sql/query.py,get_aggregation,compute_aggregate_results,438,546,"def get_aggregation(self, using, added_aggregate_names):
+    """"""
+        Return the dictionary with the values of the existing aggregations.
+        """"""
+    if not self.annotation_select:
+        return {}
+    existing_annotations = [annotation for alias, annotation in self.annotations.items() if alias not in added_aggregate_names]
+    if isinstance(self.group_by, tuple) or self.is_sliced or existing_annotations or self.distinct or self.combinator:
+        from django.db.models.sql.subqueries import AggregateQuery
+        inner_query = self.clone()
+        inner_query.subquery = True
+        outer_query = AggregateQuery(self.model, inner_query)
+        inner_query.select_for_update = False
+        inner_query.select_related = False
+        inner_query.set_annotation_mask(self.annotation_select)
+        inner_query.clear_ordering(force=False)
+        if not inner_query.distinct:
+            has_existing_aggregate_annotations = any((annotation for annotation in existing_annotations if getattr(annotation, 'contains_aggregate', True)))
+            if inner_query.default_cols and has_existing_aggregate_annotations:
+                inner_query.group_by = (self.model._meta.pk.get_col(inner_query.get_initial_alias()),)
+            inner_query.default_cols = False
+        relabels = {t: 'subquery' for t in inner_query.alias_map}
+        relabels[None] = 'subquery'
+        col_cnt = 0
+        for alias, expression in list(inner_query.annotation_select.items()):
+            annotation_select_mask = inner_query.annotation_select_mask
+            if expression.is_summary:
+                expression, col_cnt = inner_query.rewrite_cols(expression, col_cnt)
+                outer_query.annotations[alias] = expression.relabeled_clone(relabels)
+                del inner_query.annotations[alias]
+                annotation_select_mask.remove(alias)
+            inner_query.set_annotation_mask(inner_query.annotation_select_mask)
+        if inner_query.select == () and (not inner_query.default_cols) and (not inner_query.annotation_select_mask):
+            inner_query.select = (self.model._meta.pk.get_col(inner_query.get_initial_alias()),)
+    else:
+        outer_query = self
+        self.select = ()
+        self.default_cols = False
+        self.extra = {}
+    empty_set_result = [expression.empty_result_set_value for expression in outer_query.annotation_select.values()]
+    elide_empty = not any((result is NotImplemented for result in empty_set_result))
+    outer_query.clear_ordering(force=True)
+    outer_query.clear_limits()
+    outer_query.select_for_update = False
+    outer_query.select_related = False
+    compiler = outer_query.get_compiler(using, elide_empty=elide_empty)
+    result = compiler.execute_sql(SINGLE)
+    if result is None:
+        result = empty_set_result
+    converters = compiler.get_converters(outer_query.annotation_select.values())
+    result = next(compiler.apply_converters((result,), converters))
+    return dict(zip(outer_query.annotation_select, result))","def compute_aggregate_results(self, using, added_aggregate_names):
+    """"""
+        Return the dictionary with the values of the existing aggregations.
+        """"""
+    if not self.annotation_select:
+        return {}
+    existing_annotations = [annotation for alias, annotation in self.annotations.items() if alias not in added_aggregate_names]
+    if isinstance(self.group_by, tuple) or self.is_sliced or existing_annotations or self.distinct or self.combinator:
+        from django.db.models.sql.subqueries import AggregateQuery
+        inner_query = self.clone()
+        inner_query.subquery = True
+        outer_query = AggregateQuery(self.model, inner_query)
+        inner_query.select_for_update = False
+        inner_query.select_related = False
+        inner_query.set_annotation_mask(self.annotation_select)
+        inner_query.clear_ordering(force=False)
+        if not inner_query.distinct:
+            has_existing_aggregate_annotations = any((annotation for annotation in existing_annotations if getattr(annotation, 'contains_aggregate', True)))
+            if inner_query.default_cols and has_existing_aggregate_annotations:
+                inner_query.group_by = (self.model._meta.pk.get_col(inner_query.get_initial_alias()),)
+            inner_query.default_cols = False
+        relabels = {t: 'subquery' for t in inner_query.alias_map}
+        relabels[None] = 'subquery'
+        col_cnt = 0
+        for alias, expression in list(inner_query.annotation_select.items()):
+            annotation_select_mask = inner_query.annotation_select_mask
+            if expression.is_summary:
+                expression, col_cnt = inner_query.rewrite_cols(expression, col_cnt)
+                outer_query.annotations[alias] = expression.relabeled_clone(relabels)
+                del inner_query.annotations[alias]
+                annotation_select_mask.remove(alias)
+            inner_query.set_annotation_mask(inner_query.annotation_select_mask)
+        if inner_query.select == () and (not inner_query.default_cols) and (not inner_query.annotation_select_mask):
+            inner_query.select = (self.model._meta.pk.get_col(inner_query.get_initial_alias()),)
+    else:
+        outer_query = self
+        self.select = ()
+        self.default_cols = False
+        self.extra = {}
+    empty_set_result = [expression.empty_result_set_value for expression in outer_query.annotation_select.values()]
+    elide_empty = not any((result is NotImplemented for result in empty_set_result))
+    outer_query.clear_ordering(force=True)
+    outer_query.clear_limits()
+    outer_query.select_for_update = False
+    outer_query.select_related = False
+    compiler = outer_query.get_compiler(using, elide_empty=elide_empty)
+    result = compiler.execute_sql(SINGLE)
+    if result is None:
+        result = empty_set_result
+    converters = compiler.get_converters(outer_query.annotation_select.values())
+    result = next(compiler.apply_converters((result,), converters))
+    return dict(zip(outer_query.annotation_select, result))","[{""var"": ""annotation_select_mask"", ""rename"": ""relevant_annotation_mask""}, {""var"": ""outer_query"", ""rename"": ""aggregate_query_wrapper""}, {""var"": ""empty_set_result"", ""rename"": ""empty_aggregation_values""}, {""var"": ""has_existing_aggregate_annotations"", ""rename"": ""contains_active_aggregate_annotations""}, {""var"": ""result"", ""rename"": ""aggregated_results_dict""}, {""var"": ""compiler"", ""rename"": ""aggregation_query_executor""}, {""var"": ""col_cnt"", ""rename"": ""column_count""}, {""var"": ""existing_annotations"", ""rename"": ""filtered_annotations""}, {""var"": ""inner_query"", ""rename"": ""aggregated_results_query""}, {""var"": ""converters"", ""rename"": ""annotation_value_converters""}, {""var"": ""t"", ""rename"": ""alias_to_subquery_mapping""}, {""var"": ""annotation"", ""rename"": ""aggregation_result""}, {""var"": ""alias"", ""rename"": ""aggregation_alias""}, {""var"": ""elide_empty"", ""rename"": ""omit_if_empty""}, {""var"": ""expression"", ""rename"": ""aggregation_expression""}, {""var"": ""relabels"", ""rename"": ""alias_to_subquery_map""}]"
+./django/db/models/sql/query.py,get_count,retrieve_filtered_count_aggregate,548,554,"def get_count(self, using):
+    """"""
+        Perform a COUNT() query using the current filter constraints.
+        """"""
+    obj = self.clone()
+    obj.add_annotation(Count('*'), alias='__count', is_summary=True)
+    return obj.get_aggregation(using, ['__count'])['__count']","def retrieve_filtered_count_aggregate(self, using):
+    """"""
+        Perform a COUNT() query using the current filter constraints.
+        """"""
+    obj = self.clone()
+    obj.add_annotation(Count('*'), alias='__count', is_summary=True)
+    return obj.get_aggregation(using, ['__count'])['__count']","[{""var"": ""obj"", ""rename"": ""filtered_count_query""}]"
+./django/db/models/sql/query.py,check_query_object_type,validate_query_object_type_compatibility,1215,1225,"def check_query_object_type(self, value, opts, field):
+    """"""
+        Check whether the object passed while querying is of the correct type.
+        If not, raise a ValueError specifying the wrong object.
+        """"""
+    if hasattr(value, '_meta'):
+        if not check_rel_lookup_compatibility(value._meta.model, opts, field):
+            raise ValueError('Cannot query ""%s"": Must be ""%s"" instance.' % (value, opts.object_name))","def validate_query_object_type_compatibility(self, value, opts, field):
+    """"""
+        Check whether the object passed while querying is of the correct type.
+        If not, raise a ValueError specifying the wrong object.
+        """"""
+    if hasattr(value, '_meta'):
+        if not check_rel_lookup_compatibility(value._meta.model, opts, field):
+            raise ValueError('Cannot query ""%s"": Must be ""%s"" instance.' % (value, opts.object_name))",[]
+./django/db/models/sql/query.py,check_related_objects,validate_object_relations_for_field,1227,1248,"def check_related_objects(self, field, value, opts):
+    """"""Check the type of object passed to query relations.""""""
+    if field.is_relation:
+        if isinstance(value, Query) and (not value.has_select_fields) and (not check_rel_lookup_compatibility(value.model, opts, field)):
+            raise ValueError('Cannot use QuerySet for ""%s"": Use a QuerySet for ""%s"".' % (value.model._meta.object_name, opts.object_name))
+        elif hasattr(value, '_meta'):
+            self.check_query_object_type(value, opts, field)
+        elif hasattr(value, '__iter__'):
+            for v in value:
+                self.check_query_object_type(v, opts, field)","def validate_object_relations_for_field(self, field, value, opts):
+    """"""Check the type of object passed to query relations.""""""
+    if field.is_relation:
+        if isinstance(value, Query) and (not value.has_select_fields) and (not check_rel_lookup_compatibility(value.model, opts, field)):
+            raise ValueError('Cannot use QuerySet for ""%s"": Use a QuerySet for ""%s"".' % (value.model._meta.object_name, opts.object_name))
+        elif hasattr(value, '_meta'):
+            self.check_query_object_type(value, opts, field)
+        elif hasattr(value, '__iter__'):
+            for v in value:
+                self.check_query_object_type(v, opts, field)","[{""var"": ""v"", ""rename"": ""related_object_value""}]"
+./django/db/models/sql/query.py,build_filter,construct_where_node_for_filter_clause,1331,1492,"def build_filter(self, filter_expr, branch_negated=False, current_negated=False, can_reuse=None, allow_joins=True, split_subq=True, reuse_with_filtered_relation=False, check_filterable=True):
+    """"""
+        Build a WhereNode for a single filter clause but don't add it
+        to this Query. Query.add_q() will then add this filter to the where
+        Node.
+
+        The 'branch_negated' tells us if the current branch contains any
+        negations. This will be used to determine if subqueries are needed.
+
+        The 'current_negated' is used to determine if the current filter is
+        negated or not and this will be used to determine if IS NULL filtering
+        is needed.
+
+        The difference between current_negated and branch_negated is that
+        branch_negated is set on first negation, but current_negated is
+        flipped for each negation.
+
+        Note that add_filter will not do any negating itself, that is done
+        upper in the code by add_q().
+
+        The 'can_reuse' is a set of reusable joins for multijoins.
+
+        If 'reuse_with_filtered_relation' is True, then only joins in can_reuse
+        will be reused.
+
+        The method will create a filter clause that can be added to the current
+        query. However, if the filter isn't added to the query then the caller
+        is responsible for unreffing the joins used.
+        """"""
+    if isinstance(filter_expr, dict):
+        raise FieldError('Cannot parse keyword query as dict')
+    if isinstance(filter_expr, Q):
+        return self._add_q(filter_expr, branch_negated=branch_negated, current_negated=current_negated, used_aliases=can_reuse, allow_joins=allow_joins, split_subq=split_subq, check_filterable=check_filterable)
+    if hasattr(filter_expr, 'resolve_expression'):
+        if not getattr(filter_expr, 'conditional', False):
+            raise TypeError('Cannot filter against a non-conditional expression.')
+        condition = filter_expr.resolve_expression(self, allow_joins=allow_joins)
+        if not isinstance(condition, Lookup):
+            condition = self.build_lookup(['exact'], condition, True)
+        return (WhereNode([condition], connector=AND), [])
+    arg, value = filter_expr
+    if not arg:
+        raise FieldError('Cannot parse keyword query %r' % arg)
+    lookups, parts, reffed_expression = self.solve_lookup_type(arg)
+    if check_filterable:
+        self.check_filterable(reffed_expression)
+    if not allow_joins and len(parts) > 1:
+        raise FieldError('Joined field references are not permitted in this query')
+    pre_joins = self.alias_refcount.copy()
+    value = self.resolve_lookup_value(value, can_reuse, allow_joins)
+    used_joins = {k for k, v in self.alias_refcount.items() if v > pre_joins.get(k, 0)}
+    if check_filterable:
+        self.check_filterable(value)
+    if reffed_expression:
+        condition = self.build_lookup(lookups, reffed_expression, value)
+        return (WhereNode([condition], connector=AND), [])
+    opts = self.get_meta()
+    alias = self.get_initial_alias()
+    allow_many = not branch_negated or not split_subq
+    try:
+        join_info = self.setup_joins(parts, opts, alias, can_reuse=can_reuse, allow_many=allow_many, reuse_with_filtered_relation=reuse_with_filtered_relation)
+        if isinstance(value, Iterator):
+            value = list(value)
+        self.check_related_objects(join_info.final_field, value, join_info.opts)
+        self._lookup_joins = join_info.joins
+    except MultiJoin as e:
+        return self.split_exclude(filter_expr, can_reuse, e.names_with_path)
+    used_joins.update(join_info.joins)
+    targets, alias, join_list = self.trim_joins(join_info.targets, join_info.joins, join_info.path)
+    if can_reuse is not None:
+        can_reuse.update(join_list)
+    if join_info.final_field.is_relation:
+        if len(targets) == 1:
+            col = self._get_col(targets[0], join_info.final_field, alias)
+        else:
+            col = MultiColSource(alias, targets, join_info.targets, join_info.final_field)
+    else:
+        col = self._get_col(targets[0], join_info.final_field, alias)
+    condition = self.build_lookup(lookups, col, value)
+    lookup_type = condition.lookup_name
+    clause = WhereNode([condition], connector=AND)
+    require_outer = lookup_type == 'isnull' and condition.rhs is True and (not current_negated)
+    if current_negated and (lookup_type != 'isnull' or condition.rhs is False) and (condition.rhs is not None):
+        require_outer = True
+        if lookup_type != 'isnull':
+            if self.is_nullable(targets[0]) or self.alias_map[join_list[-1]].join_type == LOUTER:
+                lookup_class = targets[0].get_lookup('isnull')
+                col = self._get_col(targets[0], join_info.targets[0], alias)
+                clause.add(lookup_class(col, False), AND)
+            if isinstance(value, Col) and self.is_nullable(value.target):
+                lookup_class = value.target.get_lookup('isnull')
+                clause.add(lookup_class(value, False), AND)
+    return (clause, used_joins if not require_outer else ())","def construct_where_node_for_filter_clause(self, filter_expr, branch_negated=False, current_negated=False, can_reuse=None, allow_joins=True, split_subq=True, reuse_with_filtered_relation=False, check_filterable=True):
+    """"""
+        Build a WhereNode for a single filter clause but don't add it
+        to this Query. Query.add_q() will then add this filter to the where
+        Node.
+
+        The 'branch_negated' tells us if the current branch contains any
+        negations. This will be used to determine if subqueries are needed.
+
+        The 'current_negated' is used to determine if the current filter is
+        negated or not and this will be used to determine if IS NULL filtering
+        is needed.
+
+        The difference between current_negated and branch_negated is that
+        branch_negated is set on first negation, but current_negated is
+        flipped for each negation.
+
+        Note that add_filter will not do any negating itself, that is done
+        upper in the code by add_q().
+
+        The 'can_reuse' is a set of reusable joins for multijoins.
+
+        If 'reuse_with_filtered_relation' is True, then only joins in can_reuse
+        will be reused.
+
+        The method will create a filter clause that can be added to the current
+        query. However, if the filter isn't added to the query then the caller
+        is responsible for unreffing the joins used.
+        """"""
+    if isinstance(filter_expr, dict):
+        raise FieldError('Cannot parse keyword query as dict')
+    if isinstance(filter_expr, Q):
+        return self._add_q(filter_expr, branch_negated=branch_negated, current_negated=current_negated, used_aliases=can_reuse, allow_joins=allow_joins, split_subq=split_subq, check_filterable=check_filterable)
+    if hasattr(filter_expr, 'resolve_expression'):
+        if not getattr(filter_expr, 'conditional', False):
+            raise TypeError('Cannot filter against a non-conditional expression.')
+        condition = filter_expr.resolve_expression(self, allow_joins=allow_joins)
+        if not isinstance(condition, Lookup):
+            condition = self.build_lookup(['exact'], condition, True)
+        return (WhereNode([condition], connector=AND), [])
+    arg, value = filter_expr
+    if not arg:
+        raise FieldError('Cannot parse keyword query %r' % arg)
+    lookups, parts, reffed_expression = self.solve_lookup_type(arg)
+    if check_filterable:
+        self.check_filterable(reffed_expression)
+    if not allow_joins and len(parts) > 1:
+        raise FieldError('Joined field references are not permitted in this query')
+    pre_joins = self.alias_refcount.copy()
+    value = self.resolve_lookup_value(value, can_reuse, allow_joins)
+    used_joins = {k for k, v in self.alias_refcount.items() if v > pre_joins.get(k, 0)}
+    if check_filterable:
+        self.check_filterable(value)
+    if reffed_expression:
+        condition = self.build_lookup(lookups, reffed_expression, value)
+        return (WhereNode([condition], connector=AND), [])
+    opts = self.get_meta()
+    alias = self.get_initial_alias()
+    allow_many = not branch_negated or not split_subq
+    try:
+        join_info = self.setup_joins(parts, opts, alias, can_reuse=can_reuse, allow_many=allow_many, reuse_with_filtered_relation=reuse_with_filtered_relation)
+        if isinstance(value, Iterator):
+            value = list(value)
+        self.check_related_objects(join_info.final_field, value, join_info.opts)
+        self._lookup_joins = join_info.joins
+    except MultiJoin as e:
+        return self.split_exclude(filter_expr, can_reuse, e.names_with_path)
+    used_joins.update(join_info.joins)
+    targets, alias, join_list = self.trim_joins(join_info.targets, join_info.joins, join_info.path)
+    if can_reuse is not None:
+        can_reuse.update(join_list)
+    if join_info.final_field.is_relation:
+        if len(targets) == 1:
+            col = self._get_col(targets[0], join_info.final_field, alias)
+        else:
+            col = MultiColSource(alias, targets, join_info.targets, join_info.final_field)
+    else:
+        col = self._get_col(targets[0], join_info.final_field, alias)
+    condition = self.build_lookup(lookups, col, value)
+    lookup_type = condition.lookup_name
+    clause = WhereNode([condition], connector=AND)
+    require_outer = lookup_type == 'isnull' and condition.rhs is True and (not current_negated)
+    if current_negated and (lookup_type != 'isnull' or condition.rhs is False) and (condition.rhs is not None):
+        require_outer = True
+        if lookup_type != 'isnull':
+            if self.is_nullable(targets[0]) or self.alias_map[join_list[-1]].join_type == LOUTER:
+                lookup_class = targets[0].get_lookup('isnull')
+                col = self._get_col(targets[0], join_info.targets[0], alias)
+                clause.add(lookup_class(col, False), AND)
+            if isinstance(value, Col) and self.is_nullable(value.target):
+                lookup_class = value.target.get_lookup('isnull')
+                clause.add(lookup_class(value, False), AND)
+    return (clause, used_joins if not require_outer else ())","[{""var"": ""join_info"", ""rename"": ""join_configuration_details""}, {""var"": ""clause"", ""rename"": ""filter_condition_node""}, {""var"": ""targets"", ""rename"": ""filtered_targets""}, {""var"": ""condition"", ""rename"": ""resolved_expression""}, {""var"": ""require_outer"", ""rename"": ""require_outer_join""}, {""var"": ""k"", ""rename"": ""used_join_aliases""}, {""var"": ""arg"", ""rename"": ""filter_argument""}, {""var"": ""used_joins"", ""rename"": ""updated_join_aliases""}, {""var"": ""parts"", ""rename"": ""field_path_parts""}, {""var"": ""pre_joins"", ""rename"": ""initial_alias_refcount_snapshot""}, {""var"": ""col"", ""rename"": ""target_column""}, {""var"": ""reffed_expression"", ""rename"": ""resolved_expression""}, {""var"": ""opts"", ""rename"": ""model_options""}, {""var"": ""v"", ""rename"": ""filter_conditions""}, {""var"": ""value"", ""rename"": ""resolved_filter_value""}, {""var"": ""lookup_type"", ""rename"": ""query_lookup_type""}, {""var"": ""lookup_class"", ""rename"": ""negation_sensitive_lookup""}, {""var"": ""join_list"", ""rename"": ""trimmed_join_list""}, {""var"": ""lookups"", ""rename"": ""lookup_expr_components""}, {""var"": ""alias"", ""rename"": ""initial_table_alias""}, {""var"": ""allow_many"", ""rename"": ""permit_multiple_joins""}]"
+./django/db/models/sql/query.py,build_filtered_relation_q,construct_negated_filtered_relation,1556,1583,"def build_filtered_relation_q(self, q_object, reuse, branch_negated=False, current_negated=False):
+    """"""Add a FilteredRelation object to the current filter.""""""
+    connector = q_object.connector
+    current_negated ^= q_object.negated
+    branch_negated = branch_negated or q_object.negated
+    target_clause = WhereNode(connector=connector, negated=q_object.negated)
+    for child in q_object.children:
+        if isinstance(child, Node):
+            child_clause = self.build_filtered_relation_q(child, reuse=reuse, branch_negated=branch_negated, current_negated=current_negated)
+        else:
+            child_clause, _ = self.build_filter(child, can_reuse=reuse, branch_negated=branch_negated, current_negated=current_negated, allow_joins=True, split_subq=False, reuse_with_filtered_relation=True)
+        target_clause.add(child_clause, connector)
+    return target_clause","def construct_negated_filtered_relation(self, q_object, reuse, branch_negated=False, current_negated=False):
+    """"""Add a FilteredRelation object to the current filter.""""""
+    connector = q_object.connector
+    current_negated ^= q_object.negated
+    branch_negated = branch_negated or q_object.negated
+    target_clause = WhereNode(connector=connector, negated=q_object.negated)
+    for child in q_object.children:
+        if isinstance(child, Node):
+            child_clause = self.build_filtered_relation_q(child, reuse=reuse, branch_negated=branch_negated, current_negated=current_negated)
+        else:
+            child_clause, _ = self.build_filter(child, can_reuse=reuse, branch_negated=branch_negated, current_negated=current_negated, allow_joins=True, split_subq=False, reuse_with_filtered_relation=True)
+        target_clause.add(child_clause, connector)
+    return target_clause","[{""var"": ""_"", ""rename"": ""filter_clause""}, {""var"": ""child_clause"", ""rename"": ""nested_filter_expression""}, {""var"": ""connector"", ""rename"": ""logical_connector""}, {""var"": ""target_clause"", ""rename"": ""composed_filters_clause""}, {""var"": ""child"", ""rename"": ""subquery_element""}]"
+./django/db/models/sql/where.py,_contains_aggregate,check_for_nested_aggregate,231,234,"@classmethod
+def _contains_aggregate(cls, obj):
+    if isinstance(obj, tree.Node):
+        return any((cls._contains_aggregate(c) for c in obj.children))
+    return obj.contains_aggregate","@classmethod
+def check_for_nested_aggregate(cls, obj):
+    if isinstance(obj, tree.Node):
+        return any((cls._contains_aggregate(c) for c in obj.children))
+    return obj.contains_aggregate","[{""var"": ""c"", ""rename"": ""child_node""}]"

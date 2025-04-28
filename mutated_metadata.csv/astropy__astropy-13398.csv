@@ -1,0 +1,91 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./astropy/coordinates/builtin_frames/intermediate_rotation_transforms.py,tete_to_itrs_mat,compute_polar_motion_matrix,64,87,"def tete_to_itrs_mat(time, rbpn=None):
+    """"""Compute the polar motion p-matrix at the given time.
+
+    If the nutation-precession matrix is already known, it should be passed in,
+    as this is by far the most expensive calculation.
+    """"""
+    xp, yp = get_polar_motion(time)
+    sp = erfa.sp00(*get_jd12(time, 'tt'))
+    pmmat = erfa.pom00(xp, yp, sp)
+    ujd1, ujd2 = get_jd12(time, 'ut1')
+    jd1, jd2 = get_jd12(time, 'tt')
+    if rbpn is None:
+        gast = erfa.gst06a(ujd1, ujd2, jd1, jd2)
+    else:
+        gast = erfa.gst06(ujd1, ujd2, jd1, jd2, rbpn)
+    return erfa.c2tcio(np.eye(3), gast, pmmat)","def compute_polar_motion_matrix(time, rbpn=None):
+    """"""Compute the polar motion p-matrix at the given time.
+
+    If the nutation-precession matrix is already known, it should be passed in,
+    as this is by far the most expensive calculation.
+    """"""
+    xp, yp = get_polar_motion(time)
+    sp = erfa.sp00(*get_jd12(time, 'tt'))
+    pmmat = erfa.pom00(xp, yp, sp)
+    ujd1, ujd2 = get_jd12(time, 'ut1')
+    jd1, jd2 = get_jd12(time, 'tt')
+    if rbpn is None:
+        gast = erfa.gst06a(ujd1, ujd2, jd1, jd2)
+    else:
+        gast = erfa.gst06(ujd1, ujd2, jd1, jd2, rbpn)
+    return erfa.c2tcio(np.eye(3), gast, pmmat)","[{""var"": ""xp"", ""rename"": ""polar_motion_x""}, {""var"": ""pmmat"", ""rename"": ""polar_motion_matrix""}, {""var"": ""ujd2"", ""rename"": ""ut1_julian_date_part2""}, {""var"": ""jd2"", ""rename"": ""terrestrial_time_julian_date_part2""}, {""var"": ""gast"", ""rename"": ""greenwich_apparent_sidereal_time""}, {""var"": ""sp"", ""rename"": ""mean_obliquity_correction""}, {""var"": ""ujd1"", ""rename"": ""universal_time_jd1""}, {""var"": ""yp"", ""rename"": ""polar_motion_yp""}, {""var"": ""jd1"", ""rename"": ""terrestrial_time_jd1""}]"
+./astropy/coordinates/builtin_frames/intermediate_rotation_transforms.py,tete_to_itrs,transform_tete_to_itrs_coordinates,148,156,"@frame_transform_graph.transform(FunctionTransformWithFiniteDifference, TETE, ITRS)
+def tete_to_itrs(tete_coo, itrs_frame):
+    tete_coo2 = tete_coo.transform_to(TETE(obstime=itrs_frame.obstime, location=EARTH_CENTER))
+    pmat = tete_to_itrs_mat(itrs_frame.obstime)
+    crepr = tete_coo2.cartesian.transform(pmat)
+    return itrs_frame.realize_frame(crepr)","@frame_transform_graph.transform(FunctionTransformWithFiniteDifference, TETE, ITRS)
+def transform_tete_to_itrs_coordinates(tete_coo, itrs_frame):
+    tete_coo2 = tete_coo.transform_to(TETE(obstime=itrs_frame.obstime, location=EARTH_CENTER))
+    pmat = tete_to_itrs_mat(itrs_frame.obstime)
+    crepr = tete_coo2.cartesian.transform(pmat)
+    return itrs_frame.realize_frame(crepr)","[{""var"": ""crepr"", ""rename"": ""transformed_cartesian_coordinates""}, {""var"": ""tete_coo2"", ""rename"": ""tete_transformed_to_tete_frame""}, {""var"": ""pmat"", ""rename"": ""transformation_matrix_tete_to_itrs""}]"
+./astropy/coordinates/builtin_frames/intermediate_rotation_transforms.py,itrs_to_tete,convert_itrs_coordinates_to_tete_frame,160,167,"@frame_transform_graph.transform(FunctionTransformWithFiniteDifference, ITRS, TETE)
+def itrs_to_tete(itrs_coo, tete_frame):
+    pmat = tete_to_itrs_mat(itrs_coo.obstime)
+    newrepr = itrs_coo.cartesian.transform(matrix_transpose(pmat))
+    tete = TETE(newrepr, obstime=itrs_coo.obstime)
+    return tete.transform_to(tete_frame)","@frame_transform_graph.transform(FunctionTransformWithFiniteDifference, ITRS, TETE)
+def convert_itrs_coordinates_to_tete_frame(itrs_coo, tete_frame):
+    pmat = tete_to_itrs_mat(itrs_coo.obstime)
+    newrepr = itrs_coo.cartesian.transform(matrix_transpose(pmat))
+    tete = TETE(newrepr, obstime=itrs_coo.obstime)
+    return tete.transform_to(tete_frame)","[{""var"": ""newrepr"", ""rename"": ""transformed_cartesian_coordinates""}, {""var"": ""tete"", ""rename"": ""earth_to_space_transform""}, {""var"": ""pmat"", ""rename"": ""transformation_matrix_to_tete""}]"
+./astropy/coordinates/builtin_frames/intermediate_rotation_transforms.py,cirs_to_itrs,transform_cirs_to_itrs_with_finite_difference,198,206,"@frame_transform_graph.transform(FunctionTransformWithFiniteDifference, CIRS, ITRS)
+def cirs_to_itrs(cirs_coo, itrs_frame):
+    cirs_coo2 = cirs_coo.transform_to(CIRS(obstime=itrs_frame.obstime, location=EARTH_CENTER))
+    pmat = cirs_to_itrs_mat(itrs_frame.obstime)
+    crepr = cirs_coo2.cartesian.transform(pmat)
+    return itrs_frame.realize_frame(crepr)","@frame_transform_graph.transform(FunctionTransformWithFiniteDifference, CIRS, ITRS)
+def transform_cirs_to_itrs_with_finite_difference(cirs_coo, itrs_frame):
+    cirs_coo2 = cirs_coo.transform_to(CIRS(obstime=itrs_frame.obstime, location=EARTH_CENTER))
+    pmat = cirs_to_itrs_mat(itrs_frame.obstime)
+    crepr = cirs_coo2.cartesian.transform(pmat)
+    return itrs_frame.realize_frame(crepr)","[{""var"": ""crepr"", ""rename"": ""cartesian_representation_transformed""}, {""var"": ""cirs_coo2"", ""rename"": ""cirs_coordinates_at_itrs_time""}, {""var"": ""pmat"", ""rename"": ""cirs_to_itrs_transformation_matrix""}]"
+./astropy/coordinates/builtin_frames/intermediate_rotation_transforms.py,itrs_to_cirs,transform_ITRS_to_CIRS_with_finite_difference,210,217,"@frame_transform_graph.transform(FunctionTransformWithFiniteDifference, ITRS, CIRS)
+def itrs_to_cirs(itrs_coo, cirs_frame):
+    pmat = cirs_to_itrs_mat(itrs_coo.obstime)
+    newrepr = itrs_coo.cartesian.transform(matrix_transpose(pmat))
+    cirs = CIRS(newrepr, obstime=itrs_coo.obstime)
+    return cirs.transform_to(cirs_frame)","@frame_transform_graph.transform(FunctionTransformWithFiniteDifference, ITRS, CIRS)
+def transform_ITRS_to_CIRS_with_finite_difference(itrs_coo, cirs_frame):
+    pmat = cirs_to_itrs_mat(itrs_coo.obstime)
+    newrepr = itrs_coo.cartesian.transform(matrix_transpose(pmat))
+    cirs = CIRS(newrepr, obstime=itrs_coo.obstime)
+    return cirs.transform_to(cirs_frame)","[{""var"": ""newrepr"", ""rename"": ""transformed_cartesian_representation""}, {""var"": ""cirs"", ""rename"": ""cirs_coordinate""}, {""var"": ""pmat"", ""rename"": ""cirs_to_itrs_rotation_matrix""}]"
+./astropy/coordinates/builtin_frames/itrs.py,earth_location,to_earth_location_coordinates,28,35,"@property
+def earth_location(self):
+    """"""
+        The data in this frame as an `~astropy.coordinates.EarthLocation` class.
+        """"""
+    from astropy.coordinates.earth import EarthLocation
+    cart = self.represent_as(CartesianRepresentation)
+    return EarthLocation(x=cart.x, y=cart.y, z=cart.z)","@property
+def to_earth_location_coordinates(self):
+    """"""
+        The data in this frame as an `~astropy.coordinates.EarthLocation` class.
+        """"""
+    from astropy.coordinates.earth import EarthLocation
+    cart = self.represent_as(CartesianRepresentation)
+    return EarthLocation(x=cart.x, y=cart.y, z=cart.z)","[{""var"": ""cart"", ""rename"": ""cartesian_coordinates_rep""}]"

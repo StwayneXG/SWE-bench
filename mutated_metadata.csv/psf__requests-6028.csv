@@ -1,0 +1,32 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./requests/utils.py,prepend_scheme_if_needed,ensure_scheme_in_url,960,982,"def prepend_scheme_if_needed(url, new_scheme):
+    """"""Given a URL that may or may not have a scheme, prepend the given scheme.
+    Does not replace a present scheme with the one provided as an argument.
+
+    :rtype: str
+    """"""
+    parsed = parse_url(url)
+    scheme, auth, host, port, path, query, fragment = parsed
+    netloc = parsed.netloc
+    if not netloc:
+        netloc, path = (path, netloc)
+    if scheme is None:
+        scheme = new_scheme
+    if path is None:
+        path = ''
+    return urlunparse((scheme, netloc, path, '', query, fragment))","def ensure_scheme_in_url(url, new_scheme):
+    """"""Given a URL that may or may not have a scheme, prepend the given scheme.
+    Does not replace a present scheme with the one provided as an argument.
+
+    :rtype: str
+    """"""
+    parsed = parse_url(url)
+    scheme, auth, host, port, path, query, fragment = parsed
+    netloc = parsed.netloc
+    if not netloc:
+        netloc, path = (path, netloc)
+    if scheme is None:
+        scheme = new_scheme
+    if path is None:
+        path = ''
+    return urlunparse((scheme, netloc, path, '', query, fragment))","[{""var"": ""query"", ""rename"": ""url_query_string""}, {""var"": ""parsed"", ""rename"": ""url_components""}, {""var"": ""host"", ""rename"": ""hostname""}, {""var"": ""port"", ""rename"": ""network_port""}, {""var"": ""path"", ""rename"": ""url_path_segment""}, {""var"": ""fragment"", ""rename"": ""url_fragment""}, {""var"": ""netloc"", ""rename"": ""network_location""}, {""var"": ""auth"", ""rename"": ""authentication_info""}, {""var"": ""scheme"", ""rename"": ""current_scheme""}]"

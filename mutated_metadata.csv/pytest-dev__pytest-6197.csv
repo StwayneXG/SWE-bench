@@ -1,0 +1,12 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./src/_pytest/python.py,_mount_obj_if_needed,initialize_and_attach_object_markers,261,268,"def _mount_obj_if_needed(self):
+    obj = getattr(self, '_obj', None)
+    if obj is None:
+        self._obj = obj = self._getobj()
+        if self._ALLOW_MARKERS:
+            self.own_markers.extend(get_unpacked_marks(obj))","def initialize_and_attach_object_markers(self):
+    obj = getattr(self, '_obj', None)
+    if obj is None:
+        self._obj = obj = self._getobj()
+        if self._ALLOW_MARKERS:
+            self.own_markers.extend(get_unpacked_marks(obj))","[{""var"": ""obj"", ""rename"": ""mounted_object""}]"

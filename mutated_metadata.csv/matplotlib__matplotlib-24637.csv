@@ -1,0 +1,26 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./lib/matplotlib/offsetbox.py,draw,render_graphical_elements,1449,1462,"def draw(self, renderer):
+    if renderer is not None:
+        self._renderer = renderer
+    if not self.get_visible() or not self._check_xy(renderer):
+        return
+    self.update_positions(renderer)
+    if self.arrow_patch is not None:
+        if self.arrow_patch.figure is None and self.figure is not None:
+            self.arrow_patch.figure = self.figure
+        self.arrow_patch.draw(renderer)
+    self.patch.draw(renderer)
+    self.offsetbox.draw(renderer)
+    self.stale = False","def render_graphical_elements(self, renderer):
+    if renderer is not None:
+        self._renderer = renderer
+    if not self.get_visible() or not self._check_xy(renderer):
+        return
+    self.update_positions(renderer)
+    if self.arrow_patch is not None:
+        if self.arrow_patch.figure is None and self.figure is not None:
+            self.arrow_patch.figure = self.figure
+        self.arrow_patch.draw(renderer)
+    self.patch.draw(renderer)
+    self.offsetbox.draw(renderer)
+    self.stale = False",[]

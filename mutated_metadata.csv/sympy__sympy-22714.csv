@@ -1,0 +1,84 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./sympy/geometry/point.py,__new__,create_geometry_entity,109,179,"def __new__(cls, *args, **kwargs):
+    evaluate = kwargs.get('evaluate', global_parameters.evaluate)
+    on_morph = kwargs.get('on_morph', 'ignore')
+    coords = args[0] if len(args) == 1 else args
+    if isinstance(coords, Point):
+        evaluate = False
+        if len(coords) == kwargs.get('dim', len(coords)):
+            return coords
+    if not is_sequence(coords):
+        raise TypeError(filldedent('\n                Expecting sequence of coordinates, not `{}`'.format(func_name(coords))))
+    if len(coords) == 0 and kwargs.get('dim', None):
+        coords = (S.Zero,) * kwargs.get('dim')
+    coords = Tuple(*coords)
+    dim = kwargs.get('dim', len(coords))
+    if len(coords) < 2:
+        raise ValueError(filldedent('\n                Point requires 2 or more coordinates or\n                keyword `dim` > 1.'))
+    if len(coords) != dim:
+        message = 'Dimension of {} needs to be changed from {} to {}.'.format(coords, len(coords), dim)
+        if on_morph == 'ignore':
+            pass
+        elif on_morph == 'error':
+            raise ValueError(message)
+        elif on_morph == 'warn':
+            warnings.warn(message)
+        else:
+            raise ValueError(filldedent(""\n                        on_morph value should be 'error',\n                        'warn' or 'ignore'.""))
+    if any(coords[dim:]):
+        raise ValueError('Nonzero coordinates cannot be removed.')
+    if any((a.is_number and im(a) for a in coords)):
+        raise ValueError('Imaginary coordinates are not permitted.')
+    if not all((isinstance(a, Expr) for a in coords)):
+        raise TypeError('Coordinates must be valid SymPy expressions.')
+    coords = coords[:dim] + (S.Zero,) * (dim - len(coords))
+    if evaluate:
+        coords = coords.xreplace({f: simplify(nsimplify(f, rational=True)) for f in coords.atoms(Float)})
+    if len(coords) == 2:
+        kwargs['_nocheck'] = True
+        return Point2D(*coords, **kwargs)
+    elif len(coords) == 3:
+        kwargs['_nocheck'] = True
+        return Point3D(*coords, **kwargs)
+    return GeometryEntity.__new__(cls, *coords)","def create_geometry_entity(cls, *args, **kwargs):
+    evaluate = kwargs.get('evaluate', global_parameters.evaluate)
+    on_morph = kwargs.get('on_morph', 'ignore')
+    coords = args[0] if len(args) == 1 else args
+    if isinstance(coords, Point):
+        evaluate = False
+        if len(coords) == kwargs.get('dim', len(coords)):
+            return coords
+    if not is_sequence(coords):
+        raise TypeError(filldedent('\n                Expecting sequence of coordinates, not `{}`'.format(func_name(coords))))
+    if len(coords) == 0 and kwargs.get('dim', None):
+        coords = (S.Zero,) * kwargs.get('dim')
+    coords = Tuple(*coords)
+    dim = kwargs.get('dim', len(coords))
+    if len(coords) < 2:
+        raise ValueError(filldedent('\n                Point requires 2 or more coordinates or\n                keyword `dim` > 1.'))
+    if len(coords) != dim:
+        message = 'Dimension of {} needs to be changed from {} to {}.'.format(coords, len(coords), dim)
+        if on_morph == 'ignore':
+            pass
+        elif on_morph == 'error':
+            raise ValueError(message)
+        elif on_morph == 'warn':
+            warnings.warn(message)
+        else:
+            raise ValueError(filldedent(""\n                        on_morph value should be 'error',\n                        'warn' or 'ignore'.""))
+    if any(coords[dim:]):
+        raise ValueError('Nonzero coordinates cannot be removed.')
+    if any((a.is_number and im(a) for a in coords)):
+        raise ValueError('Imaginary coordinates are not permitted.')
+    if not all((isinstance(a, Expr) for a in coords)):
+        raise TypeError('Coordinates must be valid SymPy expressions.')
+    coords = coords[:dim] + (S.Zero,) * (dim - len(coords))
+    if evaluate:
+        coords = coords.xreplace({f: simplify(nsimplify(f, rational=True)) for f in coords.atoms(Float)})
+    if len(coords) == 2:
+        kwargs['_nocheck'] = True
+        return Point2D(*coords, **kwargs)
+    elif len(coords) == 3:
+        kwargs['_nocheck'] = True
+        return Point3D(*coords, **kwargs)
+    return GeometryEntity.__new__(cls, *coords)","[{""var"": ""evaluate"", ""rename"": ""should_evaluate_coordinates""}, {""var"": ""message"", ""rename"": ""dimension_change_message""}, {""var"": ""a"", ""rename"": ""coordinate""}, {""var"": ""coords"", ""rename"": ""coordinate_sequence""}, {""var"": ""f"", ""rename"": ""float_number""}, {""var"": ""on_morph"", ""rename"": ""dimension_handling_strategy""}, {""var"": ""dim"", ""rename"": ""dimension_count""}]"

@@ -1,0 +1,25 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/forms/models.py,to_python,convert_value_to_queryset_instance,1278,1288,"def to_python(self, value):
+    if value in self.empty_values:
+        return None
+    try:
+        key = self.to_field_name or 'pk'
+        if isinstance(value, self.queryset.model):
+            value = getattr(value, key)
+        value = self.queryset.get(**{key: value})
+    except (ValueError, TypeError, self.queryset.model.DoesNotExist):
+        raise ValidationError(self.error_messages['invalid_choice'], code='invalid_choice')
+    return value","def convert_value_to_queryset_instance(self, value):
+    if value in self.empty_values:
+        return None
+    try:
+        key = self.to_field_name or 'pk'
+        if isinstance(value, self.queryset.model):
+            value = getattr(value, key)
+        value = self.queryset.get(**{key: value})
+    except (ValueError, TypeError, self.queryset.model.DoesNotExist):
+        raise ValidationError(self.error_messages['invalid_choice'], code='invalid_choice')
+    return value","[{""var"": ""key"", ""rename"": ""field_lookup_key""}]"
+./django/forms/models.py,validate,delegate_field_validation,1290,1291,"def validate(self, value):
+    return Field.validate(self, value)","def delegate_field_validation(self, value):
+    return Field.validate(self, value)",[]

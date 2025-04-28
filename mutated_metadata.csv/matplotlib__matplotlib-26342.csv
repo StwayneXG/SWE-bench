@@ -1,0 +1,4 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./lib/matplotlib/collections.py,set_paths,configure_file_system_paths,209,210,"def set_paths(self, paths):
+    raise NotImplementedError","def configure_file_system_paths(self, paths):
+    raise NotImplementedError",[]

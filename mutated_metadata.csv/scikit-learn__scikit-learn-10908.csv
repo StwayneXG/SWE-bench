@@ -1,0 +1,44 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./sklearn/feature_extraction/text.py,inverse_transform,get_terms_per_document,964,992,"def inverse_transform(self, X):
+    """"""Return terms per document with nonzero entries in X.
+
+        Parameters
+        ----------
+        X : {array, sparse matrix}, shape = [n_samples, n_features]
+
+        Returns
+        -------
+        X_inv : list of arrays, len = n_samples
+            List of arrays of terms.
+        """"""
+    self._check_vocabulary()
+    if sp.issparse(X):
+        X = X.tocsr()
+    else:
+        X = np.asmatrix(X)
+    n_samples = X.shape[0]
+    terms = np.array(list(self.vocabulary_.keys()))
+    indices = np.array(list(self.vocabulary_.values()))
+    inverse_vocabulary = terms[np.argsort(indices)]
+    return [inverse_vocabulary[X[i, :].nonzero()[1]].ravel() for i in range(n_samples)]","def get_terms_per_document(self, X):
+    """"""Return terms per document with nonzero entries in X.
+
+        Parameters
+        ----------
+        X : {array, sparse matrix}, shape = [n_samples, n_features]
+
+        Returns
+        -------
+        X_inv : list of arrays, len = n_samples
+            List of arrays of terms.
+        """"""
+    self._check_vocabulary()
+    if sp.issparse(X):
+        X = X.tocsr()
+    else:
+        X = np.asmatrix(X)
+    n_samples = X.shape[0]
+    terms = np.array(list(self.vocabulary_.keys()))
+    indices = np.array(list(self.vocabulary_.values()))
+    inverse_vocabulary = terms[np.argsort(indices)]
+    return [inverse_vocabulary[X[i, :].nonzero()[1]].ravel() for i in range(n_samples)]","[{""var"": ""terms"", ""rename"": ""vocabulary_terms""}, {""var"": ""n_samples"", ""rename"": ""num_documents""}, {""var"": ""indices"", ""rename"": ""vocabulary_indices""}, {""var"": ""i"", ""rename"": ""sample_index""}, {""var"": ""inverse_vocabulary"", ""rename"": ""document_term_array""}]"

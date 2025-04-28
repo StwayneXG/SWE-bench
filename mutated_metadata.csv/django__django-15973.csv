@@ -1,0 +1,46 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/db/migrations/autodetector.py,_get_dependencies_for_foreign_key,"python
+resolve_foreign_key_dependency_chain",1398,1430,"@staticmethod
+def _get_dependencies_for_foreign_key(app_label, model_name, field, project_state):
+    remote_field_model = None
+    if hasattr(field.remote_field, 'model'):
+        remote_field_model = field.remote_field.model
+    else:
+        relations = project_state.relations[app_label, model_name]
+        for (remote_app_label, remote_model_name), fields in relations.items():
+            if any((field == related_field.remote_field for related_field in fields.values())):
+                remote_field_model = f'{remote_app_label}.{remote_model_name}'
+                break
+    swappable_setting = getattr(field, 'swappable_setting', None)
+    if swappable_setting is not None:
+        dep_app_label = '__setting__'
+        dep_object_name = swappable_setting
+    else:
+        dep_app_label, dep_object_name = resolve_relation(remote_field_model, app_label, model_name)
+    dependencies = [(dep_app_label, dep_object_name, None, True)]
+    if getattr(field.remote_field, 'through', None):
+        through_app_label, through_object_name = resolve_relation(remote_field_model, app_label, model_name)
+        dependencies.append((through_app_label, through_object_name, None, True))
+    return dependencies","@staticmethod
+def python
+resolve_foreign_key_dependency_chain(app_label, model_name, field, project_state):
+    remote_field_model = None
+    if hasattr(field.remote_field, 'model'):
+        remote_field_model = field.remote_field.model
+    else:
+        relations = project_state.relations[app_label, model_name]
+        for (remote_app_label, remote_model_name), fields in relations.items():
+            if any((field == related_field.remote_field for related_field in fields.values())):
+                remote_field_model = f'{remote_app_label}.{remote_model_name}'
+                break
+    swappable_setting = getattr(field, 'swappable_setting', None)
+    if swappable_setting is not None:
+        dep_app_label = '__setting__'
+        dep_object_name = swappable_setting
+    else:
+        dep_app_label, dep_object_name = resolve_relation(remote_field_model, app_label, model_name)
+    dependencies = [(dep_app_label, dep_object_name, None, True)]
+    if getattr(field.remote_field, 'through', None):
+        through_app_label, through_object_name = resolve_relation(remote_field_model, app_label, model_name)
+        dependencies.append((through_app_label, through_object_name, None, True))
+    return dependencies","[{""var"": ""dep_object_name"", ""rename"": ""dependency_identifier""}, {""var"": ""through_app_label"", ""rename"": ""intermediate_relationship_app_label""}, {""var"": ""through_object_name"", ""rename"": ""intermediate_model_name""}, {""var"": ""remote_model_name"", ""rename"": ""remote_model_identifier""}, {""var"": ""dep_app_label"", ""rename"": ""dependency_application_label""}, {""var"": ""related_field"", ""rename"": ""candidate_related_field""}, {""var"": ""swappable_setting"", ""rename"": ""field_swapping_identifier""}, {""var"": ""remote_field_model"", ""rename"": ""foreign_model_identifier""}, {""var"": ""relations"", ""rename"": ""model_relationships_cache""}, {""var"": ""remote_app_label"", ""rename"": ""related_app_label""}, {""var"": ""fields"", ""rename"": ""related_fields""}, {""var"": ""dependencies"", ""rename"": ""foreign_key_dependency_list""}]"

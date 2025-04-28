@@ -1,0 +1,12 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/forms/widgets.py,get_context,generate_checked_context_with_attrs,523,528,"def get_context(self, name, value, attrs):
+    if self.check_test(value):
+        if attrs is None:
+            attrs = {}
+        attrs['checked'] = True
+    return super().get_context(name, value, attrs)","def generate_checked_context_with_attrs(self, name, value, attrs):
+    if self.check_test(value):
+        if attrs is None:
+            attrs = {}
+        attrs['checked'] = True
+    return super().get_context(name, value, attrs)",[]

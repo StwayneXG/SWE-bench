@@ -1,0 +1,12 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./lib/matplotlib/dates.py,_wrap_in_tex,convert_text_to_tex_format,594,601,"def _wrap_in_tex(text):
+    p = '([a-zA-Z]+)'
+    ret_text = re.sub(p, '}$\\1$\\\\mathdefault{', text)
+    ret_text = '$\\mathdefault{' + ret_text.replace('-', '{-}') + '}$'
+    ret_text = ret_text.replace('$\\mathdefault{}$', '')
+    return ret_text","def convert_text_to_tex_format(text):
+    p = '([a-zA-Z]+)'
+    ret_text = re.sub(p, '}$\\1$\\\\mathdefault{', text)
+    ret_text = '$\\mathdefault{' + ret_text.replace('-', '{-}') + '}$'
+    ret_text = ret_text.replace('$\\mathdefault{}$', '')
+    return ret_text","[{""var"": ""p"", ""rename"": ""word_pattern_regex""}, {""var"": ""ret_text"", ""rename"": ""formatted_tex_string""}]"

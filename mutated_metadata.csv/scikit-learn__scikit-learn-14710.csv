@@ -1,0 +1,22 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./sklearn/ensemble/_hist_gradient_boosting/gradient_boosting.py,_check_early_stopping_scorer,evaluate_early_stopping_based_on_scores,423,439,"def _check_early_stopping_scorer(self, X_binned_small_train, y_small_train, X_binned_val, y_val):
+    """"""Check if fitting should be early-stopped based on scorer.
+
+        Scores are computed on validation data or on training data.
+        """"""
+    self.train_score_.append(self.scorer_(self, X_binned_small_train, y_small_train))
+    if self._use_validation_data:
+        self.validation_score_.append(self.scorer_(self, X_binned_val, y_val))
+        return self._should_stop(self.validation_score_)
+    else:
+        return self._should_stop(self.train_score_)","def evaluate_early_stopping_based_on_scores(self, X_binned_small_train, y_small_train, X_binned_val, y_val):
+    """"""Check if fitting should be early-stopped based on scorer.
+
+        Scores are computed on validation data or on training data.
+        """"""
+    self.train_score_.append(self.scorer_(self, X_binned_small_train, y_small_train))
+    if self._use_validation_data:
+        self.validation_score_.append(self.scorer_(self, X_binned_val, y_val))
+        return self._should_stop(self.validation_score_)
+    else:
+        return self._should_stop(self.train_score_)",[]

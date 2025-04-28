@@ -1,0 +1,343 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./sympy/utilities/codegen.py,routine,generate_routine_for_language,577,745,"def routine(self, name, expr, argument_sequence=None, global_vars=None):
+    """"""Creates an Routine object that is appropriate for this language.
+
+        This implementation is appropriate for at least C/Fortran.  Subclasses
+        can override this if necessary.
+
+        Here, we assume at most one return value (the l-value) which must be
+        scalar.  Additional outputs are OutputArguments (e.g., pointers on
+        right-hand-side or pass-by-reference).  Matrices are always returned
+        via OutputArguments.  If ``argument_sequence`` is None, arguments will
+        be ordered alphabetically, but with all InputArguments first, and then
+        OutputArgument and InOutArguments.
+
+        """"""
+    if self.cse:
+        from sympy.simplify.cse_main import cse
+        if is_sequence(expr) and (not isinstance(expr, (MatrixBase, MatrixExpr))):
+            if not expr:
+                raise ValueError('No expression given')
+            for e in expr:
+                if not e.is_Equality:
+                    raise CodeGenError('Lists of expressions must all be Equalities. {} is not.'.format(e))
+            rhs = [e.rhs for e in expr]
+            common, simplified = cse(rhs)
+            expr = [Equality(e.lhs, rhs) for e, rhs in zip(expr, simplified)]
+        else:
+            rhs = [expr]
+            if isinstance(expr, Equality):
+                common, simplified = cse(expr.rhs)
+                expr = Equality(expr.lhs, simplified[0])
+            else:
+                common, simplified = cse(expr)
+                expr = simplified
+        local_vars = [Result(b, a) for a, b in common]
+        local_symbols = set([a for a, _ in common])
+        local_expressions = Tuple(*[b for _, b in common])
+    else:
+        local_expressions = Tuple()
+    if is_sequence(expr) and (not isinstance(expr, (MatrixBase, MatrixExpr))):
+        if not expr:
+            raise ValueError('No expression given')
+        expressions = Tuple(*expr)
+    else:
+        expressions = Tuple(expr)
+    if self.cse:
+        if {i.label for i in expressions.atoms(Idx)} != set():
+            raise CodeGenError('CSE and Indexed expressions do not play well together yet')
+    else:
+        local_vars = {i.label for i in expressions.atoms(Idx)}
+        local_symbols = local_vars
+    global_vars = set() if global_vars is None else set(global_vars)
+    symbols = (expressions.free_symbols | local_expressions.free_symbols) - local_symbols - global_vars
+    new_symbols = set([])
+    new_symbols.update(symbols)
+    for symbol in symbols:
+        if isinstance(symbol, Idx):
+            new_symbols.remove(symbol)
+            new_symbols.update(symbol.args[1].free_symbols)
+        if isinstance(symbol, Indexed):
+            new_symbols.remove(symbol)
+    symbols = new_symbols
+    return_val = []
+    output_args = []
+    for expr in expressions:
+        if isinstance(expr, Equality):
+            out_arg = expr.lhs
+            expr = expr.rhs
+            if isinstance(out_arg, Indexed):
+                dims = tuple([(S.Zero, dim - 1) for dim in out_arg.shape])
+                symbol = out_arg.base.label
+            elif isinstance(out_arg, Symbol):
+                dims = []
+                symbol = out_arg
+            elif isinstance(out_arg, MatrixSymbol):
+                dims = tuple([(S.Zero, dim - 1) for dim in out_arg.shape])
+                symbol = out_arg
+            else:
+                raise CodeGenError('Only Indexed, Symbol, or MatrixSymbol can define output arguments.')
+            if expr.has(symbol):
+                output_args.append(InOutArgument(symbol, out_arg, expr, dimensions=dims))
+            else:
+                output_args.append(OutputArgument(symbol, out_arg, expr, dimensions=dims))
+            if symbol not in local_vars:
+                symbols.remove(symbol)
+        elif isinstance(expr, (ImmutableMatrix, MatrixSlice)):
+            out_arg = MatrixSymbol('out_%s' % abs(hash(expr)), *expr.shape)
+            dims = tuple([(S.Zero, dim - 1) for dim in out_arg.shape])
+            output_args.append(OutputArgument(out_arg, out_arg, expr, dimensions=dims))
+        else:
+            return_val.append(Result(expr))
+    arg_list = []
+    array_symbols = {}
+    for array in expressions.atoms(Indexed) | local_expressions.atoms(Indexed):
+        array_symbols[array.base.label] = array
+    for array in expressions.atoms(MatrixSymbol) | local_expressions.atoms(MatrixSymbol):
+        array_symbols[array] = array
+    for symbol in sorted(symbols, key=str):
+        if symbol in array_symbols:
+            dims = []
+            array = array_symbols[symbol]
+            for dim in array.shape:
+                dims.append((S.Zero, dim - 1))
+            metadata = {'dimensions': dims}
+        else:
+            metadata = {}
+        arg_list.append(InputArgument(symbol, **metadata))
+    output_args.sort(key=lambda x: str(x.name))
+    arg_list.extend(output_args)
+    if argument_sequence is not None:
+        new_sequence = []
+        for arg in argument_sequence:
+            if isinstance(arg, IndexedBase):
+                new_sequence.append(arg.label)
+            else:
+                new_sequence.append(arg)
+        argument_sequence = new_sequence
+        missing = [x for x in arg_list if x.name not in argument_sequence]
+        if missing:
+            msg = ""Argument list didn't specify: {0} ""
+            msg = msg.format(', '.join([str(m.name) for m in missing]))
+            raise CodeGenArgumentListError(msg, missing)
+        name_arg_dict = {x.name: x for x in arg_list}
+        new_args = []
+        for symbol in argument_sequence:
+            try:
+                new_args.append(name_arg_dict[symbol])
+            except KeyError:
+                new_args.append(InputArgument(symbol))
+        arg_list = new_args
+    return Routine(name, arg_list, return_val, local_vars, global_vars)","def generate_routine_for_language(self, name, expr, argument_sequence=None, global_vars=None):
+    """"""Creates an Routine object that is appropriate for this language.
+
+        This implementation is appropriate for at least C/Fortran.  Subclasses
+        can override this if necessary.
+
+        Here, we assume at most one return value (the l-value) which must be
+        scalar.  Additional outputs are OutputArguments (e.g., pointers on
+        right-hand-side or pass-by-reference).  Matrices are always returned
+        via OutputArguments.  If ``argument_sequence`` is None, arguments will
+        be ordered alphabetically, but with all InputArguments first, and then
+        OutputArgument and InOutArguments.
+
+        """"""
+    if self.cse:
+        from sympy.simplify.cse_main import cse
+        if is_sequence(expr) and (not isinstance(expr, (MatrixBase, MatrixExpr))):
+            if not expr:
+                raise ValueError('No expression given')
+            for e in expr:
+                if not e.is_Equality:
+                    raise CodeGenError('Lists of expressions must all be Equalities. {} is not.'.format(e))
+            rhs = [e.rhs for e in expr]
+            common, simplified = cse(rhs)
+            expr = [Equality(e.lhs, rhs) for e, rhs in zip(expr, simplified)]
+        else:
+            rhs = [expr]
+            if isinstance(expr, Equality):
+                common, simplified = cse(expr.rhs)
+                expr = Equality(expr.lhs, simplified[0])
+            else:
+                common, simplified = cse(expr)
+                expr = simplified
+        local_vars = [Result(b, a) for a, b in common]
+        local_symbols = set([a for a, _ in common])
+        local_expressions = Tuple(*[b for _, b in common])
+    else:
+        local_expressions = Tuple()
+    if is_sequence(expr) and (not isinstance(expr, (MatrixBase, MatrixExpr))):
+        if not expr:
+            raise ValueError('No expression given')
+        expressions = Tuple(*expr)
+    else:
+        expressions = Tuple(expr)
+    if self.cse:
+        if {i.label for i in expressions.atoms(Idx)} != set():
+            raise CodeGenError('CSE and Indexed expressions do not play well together yet')
+    else:
+        local_vars = {i.label for i in expressions.atoms(Idx)}
+        local_symbols = local_vars
+    global_vars = set() if global_vars is None else set(global_vars)
+    symbols = (expressions.free_symbols | local_expressions.free_symbols) - local_symbols - global_vars
+    new_symbols = set([])
+    new_symbols.update(symbols)
+    for symbol in symbols:
+        if isinstance(symbol, Idx):
+            new_symbols.remove(symbol)
+            new_symbols.update(symbol.args[1].free_symbols)
+        if isinstance(symbol, Indexed):
+            new_symbols.remove(symbol)
+    symbols = new_symbols
+    return_val = []
+    output_args = []
+    for expr in expressions:
+        if isinstance(expr, Equality):
+            out_arg = expr.lhs
+            expr = expr.rhs
+            if isinstance(out_arg, Indexed):
+                dims = tuple([(S.Zero, dim - 1) for dim in out_arg.shape])
+                symbol = out_arg.base.label
+            elif isinstance(out_arg, Symbol):
+                dims = []
+                symbol = out_arg
+            elif isinstance(out_arg, MatrixSymbol):
+                dims = tuple([(S.Zero, dim - 1) for dim in out_arg.shape])
+                symbol = out_arg
+            else:
+                raise CodeGenError('Only Indexed, Symbol, or MatrixSymbol can define output arguments.')
+            if expr.has(symbol):
+                output_args.append(InOutArgument(symbol, out_arg, expr, dimensions=dims))
+            else:
+                output_args.append(OutputArgument(symbol, out_arg, expr, dimensions=dims))
+            if symbol not in local_vars:
+                symbols.remove(symbol)
+        elif isinstance(expr, (ImmutableMatrix, MatrixSlice)):
+            out_arg = MatrixSymbol('out_%s' % abs(hash(expr)), *expr.shape)
+            dims = tuple([(S.Zero, dim - 1) for dim in out_arg.shape])
+            output_args.append(OutputArgument(out_arg, out_arg, expr, dimensions=dims))
+        else:
+            return_val.append(Result(expr))
+    arg_list = []
+    array_symbols = {}
+    for array in expressions.atoms(Indexed) | local_expressions.atoms(Indexed):
+        array_symbols[array.base.label] = array
+    for array in expressions.atoms(MatrixSymbol) | local_expressions.atoms(MatrixSymbol):
+        array_symbols[array] = array
+    for symbol in sorted(symbols, key=str):
+        if symbol in array_symbols:
+            dims = []
+            array = array_symbols[symbol]
+            for dim in array.shape:
+                dims.append((S.Zero, dim - 1))
+            metadata = {'dimensions': dims}
+        else:
+            metadata = {}
+        arg_list.append(InputArgument(symbol, **metadata))
+    output_args.sort(key=lambda x: str(x.name))
+    arg_list.extend(output_args)
+    if argument_sequence is not None:
+        new_sequence = []
+        for arg in argument_sequence:
+            if isinstance(arg, IndexedBase):
+                new_sequence.append(arg.label)
+            else:
+                new_sequence.append(arg)
+        argument_sequence = new_sequence
+        missing = [x for x in arg_list if x.name not in argument_sequence]
+        if missing:
+            msg = ""Argument list didn't specify: {0} ""
+            msg = msg.format(', '.join([str(m.name) for m in missing]))
+            raise CodeGenArgumentListError(msg, missing)
+        name_arg_dict = {x.name: x for x in arg_list}
+        new_args = []
+        for symbol in argument_sequence:
+            try:
+                new_args.append(name_arg_dict[symbol])
+            except KeyError:
+                new_args.append(InputArgument(symbol))
+        arg_list = new_args
+    return Routine(name, arg_list, return_val, local_vars, global_vars)","[{""var"": ""expressions"", ""rename"": ""expression_tuple""}, {""var"": ""symbol"", ""rename"": ""temporary_symbols""}, {""var"": ""rhs"", ""rename"": ""right_hand_sides""}, {""var"": ""msg"", ""rename"": ""missing_arguments_message""}, {""var"": ""i"", ""rename"": ""expression_idx""}, {""var"": ""arg_list"", ""rename"": ""argument_candidates""}, {""var"": ""return_val"", ""rename"": ""result_collection""}, {""var"": ""local_expressions"", ""rename"": ""optimized_expressions""}, {""var"": ""arg"", ""rename"": ""argument_list_sequence""}, {""var"": ""new_args"", ""rename"": ""reordered_arguments""}, {""var"": ""array_symbols"", ""rename"": ""array_symbol_mapping""}, {""var"": ""common"", ""rename"": ""common_subexpressions""}, {""var"": ""output_args"", ""rename"": ""result_arguments""}, {""var"": ""new_sequence"", ""rename"": ""ordered_argument_sequence""}, {""var"": ""symbols"", ""rename"": ""unbound_symbols""}, {""var"": ""metadata"", ""rename"": ""argument_metadata""}, {""var"": ""local_vars"", ""rename"": ""temporary_storage_vars""}, {""var"": ""a"", ""rename"": ""common_subexpression""}, {""var"": ""m"", ""rename"": ""generated_routine""}, {""var"": ""dims"", ""rename"": ""output_dimensions""}, {""var"": ""new_symbols"", ""rename"": ""resolved_symbols""}, {""var"": ""missing"", ""rename"": ""unspecified_arguments""}, {""var"": ""b"", ""rename"": ""common_subexpr""}, {""var"": ""name_arg_dict"", ""rename"": ""argument_lookup_dict""}, {""var"": ""simplified"", ""rename"": ""optimized_expressions""}, {""var"": ""_"", ""rename"": ""routine_expression""}, {""var"": ""out_arg"", ""rename"": ""output_argument""}, {""var"": ""e"", ""rename"": ""expression""}, {""var"": ""local_symbols"", ""rename"": ""temporary_symbols_set""}, {""var"": ""array"", ""rename"": ""indexed_or_matrix_entities""}, {""var"": ""dim"", ""rename"": ""dimension_size""}]"
+./sympy/utilities/codegen.py,write,generate_source_code_files,747,788,"def write(self, routines, prefix, to_files=False, header=True, empty=True):
+    """"""Writes all the source code files for the given routines.
+
+        The generated source is returned as a list of (filename, contents)
+        tuples, or is written to files (see below).  Each filename consists
+        of the given prefix, appended with an appropriate extension.
+
+        Parameters
+        ==========
+
+        routines : list
+            A list of Routine instances to be written
+
+        prefix : string
+            The prefix for the output files
+
+        to_files : bool, optional
+            When True, the output is written to files.  Otherwise, a list
+            of (filename, contents) tuples is returned.  [default: False]
+
+        header : bool, optional
+            When True, a header comment is included on top of each source
+            file. [default: True]
+
+        empty : bool, optional
+            When True, empty lines are included to structure the source
+            files. [default: True]
+
+        """"""
+    if to_files:
+        for dump_fn in self.dump_fns:
+            filename = '%s.%s' % (prefix, dump_fn.extension)
+            with open(filename, 'w') as f:
+                dump_fn(self, routines, f, prefix, header, empty)
+    else:
+        result = []
+        for dump_fn in self.dump_fns:
+            filename = '%s.%s' % (prefix, dump_fn.extension)
+            contents = StringIO()
+            dump_fn(self, routines, contents, prefix, header, empty)
+            result.append((filename, contents.getvalue()))
+        return result","def generate_source_code_files(self, routines, prefix, to_files=False, header=True, empty=True):
+    """"""Writes all the source code files for the given routines.
+
+        The generated source is returned as a list of (filename, contents)
+        tuples, or is written to files (see below).  Each filename consists
+        of the given prefix, appended with an appropriate extension.
+
+        Parameters
+        ==========
+
+        routines : list
+            A list of Routine instances to be written
+
+        prefix : string
+            The prefix for the output files
+
+        to_files : bool, optional
+            When True, the output is written to files.  Otherwise, a list
+            of (filename, contents) tuples is returned.  [default: False]
+
+        header : bool, optional
+            When True, a header comment is included on top of each source
+            file. [default: True]
+
+        empty : bool, optional
+            When True, empty lines are included to structure the source
+            files. [default: True]
+
+        """"""
+    if to_files:
+        for dump_fn in self.dump_fns:
+            filename = '%s.%s' % (prefix, dump_fn.extension)
+            with open(filename, 'w') as f:
+                dump_fn(self, routines, f, prefix, header, empty)
+    else:
+        result = []
+        for dump_fn in self.dump_fns:
+            filename = '%s.%s' % (prefix, dump_fn.extension)
+            contents = StringIO()
+            dump_fn(self, routines, contents, prefix, header, empty)
+            result.append((filename, contents.getvalue()))
+        return result","[{""var"": ""filename"", ""rename"": ""generated_filename""}, {""var"": ""f"", ""rename"": ""output_file""}, {""var"": ""result"", ""rename"": ""source_files_list""}, {""var"": ""dump_fn"", ""rename"": ""routine_writer""}, {""var"": ""contents"", ""rename"": ""source_code_data""}]"

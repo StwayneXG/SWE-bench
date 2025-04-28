@@ -1,0 +1,114 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/db/backends/base/schema.py,alter_unique_together,update_model_unique_constraints,520,536,"def alter_unique_together(self, model, old_unique_together, new_unique_together):
+    """"""
+        Deal with a model changing its unique_together. The input
+        unique_togethers must be doubly-nested, not the single-nested
+        [""foo"", ""bar""] format.
+        """"""
+    olds = {tuple(fields) for fields in old_unique_together}
+    news = {tuple(fields) for fields in new_unique_together}
+    for fields in olds.difference(news):
+        self._delete_composed_index(model, fields, {'unique': True}, self.sql_delete_unique)
+    for field_names in news.difference(olds):
+        fields = [model._meta.get_field(field) for field in field_names]
+        self.execute(self._create_unique_sql(model, fields))","def update_model_unique_constraints(self, model, old_unique_together, new_unique_together):
+    """"""
+        Deal with a model changing its unique_together. The input
+        unique_togethers must be doubly-nested, not the single-nested
+        [""foo"", ""bar""] format.
+        """"""
+    olds = {tuple(fields) for fields in old_unique_together}
+    news = {tuple(fields) for fields in new_unique_together}
+    for fields in olds.difference(news):
+        self._delete_composed_index(model, fields, {'unique': True}, self.sql_delete_unique)
+    for field_names in news.difference(olds):
+        fields = [model._meta.get_field(field) for field in field_names]
+        self.execute(self._create_unique_sql(model, fields))","[{""var"": ""field"", ""rename"": ""composite_field_names""}, {""var"": ""olds"", ""rename"": ""existing_unique_togethers""}, {""var"": ""field_names"", ""rename"": ""pending_unique_field_sets""}, {""var"": ""news"", ""rename"": ""new_unique_field_sets""}, {""var"": ""fields"", ""rename"": ""unique_together_field_set""}]"
+./django/db/backends/base/schema.py,_delete_composed_index,remove_single_constraint_from_index,559,580,"def _delete_composed_index(self, model, fields, constraint_kwargs, sql):
+    meta_constraint_names = {constraint.name for constraint in model._meta.constraints}
+    meta_index_names = {constraint.name for constraint in model._meta.indexes}
+    columns = [model._meta.get_field(field).column for field in fields]
+    constraint_names = self._constraint_names(model, columns, exclude=meta_constraint_names | meta_index_names, **constraint_kwargs)
+    if len(constraint_names) != 1:
+        raise ValueError('Found wrong number (%s) of constraints for %s(%s)' % (len(constraint_names), model._meta.db_table, ', '.join(columns)))
+    self.execute(self._delete_constraint_sql(sql, model, constraint_names[0]))","def remove_single_constraint_from_index(self, model, fields, constraint_kwargs, sql):
+    meta_constraint_names = {constraint.name for constraint in model._meta.constraints}
+    meta_index_names = {constraint.name for constraint in model._meta.indexes}
+    columns = [model._meta.get_field(field).column for field in fields]
+    constraint_names = self._constraint_names(model, columns, exclude=meta_constraint_names | meta_index_names, **constraint_kwargs)
+    if len(constraint_names) != 1:
+        raise ValueError('Found wrong number (%s) of constraints for %s(%s)' % (len(constraint_names), model._meta.db_table, ', '.join(columns)))
+    self.execute(self._delete_constraint_sql(sql, model, constraint_names[0]))","[{""var"": ""field"", ""rename"": ""field_column_name""}, {""var"": ""constraint_names"", ""rename"": ""composite_constraint_identifiers""}, {""var"": ""meta_index_names"", ""rename"": ""existing_index_names_set""}, {""var"": ""constraint"", ""rename"": ""database_constraint""}, {""var"": ""columns"", ""rename"": ""field_column_names""}, {""var"": ""meta_constraint_names"", ""rename"": ""existing_constraint_names_set""}]"
+./django/db/backends/base/schema.py,alter_db_table,rename_model_table,582,599,"def alter_db_table(self, model, old_db_table, new_db_table):
+    """"""Rename the table a model points to.""""""
+    if old_db_table == new_db_table or (self.connection.features.ignores_table_name_case and old_db_table.lower() == new_db_table.lower()):
+        return
+    self.execute(self.sql_rename_table % {'old_table': self.quote_name(old_db_table), 'new_table': self.quote_name(new_db_table)})
+    for sql in self.deferred_sql:
+        if isinstance(sql, Statement):
+            sql.rename_table_references(old_db_table, new_db_table)","def rename_model_table(self, model, old_db_table, new_db_table):
+    """"""Rename the table a model points to.""""""
+    if old_db_table == new_db_table or (self.connection.features.ignores_table_name_case and old_db_table.lower() == new_db_table.lower()):
+        return
+    self.execute(self.sql_rename_table % {'old_table': self.quote_name(old_db_table), 'new_table': self.quote_name(new_db_table)})
+    for sql in self.deferred_sql:
+        if isinstance(sql, Statement):
+            sql.rename_table_references(old_db_table, new_db_table)","[{""var"": ""sql"", ""rename"": ""deferred_sql_statement""}]"
+./django/db/backends/base/schema.py,_create_unique_sql,_generate_custom_unique_constraint_sql,1539,1593,"def _create_unique_sql(self, model, fields, name=None, condition=None, deferrable=None, include=None, opclasses=None, expressions=None):
+    if deferrable and (not self.connection.features.supports_deferrable_unique_constraints) or (condition and (not self.connection.features.supports_partial_indexes)) or (include and (not self.connection.features.supports_covering_indexes)) or (expressions and (not self.connection.features.supports_expression_indexes)):
+        return None
+
+    def create_unique_name(*args, **kwargs):
+        return self.quote_name(self._create_index_name(*args, **kwargs))
+    compiler = Query(model, alias_cols=False).get_compiler(connection=self.connection)
+    table = model._meta.db_table
+    columns = [field.column for field in fields]
+    if name is None:
+        name = IndexName(table, columns, '_uniq', create_unique_name)
+    else:
+        name = self.quote_name(name)
+    if condition or include or opclasses or expressions:
+        sql = self.sql_create_unique_index
+    else:
+        sql = self.sql_create_unique
+    if columns:
+        columns = self._index_columns(table, columns, col_suffixes=(), opclasses=opclasses)
+    else:
+        columns = Expressions(table, expressions, compiler, self.quote_value)
+    return Statement(sql, table=Table(table, self.quote_name), name=name, columns=columns, condition=self._index_condition_sql(condition), deferrable=self._deferrable_constraint_sql(deferrable), include=self._index_include_sql(model, include))","def _generate_custom_unique_constraint_sql(self, model, fields, name=None, condition=None, deferrable=None, include=None, opclasses=None, expressions=None):
+    if deferrable and (not self.connection.features.supports_deferrable_unique_constraints) or (condition and (not self.connection.features.supports_partial_indexes)) or (include and (not self.connection.features.supports_covering_indexes)) or (expressions and (not self.connection.features.supports_expression_indexes)):
+        return None
+
+    def create_unique_name(*args, **kwargs):
+        return self.quote_name(self._create_index_name(*args, **kwargs))
+    compiler = Query(model, alias_cols=False).get_compiler(connection=self.connection)
+    table = model._meta.db_table
+    columns = [field.column for field in fields]
+    if name is None:
+        name = IndexName(table, columns, '_uniq', create_unique_name)
+    else:
+        name = self.quote_name(name)
+    if condition or include or opclasses or expressions:
+        sql = self.sql_create_unique_index
+    else:
+        sql = self.sql_create_unique
+    if columns:
+        columns = self._index_columns(table, columns, col_suffixes=(), opclasses=opclasses)
+    else:
+        columns = Expressions(table, expressions, compiler, self.quote_value)
+    return Statement(sql, table=Table(table, self.quote_name), name=name, columns=columns, condition=self._index_condition_sql(condition), deferrable=self._deferrable_constraint_sql(deferrable), include=self._index_include_sql(model, include))","[{""var"": ""field"", ""rename"": ""target_fields""}, {""var"": ""compiler"", ""rename"": ""query_compiler""}, {""var"": ""sql"", ""rename"": ""unique_constraint_sql""}, {""var"": ""columns"", ""rename"": ""field_column_names""}, {""var"": ""table"", ""rename"": ""database_table_name""}]"
+./django/db/backends/base/schema.py,_delete_unique_sql,generate_delete_constraint_sql,1595,1621,"def _delete_unique_sql(self, model, name, condition=None, deferrable=None, include=None, opclasses=None, expressions=None):
+    if deferrable and (not self.connection.features.supports_deferrable_unique_constraints) or (condition and (not self.connection.features.supports_partial_indexes)) or (include and (not self.connection.features.supports_covering_indexes)) or (expressions and (not self.connection.features.supports_expression_indexes)):
+        return None
+    if condition or include or opclasses or expressions:
+        sql = self.sql_delete_index
+    else:
+        sql = self.sql_delete_unique
+    return self._delete_constraint_sql(sql, model, name)","def generate_delete_constraint_sql(self, model, name, condition=None, deferrable=None, include=None, opclasses=None, expressions=None):
+    if deferrable and (not self.connection.features.supports_deferrable_unique_constraints) or (condition and (not self.connection.features.supports_partial_indexes)) or (include and (not self.connection.features.supports_covering_indexes)) or (expressions and (not self.connection.features.supports_expression_indexes)):
+        return None
+    if condition or include or opclasses or expressions:
+        sql = self.sql_delete_index
+    else:
+        sql = self.sql_delete_unique
+    return self._delete_constraint_sql(sql, model, name)","[{""var"": ""sql"", ""rename"": ""constraint_deletion_sql""}]"

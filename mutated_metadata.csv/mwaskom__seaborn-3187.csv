@@ -1,0 +1,176 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./seaborn/_core/scales.py,_setup,configure_scale_with_transform_and_legend,322,384,"def _setup(self, data: Series, prop: Property, axis: Axis | None=None) -> Scale:
+    new = copy(self)
+    if new._tick_params is None:
+        new = new.tick()
+    if new._label_params is None:
+        new = new.label()
+    forward, inverse = new._get_transform()
+    mpl_scale = new._get_scale(str(data.name), forward, inverse)
+    if axis is None:
+        axis = PseudoAxis(mpl_scale)
+        axis.update_units(data)
+    mpl_scale.set_default_locators_and_formatters(axis)
+    new._matplotlib_scale = mpl_scale
+    normalize: Optional[Callable[[ArrayLike], ArrayLike]]
+    if prop.normed:
+        if new.norm is None:
+            vmin, vmax = (data.min(), data.max())
+        else:
+            vmin, vmax = new.norm
+        vmin, vmax = axis.convert_units((vmin, vmax))
+        a = forward(vmin)
+        b = forward(vmax) - forward(vmin)
+
+        def normalize(x):
+            return (x - a) / b
+    else:
+        normalize = vmin = vmax = None
+    new._pipeline = [axis.convert_units, forward, normalize, prop.get_mapping(new, data)]
+
+    def spacer(x):
+        x = x.dropna().unique()
+        if len(x) < 2:
+            return np.nan
+        return np.min(np.diff(np.sort(x)))
+    new._spacer = spacer
+    if prop.legend:
+        axis.set_view_interval(vmin, vmax)
+        locs = axis.major.locator()
+        locs = locs[(vmin <= locs) & (locs <= vmax)]
+        labels = axis.major.formatter.format_ticks(locs)
+        new._legend = (list(locs), list(labels))
+    return new","def configure_scale_with_transform_and_legend(self, data: Series, prop: Property, axis: Axis | None=None) -> Scale:
+    new = copy(self)
+    if new._tick_params is None:
+        new = new.tick()
+    if new._label_params is None:
+        new = new.label()
+    forward, inverse = new._get_transform()
+    mpl_scale = new._get_scale(str(data.name), forward, inverse)
+    if axis is None:
+        axis = PseudoAxis(mpl_scale)
+        axis.update_units(data)
+    mpl_scale.set_default_locators_and_formatters(axis)
+    new._matplotlib_scale = mpl_scale
+    normalize: Optional[Callable[[ArrayLike], ArrayLike]]
+    if prop.normed:
+        if new.norm is None:
+            vmin, vmax = (data.min(), data.max())
+        else:
+            vmin, vmax = new.norm
+        vmin, vmax = axis.convert_units((vmin, vmax))
+        a = forward(vmin)
+        b = forward(vmax) - forward(vmin)
+
+        def normalize(x):
+            return (x - a) / b
+    else:
+        normalize = vmin = vmax = None
+    new._pipeline = [axis.convert_units, forward, normalize, prop.get_mapping(new, data)]
+
+    def spacer(x):
+        x = x.dropna().unique()
+        if len(x) < 2:
+            return np.nan
+        return np.min(np.diff(np.sort(x)))
+    new._spacer = spacer
+    if prop.legend:
+        axis.set_view_interval(vmin, vmax)
+        locs = axis.major.locator()
+        locs = locs[(vmin <= locs) & (locs <= vmax)]
+        labels = axis.major.formatter.format_ticks(locs)
+        new._legend = (list(locs), list(labels))
+    return new","[{""var"": ""normalize"", ""rename"": ""scale_normalization_function""}, {""var"": ""forward"", ""rename"": ""forward_transform_function""}, {""var"": ""a"", ""rename"": ""scaled_min_value""}, {""var"": ""vmax"", ""rename"": ""value_range_maximum""}, {""var"": ""mpl_scale"", ""rename"": ""matplotlib_scale_object""}, {""var"": ""locs"", ""rename"": ""filtered_major_tick_locs""}, {""var"": ""new"", ""rename"": ""transformed_scale_instance""}, {""var"": ""labels"", ""rename"": ""formatted_tick_labels""}, {""var"": ""inverse"", ""rename"": ""reverse_transform_function""}, {""var"": ""vmin"", ""rename"": ""value_range_min""}, {""var"": ""b"", ""rename"": ""normalize_range""}]"
+./seaborn/_core/scales.py,_get_transform,determine_transform_operation,386,417,"def _get_transform(self):
+    arg = self.trans
+
+    def get_param(method, default):
+        if arg == method:
+            return default
+        return float(arg[len(method):])
+    if arg is None:
+        return _make_identity_transforms()
+    elif isinstance(arg, tuple):
+        return arg
+    elif isinstance(arg, str):
+        if arg == 'ln':
+            return _make_log_transforms()
+        elif arg == 'logit':
+            base = get_param('logit', 10)
+            return _make_logit_transforms(base)
+        elif arg.startswith('log'):
+            base = get_param('log', 10)
+            return _make_log_transforms(base)
+        elif arg.startswith('symlog'):
+            c = get_param('symlog', 1)
+            return _make_symlog_transforms(c)
+        elif arg.startswith('pow'):
+            exp = get_param('pow', 2)
+            return _make_power_transforms(exp)
+        elif arg == 'sqrt':
+            return _make_sqrt_transforms()
+        else:
+            raise ValueError(f'Unknown value provided for trans: {arg!r}')","def determine_transform_operation(self):
+    arg = self.trans
+
+    def get_param(method, default):
+        if arg == method:
+            return default
+        return float(arg[len(method):])
+    if arg is None:
+        return _make_identity_transforms()
+    elif isinstance(arg, tuple):
+        return arg
+    elif isinstance(arg, str):
+        if arg == 'ln':
+            return _make_log_transforms()
+        elif arg == 'logit':
+            base = get_param('logit', 10)
+            return _make_logit_transforms(base)
+        elif arg.startswith('log'):
+            base = get_param('log', 10)
+            return _make_log_transforms(base)
+        elif arg.startswith('symlog'):
+            c = get_param('symlog', 1)
+            return _make_symlog_transforms(c)
+        elif arg.startswith('pow'):
+            exp = get_param('pow', 2)
+            return _make_power_transforms(exp)
+        elif arg == 'sqrt':
+            return _make_sqrt_transforms()
+        else:
+            raise ValueError(f'Unknown value provided for trans: {arg!r}')","[{""var"": ""base"", ""rename"": ""log_base_value""}, {""var"": ""exp"", ""rename"": ""exponent_value""}, {""var"": ""c"", ""rename"": ""symlog_scale""}, {""var"": ""arg"", ""rename"": ""transform_identifier""}]"
+./seaborn/utils.py,locator_to_legend_entries,generate_legend_levels_and_labels,687,710,"def locator_to_legend_entries(locator, limits, dtype):
+    """"""Return levels and formatted levels for brief numeric legends.""""""
+    raw_levels = locator.tick_values(*limits).astype(dtype)
+    raw_levels = [l for l in raw_levels if l >= limits[0] and l <= limits[1]]
+
+    class dummy_axis:
+
+        def get_view_interval(self):
+            return limits
+    if isinstance(locator, mpl.ticker.LogLocator):
+        formatter = mpl.ticker.LogFormatter()
+    else:
+        formatter = mpl.ticker.ScalarFormatter()
+    formatter.axis = dummy_axis()
+    formatter.set_locs(raw_levels)
+    formatted_levels = [formatter(x) for x in raw_levels]
+    return (raw_levels, formatted_levels)","def generate_legend_levels_and_labels(locator, limits, dtype):
+    """"""Return levels and formatted levels for brief numeric legends.""""""
+    raw_levels = locator.tick_values(*limits).astype(dtype)
+    raw_levels = [l for l in raw_levels if l >= limits[0] and l <= limits[1]]
+
+    class dummy_axis:
+
+        def get_view_interval(self):
+            return limits
+    if isinstance(locator, mpl.ticker.LogLocator):
+        formatter = mpl.ticker.LogFormatter()
+    else:
+        formatter = mpl.ticker.ScalarFormatter()
+    formatter.axis = dummy_axis()
+    formatter.set_locs(raw_levels)
+    formatted_levels = [formatter(x) for x in raw_levels]
+    return (raw_levels, formatted_levels)","[{""var"": ""formatted_levels"", ""rename"": ""legend_entry_labels""}, {""var"": ""x"", ""rename"": ""numeric_level""}, {""var"": ""l"", ""rename"": ""level_within_limits""}, {""var"": ""raw_levels"", ""rename"": ""filtered_tick_values""}, {""var"": ""formatter"", ""rename"": ""level_formatter""}]"

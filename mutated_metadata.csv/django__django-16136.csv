@@ -1,0 +1,29 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/views/generic/base.py,http_method_not_allowed,log_and_respond_method_not_allowed,144,151,"def http_method_not_allowed(self, request, *args, **kwargs):
+    logger.warning('Method Not Allowed (%s): %s', request.method, request.path, extra={'status_code': 405, 'request': request})
+    return HttpResponseNotAllowed(self._allowed_methods())","def log_and_respond_method_not_allowed(self, request, *args, **kwargs):
+    logger.warning('Method Not Allowed (%s): %s', request.method, request.path, extra={'status_code': 405, 'request': request})
+    return HttpResponseNotAllowed(self._allowed_methods())",[]
+./django/views/generic/base.py,options,handle_options_http_verb_response,153,166,"def options(self, request, *args, **kwargs):
+    """"""Handle responding to requests for the OPTIONS HTTP verb.""""""
+    response = HttpResponse()
+    response.headers['Allow'] = ', '.join(self._allowed_methods())
+    response.headers['Content-Length'] = '0'
+    if self.view_is_async:
+
+        async def func():
+            return response
+        return func()
+    else:
+        return response","def handle_options_http_verb_response(self, request, *args, **kwargs):
+    """"""Handle responding to requests for the OPTIONS HTTP verb.""""""
+    response = HttpResponse()
+    response.headers['Allow'] = ', '.join(self._allowed_methods())
+    response.headers['Content-Length'] = '0'
+    if self.view_is_async:
+
+        async def func():
+            return response
+        return func()
+    else:
+        return response","[{""var"": ""response"", ""rename"": ""http_options_response""}]"

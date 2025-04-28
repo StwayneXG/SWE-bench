@@ -1,0 +1,32 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/db/models/aggregates.py,as_sql,generate_filtered_aggregate_sql,70,88,"def as_sql(self, compiler, connection, **extra_context):
+    extra_context['distinct'] = 'DISTINCT' if self.distinct else ''
+    if self.filter:
+        if connection.features.supports_aggregate_filter_clause:
+            filter_sql, filter_params = self.filter.as_sql(compiler, connection)
+            template = self.filter_template % extra_context.get('template', self.template)
+            sql, params = super().as_sql(compiler, connection, template=template, filter=filter_sql, **extra_context)
+            return (sql, params + filter_params)
+        else:
+            copy = self.copy()
+            copy.filter = None
+            source_expressions = copy.get_source_expressions()
+            condition = When(self.filter, then=source_expressions[0])
+            copy.set_source_expressions([Case(condition)] + source_expressions[1:])
+            return super(Aggregate, copy).as_sql(compiler, connection, **extra_context)
+    return super().as_sql(compiler, connection, **extra_context)","def generate_filtered_aggregate_sql(self, compiler, connection, **extra_context):
+    extra_context['distinct'] = 'DISTINCT' if self.distinct else ''
+    if self.filter:
+        if connection.features.supports_aggregate_filter_clause:
+            filter_sql, filter_params = self.filter.as_sql(compiler, connection)
+            template = self.filter_template % extra_context.get('template', self.template)
+            sql, params = super().as_sql(compiler, connection, template=template, filter=filter_sql, **extra_context)
+            return (sql, params + filter_params)
+        else:
+            copy = self.copy()
+            copy.filter = None
+            source_expressions = copy.get_source_expressions()
+            condition = When(self.filter, then=source_expressions[0])
+            copy.set_source_expressions([Case(condition)] + source_expressions[1:])
+            return super(Aggregate, copy).as_sql(compiler, connection, **extra_context)
+    return super().as_sql(compiler, connection, **extra_context)","[{""var"": ""filter_sql"", ""rename"": ""filter_clause_sql""}, {""var"": ""condition"", ""rename"": ""filter_condition""}, {""var"": ""params"", ""rename"": ""query_parameters""}, {""var"": ""filter_params"", ""rename"": ""filter_query_parameters""}, {""var"": ""copy"", ""rename"": ""filtered_copy_instance""}, {""var"": ""sql"", ""rename"": ""aggregate_query_sql""}, {""var"": ""source_expressions"", ""rename"": ""expression_components""}, {""var"": ""template"", ""rename"": ""sql_template""}]"

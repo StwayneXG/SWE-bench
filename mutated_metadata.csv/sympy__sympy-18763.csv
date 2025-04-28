@@ -1,0 +1,14 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./sympy/printing/latex.py,_print_Subs,format_expression_with_substitutions,699,707,"def _print_Subs(self, subs):
+    expr, old, new = subs.args
+    latex_expr = self._print(expr)
+    latex_old = (self._print(e) for e in old)
+    latex_new = (self._print(e) for e in new)
+    latex_subs = '\\\\ '.join((e[0] + '=' + e[1] for e in zip(latex_old, latex_new)))
+    return '\\left. %s \\right|_{\\substack{ %s }}' % (latex_expr, latex_subs)","def format_expression_with_substitutions(self, subs):
+    expr, old, new = subs.args
+    latex_expr = self._print(expr)
+    latex_old = (self._print(e) for e in old)
+    latex_new = (self._print(e) for e in new)
+    latex_subs = '\\\\ '.join((e[0] + '=' + e[1] for e in zip(latex_old, latex_new)))
+    return '\\left. %s \\right|_{\\substack{ %s }}' % (latex_expr, latex_subs)","[{""var"": ""latex_expr"", ""rename"": ""latex_formatted_expression""}, {""var"": ""latex_new"", ""rename"": ""latex_new_substitutions""}, {""var"": ""old"", ""rename"": ""original_values""}, {""var"": ""latex_old"", ""rename"": ""latex_original_expressions""}, {""var"": ""latex_subs"", ""rename"": ""formatted_subs_latex""}, {""var"": ""new"", ""rename"": ""replacement_terms""}, {""var"": ""e"", ""rename"": ""python\nsubstitution_element""}, {""var"": ""expr"", ""rename"": ""expression_to_substitute""}]"

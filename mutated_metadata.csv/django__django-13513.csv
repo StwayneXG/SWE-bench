@@ -1,0 +1,93 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/views/debug.py,get_traceback_frames,extract_exception_traceback_details,397,471,"def get_traceback_frames(self):
+
+    def explicit_or_implicit_cause(exc_value):
+        explicit = getattr(exc_value, '__cause__', None)
+        suppress_context = getattr(exc_value, '__suppress_context__', None)
+        implicit = getattr(exc_value, '__context__', None)
+        return explicit or (None if suppress_context else implicit)
+    exceptions = []
+    exc_value = self.exc_value
+    while exc_value:
+        exceptions.append(exc_value)
+        exc_value = explicit_or_implicit_cause(exc_value)
+        if exc_value in exceptions:
+            warnings.warn(""Cycle in the exception chain detected: exception '%s' encountered again."" % exc_value, ExceptionCycleWarning)
+            break
+    frames = []
+    if not exceptions:
+        return frames
+    exc_value = exceptions.pop()
+    tb = self.tb if not exceptions else exc_value.__traceback__
+    while tb is not None:
+        if tb.tb_frame.f_locals.get('__traceback_hide__'):
+            tb = tb.tb_next
+            continue
+        filename = tb.tb_frame.f_code.co_filename
+        function = tb.tb_frame.f_code.co_name
+        lineno = tb.tb_lineno - 1
+        loader = tb.tb_frame.f_globals.get('__loader__')
+        module_name = tb.tb_frame.f_globals.get('__name__') or ''
+        pre_context_lineno, pre_context, context_line, post_context = self._get_lines_from_file(filename, lineno, 7, loader, module_name)
+        if pre_context_lineno is None:
+            pre_context_lineno = lineno
+            pre_context = []
+            context_line = '<source code not available>'
+            post_context = []
+        frames.append({'exc_cause': explicit_or_implicit_cause(exc_value), 'exc_cause_explicit': getattr(exc_value, '__cause__', True), 'tb': tb, 'type': 'django' if module_name.startswith('django.') else 'user', 'filename': filename, 'function': function, 'lineno': lineno + 1, 'vars': self.filter.get_traceback_frame_variables(self.request, tb.tb_frame), 'id': id(tb), 'pre_context': pre_context, 'context_line': context_line, 'post_context': post_context, 'pre_context_lineno': pre_context_lineno + 1})
+        if not tb.tb_next and exceptions:
+            exc_value = exceptions.pop()
+            tb = exc_value.__traceback__
+        else:
+            tb = tb.tb_next
+    return frames","def extract_exception_traceback_details(self):
+
+    def explicit_or_implicit_cause(exc_value):
+        explicit = getattr(exc_value, '__cause__', None)
+        suppress_context = getattr(exc_value, '__suppress_context__', None)
+        implicit = getattr(exc_value, '__context__', None)
+        return explicit or (None if suppress_context else implicit)
+    exceptions = []
+    exc_value = self.exc_value
+    while exc_value:
+        exceptions.append(exc_value)
+        exc_value = explicit_or_implicit_cause(exc_value)
+        if exc_value in exceptions:
+            warnings.warn(""Cycle in the exception chain detected: exception '%s' encountered again."" % exc_value, ExceptionCycleWarning)
+            break
+    frames = []
+    if not exceptions:
+        return frames
+    exc_value = exceptions.pop()
+    tb = self.tb if not exceptions else exc_value.__traceback__
+    while tb is not None:
+        if tb.tb_frame.f_locals.get('__traceback_hide__'):
+            tb = tb.tb_next
+            continue
+        filename = tb.tb_frame.f_code.co_filename
+        function = tb.tb_frame.f_code.co_name
+        lineno = tb.tb_lineno - 1
+        loader = tb.tb_frame.f_globals.get('__loader__')
+        module_name = tb.tb_frame.f_globals.get('__name__') or ''
+        pre_context_lineno, pre_context, context_line, post_context = self._get_lines_from_file(filename, lineno, 7, loader, module_name)
+        if pre_context_lineno is None:
+            pre_context_lineno = lineno
+            pre_context = []
+            context_line = '<source code not available>'
+            post_context = []
+        frames.append({'exc_cause': explicit_or_implicit_cause(exc_value), 'exc_cause_explicit': getattr(exc_value, '__cause__', True), 'tb': tb, 'type': 'django' if module_name.startswith('django.') else 'user', 'filename': filename, 'function': function, 'lineno': lineno + 1, 'vars': self.filter.get_traceback_frame_variables(self.request, tb.tb_frame), 'id': id(tb), 'pre_context': pre_context, 'context_line': context_line, 'post_context': post_context, 'pre_context_lineno': pre_context_lineno + 1})
+        if not tb.tb_next and exceptions:
+            exc_value = exceptions.pop()
+            tb = exc_value.__traceback__
+        else:
+            tb = tb.tb_next
+    return frames","[{""var"": ""filename"", ""rename"": ""traceback_file_path""}, {""var"": ""function"", ""rename"": ""function_name_in_traceback""}, {""var"": ""context_line"", ""rename"": ""current_line_of_code""}, {""var"": ""pre_context"", ""rename"": ""previous_code_context""}, {""var"": ""module_name"", ""rename"": ""exception_module_name""}, {""var"": ""pre_context_lineno"", ""rename"": ""starting_lineno_of_pre_context""}, {""var"": ""implicit"", ""rename"": ""context_exception""}, {""var"": ""lineno"", ""rename"": ""line_number_in_traceback""}, {""var"": ""post_context"", ""rename"": ""post_execution_context""}, {""var"": ""exceptions"", ""rename"": ""exception_chain""}, {""var"": ""loader"", ""rename"": ""module_loader""}, {""var"": ""tb"", ""rename"": ""traceback_info""}, {""var"": ""suppress_context"", ""rename"": ""suppress_exception_context""}, {""var"": ""frames"", ""rename"": ""traceback_details""}, {""var"": ""explicit"", ""rename"": ""explicit_cause""}]"
+./django/views/debug.py,explicit_or_implicit_cause,determine_exception_cause_or_context,398,402,"def explicit_or_implicit_cause(exc_value):
+    explicit = getattr(exc_value, '__cause__', None)
+    suppress_context = getattr(exc_value, '__suppress_context__', None)
+    implicit = getattr(exc_value, '__context__', None)
+    return explicit or (None if suppress_context else implicit)","def determine_exception_cause_or_context(exc_value):
+    explicit = getattr(exc_value, '__cause__', None)
+    suppress_context = getattr(exc_value, '__suppress_context__', None)
+    implicit = getattr(exc_value, '__context__', None)
+    return explicit or (None if suppress_context else implicit)","[{""var"": ""implicit"", ""rename"": ""inferred_context_cause""}, {""var"": ""suppress_context"", ""rename"": ""context_suppression_flag""}, {""var"": ""explicit"", ""rename"": ""explicit_cause_indicator""}]"

@@ -1,0 +1,51 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./sympy/functions/special/zeta_functions.py,eval,complex_series_evaluation,273,279,"@classmethod
+def eval(cls, s, z):
+    if z == 1:
+        return zeta(s)
+    elif z == -1:
+        return -dirichlet_eta(s)
+    elif z == 0:
+        return 0","@classmethod
+def complex_series_evaluation(cls, s, z):
+    if z == 1:
+        return zeta(s)
+    elif z == -1:
+        return -dirichlet_eta(s)
+    elif z == 0:
+        return 0",[]
+./sympy/functions/special/zeta_functions.py,fdiff,evaluate_polylog_derivative,281,285,"def fdiff(self, argindex=1):
+    s, z = self.args
+    if argindex == 2:
+        return polylog(s - 1, z) / z
+    raise ArgumentIndexError","def evaluate_polylog_derivative(self, argindex=1):
+    s, z = self.args
+    if argindex == 2:
+        return polylog(s - 1, z) / z
+    raise ArgumentIndexError","[{""var"": ""z"", ""rename"": ""input_variable_z""}, {""var"": ""s"", ""rename"": ""complexity_order""}]"
+./sympy/functions/special/zeta_functions.py,_eval_rewrite_as_lerchphi,convert_to_lerchphi_expression,287,288,"def _eval_rewrite_as_lerchphi(self, s, z):
+    return z * lerchphi(z, s, 1)","def convert_to_lerchphi_expression(self, s, z):
+    return z * lerchphi(z, s, 1)",[]
+./sympy/functions/special/zeta_functions.py,_eval_expand_func,expand_symbolic_polylog_expression,290,301,"def _eval_expand_func(self, **hints):
+    from sympy import log, expand_mul, Dummy, exp_polar, I
+    s, z = self.args
+    if s == 1:
+        return -log(1 + exp_polar(-I * pi) * z)
+    if s.is_Integer and s <= 0:
+        u = Dummy('u')
+        start = u / (1 - u)
+        for _ in range(-s):
+            start = u * start.diff(u)
+        return expand_mul(start).subs(u, z)
+    return polylog(s, z)","def expand_symbolic_polylog_expression(self, **hints):
+    from sympy import log, expand_mul, Dummy, exp_polar, I
+    s, z = self.args
+    if s == 1:
+        return -log(1 + exp_polar(-I * pi) * z)
+    if s.is_Integer and s <= 0:
+        u = Dummy('u')
+        start = u / (1 - u)
+        for _ in range(-s):
+            start = u * start.diff(u)
+        return expand_mul(start).subs(u, z)
+    return polylog(s, z)","[{""var"": ""s"", ""rename"": ""polylog_degree""}, {""var"": ""z"", ""rename"": ""complex_exp_term""}, {""var"": ""_"", ""rename"": ""expansion_result""}, {""var"": ""u"", ""rename"": ""symbolic_dummy_variable""}, {""var"": ""start"", ""rename"": ""iterative_expansion_expression""}]"

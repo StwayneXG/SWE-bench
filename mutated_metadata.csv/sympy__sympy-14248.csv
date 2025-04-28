@@ -1,0 +1,109 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./sympy/printing/latex.py,_print_MatAdd,generate_latex_for_matrix_addition,1479,1482,"def _print_MatAdd(self, expr):
+    terms = list(expr.args)
+    tex = ' + '.join(map(self._print, terms))
+    return tex","def generate_latex_for_matrix_addition(self, expr):
+    terms = list(expr.args)
+    tex = ' + '.join(map(self._print, terms))
+    return tex","[{""var"": ""terms"", ""rename"": ""expression_terms_list""}, {""var"": ""tex"", ""rename"": ""formatted_add_expression""}]"
+./sympy/printing/latex.py,_print_MatMul,_format_ExprWithParensForOperations,1484,1491,"def _print_MatMul(self, expr):
+    from sympy import Add, MatAdd, HadamardProduct
+
+    def parens(x):
+        if isinstance(x, (Add, MatAdd, HadamardProduct)):
+            return '\\left(%s\\right)' % self._print(x)
+        return self._print(x)
+    return ' '.join(map(parens, expr.args))","def _format_ExprWithParensForOperations(self, expr):
+    from sympy import Add, MatAdd, HadamardProduct
+
+    def parens(x):
+        if isinstance(x, (Add, MatAdd, HadamardProduct)):
+            return '\\left(%s\\right)' % self._print(x)
+        return self._print(x)
+    return ' '.join(map(parens, expr.args))",[]
+./sympy/printing/latex.py,_print_Mod,format_modulo_expression,1493,1498,"def _print_Mod(self, expr, exp=None):
+    if exp is not None:
+        return '\\left(%s\\bmod{%s}\\right)^{%s}' % (self.parenthesize(expr.args[0], PRECEDENCE['Mul'], strict=True), self._print(expr.args[1]), self._print(exp))
+    return '%s\\bmod{%s}' % (self.parenthesize(expr.args[0], PRECEDENCE['Mul'], strict=True), self._print(expr.args[1]))","def format_modulo_expression(self, expr, exp=None):
+    if exp is not None:
+        return '\\left(%s\\bmod{%s}\\right)^{%s}' % (self.parenthesize(expr.args[0], PRECEDENCE['Mul'], strict=True), self._print(expr.args[1]), self._print(exp))
+    return '%s\\bmod{%s}' % (self.parenthesize(expr.args[0], PRECEDENCE['Mul'], strict=True), self._print(expr.args[1]))",[]
+./sympy/printing/latex.py,_print_HadamardProduct,_formatAndJoinHadamardExpression,1500,1507,"def _print_HadamardProduct(self, expr):
+    from sympy import Add, MatAdd, MatMul
+
+    def parens(x):
+        if isinstance(x, (Add, MatAdd, MatMul)):
+            return '\\left(%s\\right)' % self._print(x)
+        return self._print(x)
+    return ' \\circ '.join(map(parens, expr.args))","def _formatAndJoinHadamardExpression(self, expr):
+    from sympy import Add, MatAdd, MatMul
+
+    def parens(x):
+        if isinstance(x, (Add, MatAdd, MatMul)):
+            return '\\left(%s\\right)' % self._print(x)
+        return self._print(x)
+    return ' \\circ '.join(map(parens, expr.args))",[]
+./sympy/printing/latex.py,parens,wrap_expression_in_parentheses,1487,1490,"def parens(x):
+    if isinstance(x, (Add, MatAdd, HadamardProduct)):
+        return '\\left(%s\\right)' % self._print(x)
+    return self._print(x)","def wrap_expression_in_parentheses(x):
+    if isinstance(x, (Add, MatAdd, HadamardProduct)):
+        return '\\left(%s\\right)' % self._print(x)
+    return self._print(x)",[]
+./sympy/printing/latex.py,parens,format_expr_with_parentheses,1503,1506,"def parens(x):
+    if isinstance(x, (Add, MatAdd, MatMul)):
+        return '\\left(%s\\right)' % self._print(x)
+    return self._print(x)","def format_expr_with_parentheses(x):
+    if isinstance(x, (Add, MatAdd, MatMul)):
+        return '\\left(%s\\right)' % self._print(x)
+    return self._print(x)",[]
+./sympy/printing/pretty/pretty.py,_print_MatAdd,print_matrix_addition_expression,821,822,"def _print_MatAdd(self, expr):
+    return self._print_seq(expr.args, None, None, ' + ')","def print_matrix_addition_expression(self, expr):
+    return self._print_seq(expr.args, None, None, ' + ')",[]
+./sympy/printing/pretty/pretty.py,_print_MatMul,format_and_multiply_matrix_expression,824,834,"def _print_MatMul(self, expr):
+    args = list(expr.args)
+    from sympy import Add, MatAdd, HadamardProduct
+    for i, a in enumerate(args):
+        if isinstance(a, (Add, MatAdd, HadamardProduct)) and len(expr.args) > 1:
+            args[i] = prettyForm(*self._print(a).parens())
+        else:
+            args[i] = self._print(a)
+    return prettyForm.__mul__(*args)","def format_and_multiply_matrix_expression(self, expr):
+    args = list(expr.args)
+    from sympy import Add, MatAdd, HadamardProduct
+    for i, a in enumerate(args):
+        if isinstance(a, (Add, MatAdd, HadamardProduct)) and len(expr.args) > 1:
+            args[i] = prettyForm(*self._print(a).parens())
+        else:
+            args[i] = self._print(a)
+    return prettyForm.__mul__(*args)","[{""var"": ""i"", ""rename"": ""arg_index""}, {""var"": ""a"", ""rename"": ""mathematical_expression""}, {""var"": ""args"", ""rename"": ""expression_arguments""}]"
+./sympy/printing/str.py,_print_MatMul,generate_parenthesized_matrix_multiplication,306,308,"def _print_MatMul(self, expr):
+    return '*'.join([self.parenthesize(arg, precedence(expr)) for arg in expr.args])","def generate_parenthesized_matrix_multiplication(self, expr):
+    return '*'.join([self.parenthesize(arg, precedence(expr)) for arg in expr.args])","[{""var"": ""arg"", ""rename"": ""matrix_term""}]"
+./sympy/printing/str.py,_print_HadamardProduct,generate_hadamard_product_expression,310,312,"def _print_HadamardProduct(self, expr):
+    return '.*'.join([self.parenthesize(arg, precedence(expr)) for arg in expr.args])","def generate_hadamard_product_expression(self, expr):
+    return '.*'.join([self.parenthesize(arg, precedence(expr)) for arg in expr.args])","[{""var"": ""arg"", ""rename"": ""expression_argument""}]"
+./sympy/printing/str.py,_print_MatAdd,format_matrix_addition_expression,314,316,"def _print_MatAdd(self, expr):
+    return ' + '.join([self.parenthesize(arg, precedence(expr)) for arg in expr.args])","def format_matrix_addition_expression(self, expr):
+    return ' + '.join([self.parenthesize(arg, precedence(expr)) for arg in expr.args])","[{""var"": ""arg"", ""rename"": ""addition_argument""}]"
+./sympy/printing/str.py,_print_NegativeInfinity,formatAsNegativeInfinity,321,322,"def _print_NegativeInfinity(self, expr):
+    return '-oo'","def formatAsNegativeInfinity(self, expr):
+    return '-oo'",[]
+./sympy/printing/str.py,_print_Normal,format_normal_distribution_parameters,324,325,"def _print_Normal(self, expr):
+    return 'Normal(%s, %s)' % (expr.mu, expr.sigma)","def format_normal_distribution_parameters(self, expr):
+    return 'Normal(%s, %s)' % (expr.mu, expr.sigma)",[]
+./sympy/printing/str.py,_print_Order,format_asymptotic_order_expression,327,334,"def _print_Order(self, expr):
+    if all((p is S.Zero for p in expr.point)) or not len(expr.variables):
+        if len(expr.variables) <= 1:
+            return 'O(%s)' % self._print(expr.expr)
+        else:
+            return 'O(%s)' % self.stringify((expr.expr,) + expr.variables, ', ', 0)
+    else:
+        return 'O(%s)' % self.stringify(expr.args, ', ', 0)","def format_asymptotic_order_expression(self, expr):
+    if all((p is S.Zero for p in expr.point)) or not len(expr.variables):
+        if len(expr.variables) <= 1:
+            return 'O(%s)' % self._print(expr.expr)
+        else:
+            return 'O(%s)' % self.stringify((expr.expr,) + expr.variables, ', ', 0)
+    else:
+        return 'O(%s)' % self.stringify(expr.args, ', ', 0)","[{""var"": ""p"", ""rename"": ""zero_check_point""}]"

@@ -1,0 +1,168 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./pylint/config/argument.py,__init__,initialize_action_with_flags,451,469,"def __init__(self, *, flags: list[str], action: type[_CallbackAction], arg_help: str, kwargs: dict[str, Any], hide_help: bool, section: str | None) -> None:
+    super().__init__(flags=flags, arg_help=arg_help, hide_help=hide_help, section=section)
+    self.action = action
+    'The action to perform with the argument.'
+    self.kwargs = kwargs
+    'Any additional arguments passed to the action.'","def initialize_action_with_flags(self, *, flags: list[str], action: type[_CallbackAction], arg_help: str, kwargs: dict[str, Any], hide_help: bool, section: str | None) -> None:
+    super().__init__(flags=flags, arg_help=arg_help, hide_help=hide_help, section=section)
+    self.action = action
+    'The action to perform with the argument.'
+    self.kwargs = kwargs
+    'Any additional arguments passed to the action.'",[]
+./pylint/config/arguments_manager.py,_add_parser_option,"python
+add_argument_to_parser_group",159,234,"@staticmethod
+def _add_parser_option(section_group: argparse._ArgumentGroup, argument: _Argument) -> None:
+    """"""Add an argument.""""""
+    if isinstance(argument, _StoreArgument):
+        section_group.add_argument(*argument.flags, action=argument.action, default=argument.default, type=argument.type, help=argument.help, metavar=argument.metavar, choices=argument.choices)
+    elif isinstance(argument, _StoreOldNamesArgument):
+        section_group.add_argument(*argument.flags, **argument.kwargs, action=argument.action, default=argument.default, type=argument.type, help=argument.help, metavar=argument.metavar, choices=argument.choices)
+        assert argument.kwargs['old_names']
+        for old_name in argument.kwargs['old_names']:
+            section_group.add_argument(f'--{old_name}', action='store', default=argument.default, type=argument.type, help=argparse.SUPPRESS, metavar=argument.metavar, choices=argument.choices)
+    elif isinstance(argument, _StoreNewNamesArgument):
+        section_group.add_argument(*argument.flags, **argument.kwargs, action=argument.action, default=argument.default, type=argument.type, help=argument.help, metavar=argument.metavar, choices=argument.choices)
+    elif isinstance(argument, _StoreTrueArgument):
+        section_group.add_argument(*argument.flags, action=argument.action, default=argument.default, help=argument.help)
+    elif isinstance(argument, _CallableArgument):
+        section_group.add_argument(*argument.flags, **argument.kwargs, action=argument.action, help=argument.help)
+    elif isinstance(argument, _ExtendArgument):
+        section_group.add_argument(*argument.flags, action=argument.action, default=argument.default, type=argument.type, help=argument.help, metavar=argument.metavar, choices=argument.choices, dest=argument.dest)
+    else:
+        raise UnrecognizedArgumentAction","@staticmethod
+def python
+add_argument_to_parser_group(section_group: argparse._ArgumentGroup, argument: _Argument) -> None:
+    """"""Add an argument.""""""
+    if isinstance(argument, _StoreArgument):
+        section_group.add_argument(*argument.flags, action=argument.action, default=argument.default, type=argument.type, help=argument.help, metavar=argument.metavar, choices=argument.choices)
+    elif isinstance(argument, _StoreOldNamesArgument):
+        section_group.add_argument(*argument.flags, **argument.kwargs, action=argument.action, default=argument.default, type=argument.type, help=argument.help, metavar=argument.metavar, choices=argument.choices)
+        assert argument.kwargs['old_names']
+        for old_name in argument.kwargs['old_names']:
+            section_group.add_argument(f'--{old_name}', action='store', default=argument.default, type=argument.type, help=argparse.SUPPRESS, metavar=argument.metavar, choices=argument.choices)
+    elif isinstance(argument, _StoreNewNamesArgument):
+        section_group.add_argument(*argument.flags, **argument.kwargs, action=argument.action, default=argument.default, type=argument.type, help=argument.help, metavar=argument.metavar, choices=argument.choices)
+    elif isinstance(argument, _StoreTrueArgument):
+        section_group.add_argument(*argument.flags, action=argument.action, default=argument.default, help=argument.help)
+    elif isinstance(argument, _CallableArgument):
+        section_group.add_argument(*argument.flags, **argument.kwargs, action=argument.action, help=argument.help)
+    elif isinstance(argument, _ExtendArgument):
+        section_group.add_argument(*argument.flags, action=argument.action, default=argument.default, type=argument.type, help=argument.help, metavar=argument.metavar, choices=argument.choices, dest=argument.dest)
+    else:
+        raise UnrecognizedArgumentAction","[{""var"": ""old_name"", ""rename"": ""deprecated_name_alias""}]"
+./pylint/config/utils.py,_convert_option_to_argument,_transform_option_to_argument_instance,31,145,"def _convert_option_to_argument(opt: str, optdict: dict[str, Any]) -> _StoreArgument | _StoreTrueArgument | _CallableArgument | _StoreOldNamesArgument | _StoreNewNamesArgument | _ExtendArgument:
+    """"""Convert an optdict to an Argument class instance.""""""
+    if 'level' in optdict and 'hide' not in optdict:
+        warnings.warn(""The 'level' key in optdicts has been deprecated. Use 'hide' with a boolean to hide an option from the help message."", DeprecationWarning)
+    flags = [f'--{opt}']
+    if 'short' in optdict:
+        flags += [f""-{optdict['short']}""]
+    action = optdict.get('action', 'store')
+    if action == 'store_true':
+        return _StoreTrueArgument(flags=flags, action=action, default=optdict.get('default', True), arg_help=optdict.get('help', ''), hide_help=optdict.get('hide', False), section=optdict.get('group', None))
+    if not isinstance(action, str) and issubclass(action, _CallbackAction):
+        return _CallableArgument(flags=flags, action=action, arg_help=optdict.get('help', ''), kwargs=optdict.get('kwargs', {}), hide_help=optdict.get('hide', False), section=optdict.get('group', None))
+    try:
+        default = optdict['default']
+    except KeyError:
+        warnings.warn(""An option dictionary should have a 'default' key to specify the option's default value. This key will be required in pylint 3.0. It is not required for 'store_true' and callable actions."", DeprecationWarning)
+        default = None
+    if action == 'extend':
+        return _ExtendArgument(flags=flags, action=action, default=default, arg_type=optdict['type'], choices=optdict.get('choices', None), arg_help=optdict.get('help', ''), metavar=optdict.get('metavar', ''), hide_help=optdict.get('hide', False), section=optdict.get('group', None), dest=optdict.get('dest', None))
+    if 'kwargs' in optdict:
+        if 'old_names' in optdict['kwargs']:
+            return _StoreOldNamesArgument(flags=flags, default=default, arg_type=optdict['type'], choices=optdict.get('choices', None), arg_help=optdict.get('help', ''), metavar=optdict.get('metavar', ''), hide_help=optdict.get('hide', False), kwargs=optdict.get('kwargs', {}), section=optdict.get('group', None))
+        if 'new_names' in optdict['kwargs']:
+            return _StoreNewNamesArgument(flags=flags, default=default, arg_type=optdict['type'], choices=optdict.get('choices', None), arg_help=optdict.get('help', ''), metavar=optdict.get('metavar', ''), hide_help=optdict.get('hide', False), kwargs=optdict.get('kwargs', {}), section=optdict.get('group', None))
+    if 'dest' in optdict:
+        return _StoreOldNamesArgument(flags=flags, default=default, arg_type=optdict['type'], choices=optdict.get('choices', None), arg_help=optdict.get('help', ''), metavar=optdict.get('metavar', ''), hide_help=optdict.get('hide', False), kwargs={'old_names': [optdict['dest']]}, section=optdict.get('group', None))
+    return _StoreArgument(flags=flags, action=action, default=default, arg_type=optdict['type'], choices=optdict.get('choices', None), arg_help=optdict.get('help', ''), metavar=optdict.get('metavar', ''), hide_help=optdict.get('hide', False), section=optdict.get('group', None))","def _transform_option_to_argument_instance(opt: str, optdict: dict[str, Any]) -> _StoreArgument | _StoreTrueArgument | _CallableArgument | _StoreOldNamesArgument | _StoreNewNamesArgument | _ExtendArgument:
+    """"""Convert an optdict to an Argument class instance.""""""
+    if 'level' in optdict and 'hide' not in optdict:
+        warnings.warn(""The 'level' key in optdicts has been deprecated. Use 'hide' with a boolean to hide an option from the help message."", DeprecationWarning)
+    flags = [f'--{opt}']
+    if 'short' in optdict:
+        flags += [f""-{optdict['short']}""]
+    action = optdict.get('action', 'store')
+    if action == 'store_true':
+        return _StoreTrueArgument(flags=flags, action=action, default=optdict.get('default', True), arg_help=optdict.get('help', ''), hide_help=optdict.get('hide', False), section=optdict.get('group', None))
+    if not isinstance(action, str) and issubclass(action, _CallbackAction):
+        return _CallableArgument(flags=flags, action=action, arg_help=optdict.get('help', ''), kwargs=optdict.get('kwargs', {}), hide_help=optdict.get('hide', False), section=optdict.get('group', None))
+    try:
+        default = optdict['default']
+    except KeyError:
+        warnings.warn(""An option dictionary should have a 'default' key to specify the option's default value. This key will be required in pylint 3.0. It is not required for 'store_true' and callable actions."", DeprecationWarning)
+        default = None
+    if action == 'extend':
+        return _ExtendArgument(flags=flags, action=action, default=default, arg_type=optdict['type'], choices=optdict.get('choices', None), arg_help=optdict.get('help', ''), metavar=optdict.get('metavar', ''), hide_help=optdict.get('hide', False), section=optdict.get('group', None), dest=optdict.get('dest', None))
+    if 'kwargs' in optdict:
+        if 'old_names' in optdict['kwargs']:
+            return _StoreOldNamesArgument(flags=flags, default=default, arg_type=optdict['type'], choices=optdict.get('choices', None), arg_help=optdict.get('help', ''), metavar=optdict.get('metavar', ''), hide_help=optdict.get('hide', False), kwargs=optdict.get('kwargs', {}), section=optdict.get('group', None))
+        if 'new_names' in optdict['kwargs']:
+            return _StoreNewNamesArgument(flags=flags, default=default, arg_type=optdict['type'], choices=optdict.get('choices', None), arg_help=optdict.get('help', ''), metavar=optdict.get('metavar', ''), hide_help=optdict.get('hide', False), kwargs=optdict.get('kwargs', {}), section=optdict.get('group', None))
+    if 'dest' in optdict:
+        return _StoreOldNamesArgument(flags=flags, default=default, arg_type=optdict['type'], choices=optdict.get('choices', None), arg_help=optdict.get('help', ''), metavar=optdict.get('metavar', ''), hide_help=optdict.get('hide', False), kwargs={'old_names': [optdict['dest']]}, section=optdict.get('group', None))
+    return _StoreArgument(flags=flags, action=action, default=default, arg_type=optdict['type'], choices=optdict.get('choices', None), arg_help=optdict.get('help', ''), metavar=optdict.get('metavar', ''), hide_help=optdict.get('hide', False), section=optdict.get('group', None))","[{""var"": ""flags"", ""rename"": ""command_line_flags""}, {""var"": ""action"", ""rename"": ""action_type""}, {""var"": ""default"", ""rename"": ""default_value""}]"
+./pylint/config/utils.py,_preprocess_options,process_initial_config_options,214,249,"def _preprocess_options(run: Run, args: Sequence[str]) -> list[str]:
+    """"""Preprocess options before full config parsing has started.""""""
+    processed_args: list[str] = []
+    i = 0
+    while i < len(args):
+        argument = args[i]
+        if not argument.startswith('--'):
+            processed_args.append(argument)
+            i += 1
+            continue
+        try:
+            option, value = argument.split('=', 1)
+        except ValueError:
+            option, value = (argument, None)
+        if option not in PREPROCESSABLE_OPTIONS:
+            processed_args.append(argument)
+            i += 1
+            continue
+        takearg, cb = PREPROCESSABLE_OPTIONS[option]
+        if takearg and value is None:
+            i += 1
+            if i >= len(args) or args[i].startswith('-'):
+                raise ArgumentPreprocessingError(f'Option {option} expects a value')
+            value = args[i]
+        elif not takearg and value is not None:
+            raise ArgumentPreprocessingError(f""Option {option} doesn't expects a value"")
+        cb(run, value)
+        i += 1
+    return processed_args","def process_initial_config_options(run: Run, args: Sequence[str]) -> list[str]:
+    """"""Preprocess options before full config parsing has started.""""""
+    processed_args: list[str] = []
+    i = 0
+    while i < len(args):
+        argument = args[i]
+        if not argument.startswith('--'):
+            processed_args.append(argument)
+            i += 1
+            continue
+        try:
+            option, value = argument.split('=', 1)
+        except ValueError:
+            option, value = (argument, None)
+        if option not in PREPROCESSABLE_OPTIONS:
+            processed_args.append(argument)
+            i += 1
+            continue
+        takearg, cb = PREPROCESSABLE_OPTIONS[option]
+        if takearg and value is None:
+            i += 1
+            if i >= len(args) or args[i].startswith('-'):
+                raise ArgumentPreprocessingError(f'Option {option} expects a value')
+            value = args[i]
+        elif not takearg and value is not None:
+            raise ArgumentPreprocessingError(f""Option {option} doesn't expects a value"")
+        cb(run, value)
+        i += 1
+    return processed_args","[{""var"": ""i"", ""rename"": ""current_index""}, {""var"": ""argument"", ""rename"": ""current_option""}, {""var"": ""value"", ""rename"": ""option_value""}, {""var"": ""option"", ""rename"": ""option_key""}, {""var"": ""cb"", ""rename"": ""callback_function""}, {""var"": ""takearg"", ""rename"": ""expects_value""}, {""var"": ""processed_args"", ""rename"": ""filtered_options_list""}]"
+./pylint/lint/base_options.py,_make_run_options,configure_run_command_options,395,569,"def _make_run_options(self: Run) -> Options:
+    """"""Return the options used in a Run class.""""""
+    return (('rcfile', {'action': _DoNothingAction, 'kwargs': {}, 'group': 'Commands', 'help': 'Specify a configuration file to load.', 'hide_from_config_file': True}), ('output', {'action': _DoNothingAction, 'kwargs': {}, 'group': 'Commands', 'help': 'Specify an output file.', 'hide_from_config_file': True}), ('init-hook', {'action': _DoNothingAction, 'kwargs': {}, 'help': 'Python code to execute, usually for sys.path manipulation such as pygtk.require().'}), ('help-msg', {'action': _MessageHelpAction, 'kwargs': {'Run': self}, 'group': 'Commands', 'help': 'Display a help message for the given message id and exit. The value may be a comma separated list of message ids.', 'hide_from_config_file': True}), ('list-msgs', {'action': _ListMessagesAction, 'kwargs': {'Run': self}, 'group': 'Commands', 'help': ""Display a list of all pylint's messages divided by whether they are emittable with the given interpreter."", 'hide_from_config_file': True}), ('list-msgs-enabled', {'action': _ListMessagesEnabledAction, 'kwargs': {'Run': self}, 'group': 'Commands', 'help': 'Display a list of what messages are enabled, disabled and non-emittable with the given configuration.', 'hide_from_config_file': True}), ('list-groups', {'action': _ListCheckGroupsAction, 'kwargs': {'Run': self}, 'group': 'Commands', 'help': ""List pylint's message groups."", 'hide_from_config_file': True}), ('list-conf-levels', {'action': _ListConfidenceLevelsAction, 'kwargs': {'Run': self}, 'group': 'Commands', 'help': ""Generate pylint's confidence levels."", 'hide_from_config_file': True}), ('list-extensions', {'action': _ListExtensionsAction, 'kwargs': {'Run': self}, 'group': 'Commands', 'help': 'List available extensions.', 'hide_from_config_file': True}), ('full-documentation', {'action': _FullDocumentationAction, 'kwargs': {'Run': self}, 'group': 'Commands', 'help': ""Generate pylint's full documentation."", 'hide_from_config_file': True}), ('generate-rcfile', {'action': _GenerateRCFileAction, 'kwargs': {'Run': self}, 'group': 'Commands', 'help': 'Generate a sample configuration file according to the current configuration. You can put other options before this one to get them in the generated configuration.', 'hide_from_config_file': True}), ('generate-toml-config', {'action': _GenerateConfigFileAction, 'kwargs': {'Run': self}, 'group': 'Commands', 'help': 'Generate a sample configuration file according to the current configuration. You can put other options before this one to get them in the generated configuration. The config is in the .toml format.', 'hide_from_config_file': True}), ('errors-only', {'action': _ErrorsOnlyModeAction, 'kwargs': {'Run': self}, 'short': 'E', 'help': 'In error mode, checkers without error messages are disabled and for others, only the ERROR messages are displayed, and no reports are done by default.', 'hide_from_config_file': True}), ('verbose', {'action': _DoNothingAction, 'kwargs': {}, 'short': 'v', 'help': 'In verbose mode, extra non-checker-related info will be displayed.', 'hide_from_config_file': True}), ('enable-all-extensions', {'action': _DoNothingAction, 'kwargs': {}, 'help': 'Load and enable all available extensions. Use --list-extensions to see a list all available extensions.', 'hide_from_config_file': True}), ('long-help', {'action': _LongHelpAction, 'kwargs': {'Run': self}, 'help': 'Show more verbose help.', 'group': 'Commands', 'hide_from_config_file': True}))","def configure_run_command_options(self: Run) -> Options:
+    """"""Return the options used in a Run class.""""""
+    return (('rcfile', {'action': _DoNothingAction, 'kwargs': {}, 'group': 'Commands', 'help': 'Specify a configuration file to load.', 'hide_from_config_file': True}), ('output', {'action': _DoNothingAction, 'kwargs': {}, 'group': 'Commands', 'help': 'Specify an output file.', 'hide_from_config_file': True}), ('init-hook', {'action': _DoNothingAction, 'kwargs': {}, 'help': 'Python code to execute, usually for sys.path manipulation such as pygtk.require().'}), ('help-msg', {'action': _MessageHelpAction, 'kwargs': {'Run': self}, 'group': 'Commands', 'help': 'Display a help message for the given message id and exit. The value may be a comma separated list of message ids.', 'hide_from_config_file': True}), ('list-msgs', {'action': _ListMessagesAction, 'kwargs': {'Run': self}, 'group': 'Commands', 'help': ""Display a list of all pylint's messages divided by whether they are emittable with the given interpreter."", 'hide_from_config_file': True}), ('list-msgs-enabled', {'action': _ListMessagesEnabledAction, 'kwargs': {'Run': self}, 'group': 'Commands', 'help': 'Display a list of what messages are enabled, disabled and non-emittable with the given configuration.', 'hide_from_config_file': True}), ('list-groups', {'action': _ListCheckGroupsAction, 'kwargs': {'Run': self}, 'group': 'Commands', 'help': ""List pylint's message groups."", 'hide_from_config_file': True}), ('list-conf-levels', {'action': _ListConfidenceLevelsAction, 'kwargs': {'Run': self}, 'group': 'Commands', 'help': ""Generate pylint's confidence levels."", 'hide_from_config_file': True}), ('list-extensions', {'action': _ListExtensionsAction, 'kwargs': {'Run': self}, 'group': 'Commands', 'help': 'List available extensions.', 'hide_from_config_file': True}), ('full-documentation', {'action': _FullDocumentationAction, 'kwargs': {'Run': self}, 'group': 'Commands', 'help': ""Generate pylint's full documentation."", 'hide_from_config_file': True}), ('generate-rcfile', {'action': _GenerateRCFileAction, 'kwargs': {'Run': self}, 'group': 'Commands', 'help': 'Generate a sample configuration file according to the current configuration. You can put other options before this one to get them in the generated configuration.', 'hide_from_config_file': True}), ('generate-toml-config', {'action': _GenerateConfigFileAction, 'kwargs': {'Run': self}, 'group': 'Commands', 'help': 'Generate a sample configuration file according to the current configuration. You can put other options before this one to get them in the generated configuration. The config is in the .toml format.', 'hide_from_config_file': True}), ('errors-only', {'action': _ErrorsOnlyModeAction, 'kwargs': {'Run': self}, 'short': 'E', 'help': 'In error mode, checkers without error messages are disabled and for others, only the ERROR messages are displayed, and no reports are done by default.', 'hide_from_config_file': True}), ('verbose', {'action': _DoNothingAction, 'kwargs': {}, 'short': 'v', 'help': 'In verbose mode, extra non-checker-related info will be displayed.', 'hide_from_config_file': True}), ('enable-all-extensions', {'action': _DoNothingAction, 'kwargs': {}, 'help': 'Load and enable all available extensions. Use --list-extensions to see a list all available extensions.', 'hide_from_config_file': True}), ('long-help', {'action': _LongHelpAction, 'kwargs': {'Run': self}, 'help': 'Show more verbose help.', 'group': 'Commands', 'hide_from_config_file': True}))",[]

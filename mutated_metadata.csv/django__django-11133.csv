@@ -1,0 +1,14 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/http/response.py,make_bytes,convert_to_charset_bytestring,223,237,"def make_bytes(self, value):
+    """"""Turn a value into a bytestring encoded in the output charset.""""""
+    if isinstance(value, bytes):
+        return bytes(value)
+    if isinstance(value, str):
+        return bytes(value.encode(self.charset))
+    return str(value).encode(self.charset)","def convert_to_charset_bytestring(self, value):
+    """"""Turn a value into a bytestring encoded in the output charset.""""""
+    if isinstance(value, bytes):
+        return bytes(value)
+    if isinstance(value, str):
+        return bytes(value.encode(self.charset))
+    return str(value).encode(self.charset)",[]

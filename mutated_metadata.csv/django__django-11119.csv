@@ -1,0 +1,26 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/template/engine.py,render_to_string,convert_template_to_string,149,163,"def render_to_string(self, template_name, context=None):
+    """"""
+        Render the template specified by template_name with the given context.
+        For use in Django's test suite.
+        """"""
+    if isinstance(template_name, (list, tuple)):
+        t = self.select_template(template_name)
+    else:
+        t = self.get_template(template_name)
+    if isinstance(context, Context):
+        return t.render(context)
+    else:
+        return t.render(Context(context))","def convert_template_to_string(self, template_name, context=None):
+    """"""
+        Render the template specified by template_name with the given context.
+        For use in Django's test suite.
+        """"""
+    if isinstance(template_name, (list, tuple)):
+        t = self.select_template(template_name)
+    else:
+        t = self.get_template(template_name)
+    if isinstance(context, Context):
+        return t.render(context)
+    else:
+        return t.render(Context(context))","[{""var"": ""t"", ""rename"": ""selected_template""}]"

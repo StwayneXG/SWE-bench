@@ -1,0 +1,292 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./sphinx/domains/python.py,_parse_annotation,generate_annotation_references,80,134,"def _parse_annotation(annotation: str) -> List[Node]:
+    """"""Parse type annotation.""""""
+
+    def make_xref(text: str) -> addnodes.pending_xref:
+        if text == 'None':
+            reftype = 'obj'
+        else:
+            reftype = 'class'
+        return pending_xref('', nodes.Text(text), refdomain='py', reftype=reftype, reftarget=text)
+
+    def unparse(node: ast.AST) -> List[Node]:
+        if isinstance(node, ast.Attribute):
+            return [nodes.Text('%s.%s' % (unparse(node.value)[0], node.attr))]
+        elif isinstance(node, ast.Expr):
+            return unparse(node.value)
+        elif isinstance(node, ast.Index):
+            return unparse(node.value)
+        elif isinstance(node, ast.List):
+            result = [addnodes.desc_sig_punctuation('', '[')]
+            for elem in node.elts:
+                result.extend(unparse(elem))
+                result.append(addnodes.desc_sig_punctuation('', ', '))
+            result.pop()
+            result.append(addnodes.desc_sig_punctuation('', ']'))
+            return result
+        elif isinstance(node, ast.Module):
+            return sum((unparse(e) for e in node.body), [])
+        elif isinstance(node, ast.Name):
+            return [nodes.Text(node.id)]
+        elif isinstance(node, ast.Subscript):
+            result = unparse(node.value)
+            result.append(addnodes.desc_sig_punctuation('', '['))
+            result.extend(unparse(node.slice))
+            result.append(addnodes.desc_sig_punctuation('', ']'))
+            return result
+        elif isinstance(node, ast.Tuple):
+            result = []
+            for elem in node.elts:
+                result.extend(unparse(elem))
+                result.append(addnodes.desc_sig_punctuation('', ', '))
+            result.pop()
+            return result
+        else:
+            raise SyntaxError
+    try:
+        tree = ast_parse(annotation)
+        result = unparse(tree)
+        for i, node in enumerate(result):
+            if isinstance(node, nodes.Text):
+                result[i] = make_xref(str(node))
+        return result
+    except SyntaxError:
+        return [make_xref(annotation)]","def generate_annotation_references(annotation: str) -> List[Node]:
+    """"""Parse type annotation.""""""
+
+    def make_xref(text: str) -> addnodes.pending_xref:
+        if text == 'None':
+            reftype = 'obj'
+        else:
+            reftype = 'class'
+        return pending_xref('', nodes.Text(text), refdomain='py', reftype=reftype, reftarget=text)
+
+    def unparse(node: ast.AST) -> List[Node]:
+        if isinstance(node, ast.Attribute):
+            return [nodes.Text('%s.%s' % (unparse(node.value)[0], node.attr))]
+        elif isinstance(node, ast.Expr):
+            return unparse(node.value)
+        elif isinstance(node, ast.Index):
+            return unparse(node.value)
+        elif isinstance(node, ast.List):
+            result = [addnodes.desc_sig_punctuation('', '[')]
+            for elem in node.elts:
+                result.extend(unparse(elem))
+                result.append(addnodes.desc_sig_punctuation('', ', '))
+            result.pop()
+            result.append(addnodes.desc_sig_punctuation('', ']'))
+            return result
+        elif isinstance(node, ast.Module):
+            return sum((unparse(e) for e in node.body), [])
+        elif isinstance(node, ast.Name):
+            return [nodes.Text(node.id)]
+        elif isinstance(node, ast.Subscript):
+            result = unparse(node.value)
+            result.append(addnodes.desc_sig_punctuation('', '['))
+            result.extend(unparse(node.slice))
+            result.append(addnodes.desc_sig_punctuation('', ']'))
+            return result
+        elif isinstance(node, ast.Tuple):
+            result = []
+            for elem in node.elts:
+                result.extend(unparse(elem))
+                result.append(addnodes.desc_sig_punctuation('', ', '))
+            result.pop()
+            return result
+        else:
+            raise SyntaxError
+    try:
+        tree = ast_parse(annotation)
+        result = unparse(tree)
+        for i, node in enumerate(result):
+            if isinstance(node, nodes.Text):
+                result[i] = make_xref(str(node))
+        return result
+    except SyntaxError:
+        return [make_xref(annotation)]","[{""var"": ""tree"", ""rename"": ""annotation_ast_tree""}, {""var"": ""i"", ""rename"": ""annotation_node_index""}, {""var"": ""reftype"", ""rename"": ""reference_type""}, {""var"": ""result"", ""rename"": ""parsed_annotation_nodes""}, {""var"": ""elem"", ""rename"": ""expression_element""}, {""var"": ""e"", ""rename"": ""sub_node""}]"
+./sphinx/domains/python.py,unparse,generate_ast_representation,91,124,"def unparse(node: ast.AST) -> List[Node]:
+    if isinstance(node, ast.Attribute):
+        return [nodes.Text('%s.%s' % (unparse(node.value)[0], node.attr))]
+    elif isinstance(node, ast.Expr):
+        return unparse(node.value)
+    elif isinstance(node, ast.Index):
+        return unparse(node.value)
+    elif isinstance(node, ast.List):
+        result = [addnodes.desc_sig_punctuation('', '[')]
+        for elem in node.elts:
+            result.extend(unparse(elem))
+            result.append(addnodes.desc_sig_punctuation('', ', '))
+        result.pop()
+        result.append(addnodes.desc_sig_punctuation('', ']'))
+        return result
+    elif isinstance(node, ast.Module):
+        return sum((unparse(e) for e in node.body), [])
+    elif isinstance(node, ast.Name):
+        return [nodes.Text(node.id)]
+    elif isinstance(node, ast.Subscript):
+        result = unparse(node.value)
+        result.append(addnodes.desc_sig_punctuation('', '['))
+        result.extend(unparse(node.slice))
+        result.append(addnodes.desc_sig_punctuation('', ']'))
+        return result
+    elif isinstance(node, ast.Tuple):
+        result = []
+        for elem in node.elts:
+            result.extend(unparse(elem))
+            result.append(addnodes.desc_sig_punctuation('', ', '))
+        result.pop()
+        return result
+    else:
+        raise SyntaxError","def generate_ast_representation(node: ast.AST) -> List[Node]:
+    if isinstance(node, ast.Attribute):
+        return [nodes.Text('%s.%s' % (unparse(node.value)[0], node.attr))]
+    elif isinstance(node, ast.Expr):
+        return unparse(node.value)
+    elif isinstance(node, ast.Index):
+        return unparse(node.value)
+    elif isinstance(node, ast.List):
+        result = [addnodes.desc_sig_punctuation('', '[')]
+        for elem in node.elts:
+            result.extend(unparse(elem))
+            result.append(addnodes.desc_sig_punctuation('', ', '))
+        result.pop()
+        result.append(addnodes.desc_sig_punctuation('', ']'))
+        return result
+    elif isinstance(node, ast.Module):
+        return sum((unparse(e) for e in node.body), [])
+    elif isinstance(node, ast.Name):
+        return [nodes.Text(node.id)]
+    elif isinstance(node, ast.Subscript):
+        result = unparse(node.value)
+        result.append(addnodes.desc_sig_punctuation('', '['))
+        result.extend(unparse(node.slice))
+        result.append(addnodes.desc_sig_punctuation('', ']'))
+        return result
+    elif isinstance(node, ast.Tuple):
+        result = []
+        for elem in node.elts:
+            result.extend(unparse(elem))
+            result.append(addnodes.desc_sig_punctuation('', ', '))
+        result.pop()
+        return result
+    else:
+        raise SyntaxError","[{""var"": ""elem"", ""rename"": ""element_node""}, {""var"": ""e"", ""rename"": ""node_element""}, {""var"": ""result"", ""rename"": ""unparse_output""}]"
+./sphinx/pycode/ast.py,unparse,ast_to_string,61,122,"def unparse(node: ast.AST) -> str:
+    """"""Unparse an AST to string.""""""
+    if node is None:
+        return None
+    elif isinstance(node, str):
+        return node
+    elif node.__class__ in OPERATORS:
+        return OPERATORS[node.__class__]
+    elif isinstance(node, ast.arg):
+        if node.annotation:
+            return '%s: %s' % (node.arg, unparse(node.annotation))
+        else:
+            return node.arg
+    elif isinstance(node, ast.arguments):
+        return unparse_arguments(node)
+    elif isinstance(node, ast.Attribute):
+        return '%s.%s' % (unparse(node.value), node.attr)
+    elif isinstance(node, ast.BinOp):
+        return ' '.join((unparse(e) for e in [node.left, node.op, node.right]))
+    elif isinstance(node, ast.BoolOp):
+        op = ' %s ' % unparse(node.op)
+        return op.join((unparse(e) for e in node.values))
+    elif isinstance(node, ast.Bytes):
+        return repr(node.s)
+    elif isinstance(node, ast.Call):
+        args = [unparse(e) for e in node.args] + ['%s=%s' % (k.arg, unparse(k.value)) for k in node.keywords]
+        return '%s(%s)' % (unparse(node.func), ', '.join(args))
+    elif isinstance(node, ast.Dict):
+        keys = (unparse(k) for k in node.keys)
+        values = (unparse(v) for v in node.values)
+        items = (k + ': ' + v for k, v in zip(keys, values))
+        return '{' + ', '.join(items) + '}'
+    elif isinstance(node, ast.Ellipsis):
+        return '...'
+    elif isinstance(node, ast.Index):
+        return unparse(node.value)
+    elif isinstance(node, ast.Lambda):
+        return 'lambda %s: ...' % unparse(node.args)
+    elif isinstance(node, ast.List):
+        return '[' + ', '.join((unparse(e) for e in node.elts)) + ']'
+    elif isinstance(node, ast.Name):
+        return node.id
+    elif isinstance(node, ast.NameConstant):
+        return repr(node.value)
+    elif isinstance(node, ast.Num):
+        return repr(node.n)
+    elif isinstance(node, ast.Set):
+        return '{' + ', '.join((unparse(e) for e in node.elts)) + '}'
+    elif isinstance(node, ast.Str):
+        return repr(node.s)
+    elif isinstance(node, ast.Subscript):
+        return '%s[%s]' % (unparse(node.value), unparse(node.slice))
+    elif isinstance(node, ast.UnaryOp):
+        return '%s %s' % (unparse(node.op), unparse(node.operand))
+    elif isinstance(node, ast.Tuple):
+        return ', '.join((unparse(e) for e in node.elts))
+    elif sys.version_info > (3, 6) and isinstance(node, ast.Constant):
+        return repr(node.value)
+    else:
+        raise NotImplementedError('Unable to parse %s object' % type(node).__name__)","def ast_to_string(node: ast.AST) -> str:
+    """"""Unparse an AST to string.""""""
+    if node is None:
+        return None
+    elif isinstance(node, str):
+        return node
+    elif node.__class__ in OPERATORS:
+        return OPERATORS[node.__class__]
+    elif isinstance(node, ast.arg):
+        if node.annotation:
+            return '%s: %s' % (node.arg, unparse(node.annotation))
+        else:
+            return node.arg
+    elif isinstance(node, ast.arguments):
+        return unparse_arguments(node)
+    elif isinstance(node, ast.Attribute):
+        return '%s.%s' % (unparse(node.value), node.attr)
+    elif isinstance(node, ast.BinOp):
+        return ' '.join((unparse(e) for e in [node.left, node.op, node.right]))
+    elif isinstance(node, ast.BoolOp):
+        op = ' %s ' % unparse(node.op)
+        return op.join((unparse(e) for e in node.values))
+    elif isinstance(node, ast.Bytes):
+        return repr(node.s)
+    elif isinstance(node, ast.Call):
+        args = [unparse(e) for e in node.args] + ['%s=%s' % (k.arg, unparse(k.value)) for k in node.keywords]
+        return '%s(%s)' % (unparse(node.func), ', '.join(args))
+    elif isinstance(node, ast.Dict):
+        keys = (unparse(k) for k in node.keys)
+        values = (unparse(v) for v in node.values)
+        items = (k + ': ' + v for k, v in zip(keys, values))
+        return '{' + ', '.join(items) + '}'
+    elif isinstance(node, ast.Ellipsis):
+        return '...'
+    elif isinstance(node, ast.Index):
+        return unparse(node.value)
+    elif isinstance(node, ast.Lambda):
+        return 'lambda %s: ...' % unparse(node.args)
+    elif isinstance(node, ast.List):
+        return '[' + ', '.join((unparse(e) for e in node.elts)) + ']'
+    elif isinstance(node, ast.Name):
+        return node.id
+    elif isinstance(node, ast.NameConstant):
+        return repr(node.value)
+    elif isinstance(node, ast.Num):
+        return repr(node.n)
+    elif isinstance(node, ast.Set):
+        return '{' + ', '.join((unparse(e) for e in node.elts)) + '}'
+    elif isinstance(node, ast.Str):
+        return repr(node.s)
+    elif isinstance(node, ast.Subscript):
+        return '%s[%s]' % (unparse(node.value), unparse(node.slice))
+    elif isinstance(node, ast.UnaryOp):
+        return '%s %s' % (unparse(node.op), unparse(node.operand))
+    elif isinstance(node, ast.Tuple):
+        return ', '.join((unparse(e) for e in node.elts))
+    elif sys.version_info > (3, 6) and isinstance(node, ast.Constant):
+        return repr(node.value)
+    else:
+        raise NotImplementedError('Unable to parse %s object' % type(node).__name__)","[{""var"": ""values"", ""rename"": ""unparsed_values""}, {""var"": ""k"", ""rename"": ""keyword_argument""}, {""var"": ""v"", ""rename"": ""node_value""}, {""var"": ""e"", ""rename"": ""element""}, {""var"": ""keys"", ""rename"": ""unparsed_keys""}, {""var"": ""args"", ""rename"": ""unparsed_args_list""}, {""var"": ""op"", ""rename"": ""operation_delimiter""}, {""var"": ""items"", ""rename"": ""parsed_key_value_pairs""}]"

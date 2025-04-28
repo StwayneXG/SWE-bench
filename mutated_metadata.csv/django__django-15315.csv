@@ -1,0 +1,4 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/db/models/fields/__init__.py,__hash__,calculate_unique_model_identifier,544,549,"def __hash__(self):
+    return hash((self.creation_counter, self.model._meta.app_label if hasattr(self, 'model') else None, self.model._meta.model_name if hasattr(self, 'model') else None))","def calculate_unique_model_identifier(self):
+    return hash((self.creation_counter, self.model._meta.app_label if hasattr(self, 'model') else None, self.model._meta.model_name if hasattr(self, 'model') else None))",[]

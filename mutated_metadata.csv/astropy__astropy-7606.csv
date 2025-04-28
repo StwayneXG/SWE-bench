@@ -1,0 +1,34 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./astropy/units/core.py,__eq__,is_equivalent_unit,724,741,"def __eq__(self, other):
+    if self is other:
+        return True
+    try:
+        other = Unit(other, parse_strict='silent')
+    except (ValueError, UnitsError, TypeError):
+        return False
+    if not isinstance(other, UnitBase):
+        return NotImplemented
+    try:
+        return is_effectively_unity(self._to(other))
+    except UnitsError:
+        return False","def is_equivalent_unit(self, other):
+    if self is other:
+        return True
+    try:
+        other = Unit(other, parse_strict='silent')
+    except (ValueError, UnitsError, TypeError):
+        return False
+    if not isinstance(other, UnitBase):
+        return NotImplemented
+    try:
+        return is_effectively_unity(self._to(other))
+    except UnitsError:
+        return False",[]
+./astropy/units/core.py,__eq__,is_equivalent_unrecognized_unit,1712,1714,"def __eq__(self, other):
+    other = Unit(other, parse_strict='silent')
+    return isinstance(other, UnrecognizedUnit) and self.name == other.name","def is_equivalent_unrecognized_unit(self, other):
+    other = Unit(other, parse_strict='silent')
+    return isinstance(other, UnrecognizedUnit) and self.name == other.name",[]
+./astropy/units/core.py,__ne__,is_not_equal_to,1716,1717,"def __ne__(self, other):
+    return not self == other","def is_not_equal_to(self, other):
+    return not self == other",[]

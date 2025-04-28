@@ -1,0 +1,139 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./xarray/core/rolling.py,__iter__,iterate_one_dimensional_rolling_windows,270,282,"def __iter__(self) -> Iterator[tuple[RollingKey, DataArray]]:
+    if self.ndim > 1:
+        raise ValueError('__iter__ is only supported for 1d-rolling')
+    stops = np.arange(1, len(self.window_labels) + 1)
+    starts = stops - int(self.window[0])
+    starts[:int(self.window[0])] = 0
+    for label, start, stop in zip(self.window_labels, starts, stops):
+        window = self.obj.isel({self.dim[0]: slice(start, stop)})
+        counts = window.count(dim=self.dim[0])
+        window = window.where(counts >= self.min_periods)
+        yield (label, window)","def iterate_one_dimensional_rolling_windows(self) -> Iterator[tuple[RollingKey, DataArray]]:
+    if self.ndim > 1:
+        raise ValueError('__iter__ is only supported for 1d-rolling')
+    stops = np.arange(1, len(self.window_labels) + 1)
+    starts = stops - int(self.window[0])
+    starts[:int(self.window[0])] = 0
+    for label, start, stop in zip(self.window_labels, starts, stops):
+        window = self.obj.isel({self.dim[0]: slice(start, stop)})
+        counts = window.count(dim=self.dim[0])
+        window = window.where(counts >= self.min_periods)
+        yield (label, window)","[{""var"": ""starts"", ""rename"": ""window_start_indices""}, {""var"": ""stops"", ""rename"": ""window_stop_indices""}, {""var"": ""window"", ""rename"": ""rolling_window_slice""}, {""var"": ""stop"", ""rename"": ""window_end_index""}, {""var"": ""label"", ""rename"": ""window_identifier""}, {""var"": ""start"", ""rename"": ""window_start_index""}, {""var"": ""counts"", ""rename"": ""valid_data_counts""}]"
+./xarray/core/rolling.py,construct,stack_window_dimension_as_new_axis,284,357,"def construct(self, window_dim: Hashable | Mapping[Any, Hashable] | None=None, stride: int | Mapping[Any, int]=1, fill_value: Any=dtypes.NA, keep_attrs: bool | None=None, **window_dim_kwargs: Hashable) -> DataArray:
+    """"""
+        Convert this rolling object to xr.DataArray,
+        where the window dimension is stacked as a new dimension
+
+        Parameters
+        ----------
+        window_dim : Hashable or dict-like to Hashable, optional
+            A mapping from dimension name to the new window dimension names.
+        stride : int or mapping of int, default: 1
+            Size of stride for the rolling window.
+        fill_value : default: dtypes.NA
+            Filling value to match the dimension size.
+        keep_attrs : bool, default: None
+            If True, the attributes (``attrs``) will be copied from the original
+            object to the new one. If False, the new object will be returned
+            without attributes. If None uses the global default.
+        **window_dim_kwargs : Hashable, optional
+            The keyword arguments form of ``window_dim`` {dim: new_name, ...}.
+
+        Returns
+        -------
+        DataArray that is a view of the original array. The returned array is
+        not writeable.
+
+        Examples
+        --------
+        >>> da = xr.DataArray(np.arange(8).reshape(2, 4), dims=(""a"", ""b""))
+
+        >>> rolling = da.rolling(b=3)
+        >>> rolling.construct(""window_dim"")
+        <xarray.DataArray (a: 2, b: 4, window_dim: 3)>
+        array([[[nan, nan,  0.],
+                [nan,  0.,  1.],
+                [ 0.,  1.,  2.],
+                [ 1.,  2.,  3.]],
+        <BLANKLINE>
+               [[nan, nan,  4.],
+                [nan,  4.,  5.],
+                [ 4.,  5.,  6.],
+                [ 5.,  6.,  7.]]])
+        Dimensions without coordinates: a, b, window_dim
+
+        >>> rolling = da.rolling(b=3, center=True)
+        >>> rolling.construct(""window_dim"")
+        <xarray.DataArray (a: 2, b: 4, window_dim: 3)>
+        array([[[nan,  0.,  1.],
+                [ 0.,  1.,  2.],
+                [ 1.,  2.,  3.],
+                [ 2.,  3., nan]],
+        <BLANKLINE>
+               [[nan,  4.,  5.],
+                [ 4.,  5.,  6.],
+                [ 5.,  6.,  7.],
+                [ 6.,  7., nan]]])
+        Dimensions without coordinates: a, b, window_dim
+
+        """"""
+    return self._construct(self.obj, window_dim=window_dim, stride=stride, fill_value=fill_value, keep_attrs=keep_attrs, **window_dim_kwargs)","def stack_window_dimension_as_new_axis(self, window_dim: Hashable | Mapping[Any, Hashable] | None=None, stride: int | Mapping[Any, int]=1, fill_value: Any=dtypes.NA, keep_attrs: bool | None=None, **window_dim_kwargs: Hashable) -> DataArray:
+    """"""
+        Convert this rolling object to xr.DataArray,
+        where the window dimension is stacked as a new dimension
+
+        Parameters
+        ----------
+        window_dim : Hashable or dict-like to Hashable, optional
+            A mapping from dimension name to the new window dimension names.
+        stride : int or mapping of int, default: 1
+            Size of stride for the rolling window.
+        fill_value : default: dtypes.NA
+            Filling value to match the dimension size.
+        keep_attrs : bool, default: None
+            If True, the attributes (``attrs``) will be copied from the original
+            object to the new one. If False, the new object will be returned
+            without attributes. If None uses the global default.
+        **window_dim_kwargs : Hashable, optional
+            The keyword arguments form of ``window_dim`` {dim: new_name, ...}.
+
+        Returns
+        -------
+        DataArray that is a view of the original array. The returned array is
+        not writeable.
+
+        Examples
+        --------
+        >>> da = xr.DataArray(np.arange(8).reshape(2, 4), dims=(""a"", ""b""))
+
+        >>> rolling = da.rolling(b=3)
+        >>> rolling.construct(""window_dim"")
+        <xarray.DataArray (a: 2, b: 4, window_dim: 3)>
+        array([[[nan, nan,  0.],
+                [nan,  0.,  1.],
+                [ 0.,  1.,  2.],
+                [ 1.,  2.,  3.]],
+        <BLANKLINE>
+               [[nan, nan,  4.],
+                [nan,  4.,  5.],
+                [ 4.,  5.,  6.],
+                [ 5.,  6.,  7.]]])
+        Dimensions without coordinates: a, b, window_dim
+
+        >>> rolling = da.rolling(b=3, center=True)
+        >>> rolling.construct(""window_dim"")
+        <xarray.DataArray (a: 2, b: 4, window_dim: 3)>
+        array([[[nan,  0.,  1.],
+                [ 0.,  1.,  2.],
+                [ 1.,  2.,  3.],
+                [ 2.,  3., nan]],
+        <BLANKLINE>
+               [[nan,  4.,  5.],
+                [ 4.,  5.,  6.],
+                [ 5.,  6.,  7.],
+                [ 6.,  7., nan]]])
+        Dimensions without coordinates: a, b, window_dim
+
+        """"""
+    return self._construct(self.obj, window_dim=window_dim, stride=stride, fill_value=fill_value, keep_attrs=keep_attrs, **window_dim_kwargs)",[]

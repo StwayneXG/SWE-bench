@@ -1,0 +1,248 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/db/backends/mysql/operations.py,_convert_field_to_tz,apply_timezone_conversion_to_field,71,74,"def _convert_field_to_tz(self, field_name, tzname):
+    if settings.USE_TZ:
+        field_name = ""CONVERT_TZ(%s, 'UTC', '%s')"" % (field_name, tzname)
+    return field_name","def apply_timezone_conversion_to_field(self, field_name, tzname):
+    if settings.USE_TZ:
+        field_name = ""CONVERT_TZ(%s, 'UTC', '%s')"" % (field_name, tzname)
+    return field_name",[]
+./django/db/backends/oracle/operations.py,_convert_field_to_tz,_cast_field_to_specified_timezone_sql,97,104,"def _convert_field_to_tz(self, field_name, tzname):
+    if not settings.USE_TZ:
+        return field_name
+    if not self._tzname_re.match(tzname):
+        raise ValueError('Invalid time zone name: %s' % tzname)
+    return ""CAST((FROM_TZ(%s, '0:00') AT TIME ZONE '%s') AS TIMESTAMP)"" % (field_name, tzname)","def _cast_field_to_specified_timezone_sql(self, field_name, tzname):
+    if not settings.USE_TZ:
+        return field_name
+    if not self._tzname_re.match(tzname):
+        raise ValueError('Invalid time zone name: %s' % tzname)
+    return ""CAST((FROM_TZ(%s, '0:00') AT TIME ZONE '%s') AS TIMESTAMP)"" % (field_name, tzname)",[]
+./django/db/backends/oracle/operations.py,datetime_cast_date_sql,truncate_datetime_to_date_sql,106,108,"def datetime_cast_date_sql(self, field_name, tzname):
+    field_name = self._convert_field_to_tz(field_name, tzname)
+    return 'TRUNC(%s)' % field_name","def truncate_datetime_to_date_sql(self, field_name, tzname):
+    field_name = self._convert_field_to_tz(field_name, tzname)
+    return 'TRUNC(%s)' % field_name",[]
+./django/db/backends/oracle/operations.py,datetime_cast_time_sql,convert_field_to_timezone_in_sql,110,113,"def datetime_cast_time_sql(self, field_name, tzname):
+    return self._convert_field_to_tz(field_name, tzname)","def convert_field_to_timezone_in_sql(self, field_name, tzname):
+    return self._convert_field_to_tz(field_name, tzname)",[]
+./django/db/backends/sqlite3/base.py,_sqlite_datetime_parse,parse_and_localize_sqlite_datetime,401,410,"def _sqlite_datetime_parse(dt, tzname=None):
+    if dt is None:
+        return None
+    try:
+        dt = backend_utils.typecast_timestamp(dt)
+    except (TypeError, ValueError):
+        return None
+    if tzname is not None:
+        dt = timezone.localtime(dt, pytz.timezone(tzname))
+    return dt","def parse_and_localize_sqlite_datetime(dt, tzname=None):
+    if dt is None:
+        return None
+    try:
+        dt = backend_utils.typecast_timestamp(dt)
+    except (TypeError, ValueError):
+        return None
+    if tzname is not None:
+        dt = timezone.localtime(dt, pytz.timezone(tzname))
+    return dt",[]
+./django/db/backends/sqlite3/base.py,_sqlite_datetime_cast_date,convert_sqlite_datetime_to_iso_date,446,450,"def _sqlite_datetime_cast_date(dt, tzname):
+    dt = _sqlite_datetime_parse(dt, tzname)
+    if dt is None:
+        return None
+    return dt.date().isoformat()","def convert_sqlite_datetime_to_iso_date(dt, tzname):
+    dt = _sqlite_datetime_parse(dt, tzname)
+    if dt is None:
+        return None
+    return dt.date().isoformat()",[]
+./django/db/backends/sqlite3/base.py,_sqlite_datetime_cast_time,convert_sqlite_datetime_to_iso_time_string,453,457,"def _sqlite_datetime_cast_time(dt, tzname):
+    dt = _sqlite_datetime_parse(dt, tzname)
+    if dt is None:
+        return None
+    return dt.time().isoformat()","def convert_sqlite_datetime_to_iso_time_string(dt, tzname):
+    dt = _sqlite_datetime_parse(dt, tzname)
+    if dt is None:
+        return None
+    return dt.time().isoformat()",[]
+./django/db/backends/sqlite3/base.py,_sqlite_datetime_extract,extract_datetime_component_sqlite,460,473,"def _sqlite_datetime_extract(lookup_type, dt, tzname=None):
+    dt = _sqlite_datetime_parse(dt, tzname)
+    if dt is None:
+        return None
+    if lookup_type == 'week_day':
+        return dt.isoweekday() % 7 + 1
+    elif lookup_type == 'week':
+        return dt.isocalendar()[1]
+    elif lookup_type == 'quarter':
+        return math.ceil(dt.month / 3)
+    elif lookup_type == 'iso_year':
+        return dt.isocalendar()[0]
+    else:
+        return getattr(dt, lookup_type)","def extract_datetime_component_sqlite(lookup_type, dt, tzname=None):
+    dt = _sqlite_datetime_parse(dt, tzname)
+    if dt is None:
+        return None
+    if lookup_type == 'week_day':
+        return dt.isoweekday() % 7 + 1
+    elif lookup_type == 'week':
+        return dt.isocalendar()[1]
+    elif lookup_type == 'quarter':
+        return math.ceil(dt.month / 3)
+    elif lookup_type == 'iso_year':
+        return dt.isocalendar()[0]
+    else:
+        return getattr(dt, lookup_type)",[]
+./django/db/backends/sqlite3/base.py,_sqlite_datetime_trunc,truncate_sqlite_datetime_to_resolution,476,497,"def _sqlite_datetime_trunc(lookup_type, dt, tzname):
+    dt = _sqlite_datetime_parse(dt, tzname)
+    if dt is None:
+        return None
+    if lookup_type == 'year':
+        return '%i-01-01 00:00:00' % dt.year
+    elif lookup_type == 'quarter':
+        month_in_quarter = dt.month - (dt.month - 1) % 3
+        return '%i-%02i-01 00:00:00' % (dt.year, month_in_quarter)
+    elif lookup_type == 'month':
+        return '%i-%02i-01 00:00:00' % (dt.year, dt.month)
+    elif lookup_type == 'week':
+        dt = dt - datetime.timedelta(days=dt.weekday())
+        return '%i-%02i-%02i 00:00:00' % (dt.year, dt.month, dt.day)
+    elif lookup_type == 'day':
+        return '%i-%02i-%02i 00:00:00' % (dt.year, dt.month, dt.day)
+    elif lookup_type == 'hour':
+        return '%i-%02i-%02i %02i:00:00' % (dt.year, dt.month, dt.day, dt.hour)
+    elif lookup_type == 'minute':
+        return '%i-%02i-%02i %02i:%02i:00' % (dt.year, dt.month, dt.day, dt.hour, dt.minute)
+    elif lookup_type == 'second':
+        return '%i-%02i-%02i %02i:%02i:%02i' % (dt.year, dt.month, dt.day, dt.hour, dt.minute, dt.second)","def truncate_sqlite_datetime_to_resolution(lookup_type, dt, tzname):
+    dt = _sqlite_datetime_parse(dt, tzname)
+    if dt is None:
+        return None
+    if lookup_type == 'year':
+        return '%i-01-01 00:00:00' % dt.year
+    elif lookup_type == 'quarter':
+        month_in_quarter = dt.month - (dt.month - 1) % 3
+        return '%i-%02i-01 00:00:00' % (dt.year, month_in_quarter)
+    elif lookup_type == 'month':
+        return '%i-%02i-01 00:00:00' % (dt.year, dt.month)
+    elif lookup_type == 'week':
+        dt = dt - datetime.timedelta(days=dt.weekday())
+        return '%i-%02i-%02i 00:00:00' % (dt.year, dt.month, dt.day)
+    elif lookup_type == 'day':
+        return '%i-%02i-%02i 00:00:00' % (dt.year, dt.month, dt.day)
+    elif lookup_type == 'hour':
+        return '%i-%02i-%02i %02i:00:00' % (dt.year, dt.month, dt.day, dt.hour)
+    elif lookup_type == 'minute':
+        return '%i-%02i-%02i %02i:%02i:00' % (dt.year, dt.month, dt.day, dt.hour, dt.minute)
+    elif lookup_type == 'second':
+        return '%i-%02i-%02i %02i:%02i:%02i' % (dt.year, dt.month, dt.day, dt.hour, dt.minute, dt.second)","[{""var"": ""month_in_quarter"", ""rename"": ""start_month_of_quarter""}]"
+./django/db/backends/sqlite3/base.py,get_new_connection,initialize_database_with_custom_functions,194,243,"def get_new_connection(self, conn_params):
+    conn = Database.connect(**conn_params)
+    conn.create_function('django_date_extract', 2, _sqlite_datetime_extract)
+    conn.create_function('django_date_trunc', 2, _sqlite_date_trunc)
+    conn.create_function('django_datetime_cast_date', 2, _sqlite_datetime_cast_date)
+    conn.create_function('django_datetime_cast_time', 2, _sqlite_datetime_cast_time)
+    conn.create_function('django_datetime_extract', 3, _sqlite_datetime_extract)
+    conn.create_function('django_datetime_trunc', 3, _sqlite_datetime_trunc)
+    conn.create_function('django_time_extract', 2, _sqlite_time_extract)
+    conn.create_function('django_time_trunc', 2, _sqlite_time_trunc)
+    conn.create_function('django_time_diff', 2, _sqlite_time_diff)
+    conn.create_function('django_timestamp_diff', 2, _sqlite_timestamp_diff)
+    conn.create_function('django_format_dtdelta', 3, _sqlite_format_dtdelta)
+    conn.create_function('regexp', 2, _sqlite_regexp)
+    conn.create_function('ACOS', 1, none_guard(math.acos))
+    conn.create_function('ASIN', 1, none_guard(math.asin))
+    conn.create_function('ATAN', 1, none_guard(math.atan))
+    conn.create_function('ATAN2', 2, none_guard(math.atan2))
+    conn.create_function('CEILING', 1, none_guard(math.ceil))
+    conn.create_function('COS', 1, none_guard(math.cos))
+    conn.create_function('COT', 1, none_guard(lambda x: 1 / math.tan(x)))
+    conn.create_function('DEGREES', 1, none_guard(math.degrees))
+    conn.create_function('EXP', 1, none_guard(math.exp))
+    conn.create_function('FLOOR', 1, none_guard(math.floor))
+    conn.create_function('LN', 1, none_guard(math.log))
+    conn.create_function('LOG', 2, none_guard(lambda x, y: math.log(y, x)))
+    conn.create_function('LPAD', 3, _sqlite_lpad)
+    conn.create_function('MD5', 1, none_guard(lambda x: hashlib.md5(x.encode()).hexdigest()))
+    conn.create_function('MOD', 2, none_guard(math.fmod))
+    conn.create_function('PI', 0, lambda: math.pi)
+    conn.create_function('POWER', 2, none_guard(operator.pow))
+    conn.create_function('RADIANS', 1, none_guard(math.radians))
+    conn.create_function('REPEAT', 2, none_guard(operator.mul))
+    conn.create_function('REVERSE', 1, none_guard(lambda x: x[::-1]))
+    conn.create_function('RPAD', 3, _sqlite_rpad)
+    conn.create_function('SHA1', 1, none_guard(lambda x: hashlib.sha1(x.encode()).hexdigest()))
+    conn.create_function('SHA224', 1, none_guard(lambda x: hashlib.sha224(x.encode()).hexdigest()))
+    conn.create_function('SHA256', 1, none_guard(lambda x: hashlib.sha256(x.encode()).hexdigest()))
+    conn.create_function('SHA384', 1, none_guard(lambda x: hashlib.sha384(x.encode()).hexdigest()))
+    conn.create_function('SHA512', 1, none_guard(lambda x: hashlib.sha512(x.encode()).hexdigest()))
+    conn.create_function('SIGN', 1, none_guard(lambda x: (x > 0) - (x < 0)))
+    conn.create_function('SIN', 1, none_guard(math.sin))
+    conn.create_function('SQRT', 1, none_guard(math.sqrt))
+    conn.create_function('TAN', 1, none_guard(math.tan))
+    conn.create_aggregate('STDDEV_POP', 1, list_aggregate(statistics.pstdev))
+    conn.create_aggregate('STDDEV_SAMP', 1, list_aggregate(statistics.stdev))
+    conn.create_aggregate('VAR_POP', 1, list_aggregate(statistics.pvariance))
+    conn.create_aggregate('VAR_SAMP', 1, list_aggregate(statistics.variance))
+    conn.execute('PRAGMA foreign_keys = ON')
+    return conn","def initialize_database_with_custom_functions(self, conn_params):
+    conn = Database.connect(**conn_params)
+    conn.create_function('django_date_extract', 2, _sqlite_datetime_extract)
+    conn.create_function('django_date_trunc', 2, _sqlite_date_trunc)
+    conn.create_function('django_datetime_cast_date', 2, _sqlite_datetime_cast_date)
+    conn.create_function('django_datetime_cast_time', 2, _sqlite_datetime_cast_time)
+    conn.create_function('django_datetime_extract', 3, _sqlite_datetime_extract)
+    conn.create_function('django_datetime_trunc', 3, _sqlite_datetime_trunc)
+    conn.create_function('django_time_extract', 2, _sqlite_time_extract)
+    conn.create_function('django_time_trunc', 2, _sqlite_time_trunc)
+    conn.create_function('django_time_diff', 2, _sqlite_time_diff)
+    conn.create_function('django_timestamp_diff', 2, _sqlite_timestamp_diff)
+    conn.create_function('django_format_dtdelta', 3, _sqlite_format_dtdelta)
+    conn.create_function('regexp', 2, _sqlite_regexp)
+    conn.create_function('ACOS', 1, none_guard(math.acos))
+    conn.create_function('ASIN', 1, none_guard(math.asin))
+    conn.create_function('ATAN', 1, none_guard(math.atan))
+    conn.create_function('ATAN2', 2, none_guard(math.atan2))
+    conn.create_function('CEILING', 1, none_guard(math.ceil))
+    conn.create_function('COS', 1, none_guard(math.cos))
+    conn.create_function('COT', 1, none_guard(lambda x: 1 / math.tan(x)))
+    conn.create_function('DEGREES', 1, none_guard(math.degrees))
+    conn.create_function('EXP', 1, none_guard(math.exp))
+    conn.create_function('FLOOR', 1, none_guard(math.floor))
+    conn.create_function('LN', 1, none_guard(math.log))
+    conn.create_function('LOG', 2, none_guard(lambda x, y: math.log(y, x)))
+    conn.create_function('LPAD', 3, _sqlite_lpad)
+    conn.create_function('MD5', 1, none_guard(lambda x: hashlib.md5(x.encode()).hexdigest()))
+    conn.create_function('MOD', 2, none_guard(math.fmod))
+    conn.create_function('PI', 0, lambda: math.pi)
+    conn.create_function('POWER', 2, none_guard(operator.pow))
+    conn.create_function('RADIANS', 1, none_guard(math.radians))
+    conn.create_function('REPEAT', 2, none_guard(operator.mul))
+    conn.create_function('REVERSE', 1, none_guard(lambda x: x[::-1]))
+    conn.create_function('RPAD', 3, _sqlite_rpad)
+    conn.create_function('SHA1', 1, none_guard(lambda x: hashlib.sha1(x.encode()).hexdigest()))
+    conn.create_function('SHA224', 1, none_guard(lambda x: hashlib.sha224(x.encode()).hexdigest()))
+    conn.create_function('SHA256', 1, none_guard(lambda x: hashlib.sha256(x.encode()).hexdigest()))
+    conn.create_function('SHA384', 1, none_guard(lambda x: hashlib.sha384(x.encode()).hexdigest()))
+    conn.create_function('SHA512', 1, none_guard(lambda x: hashlib.sha512(x.encode()).hexdigest()))
+    conn.create_function('SIGN', 1, none_guard(lambda x: (x > 0) - (x < 0)))
+    conn.create_function('SIN', 1, none_guard(math.sin))
+    conn.create_function('SQRT', 1, none_guard(math.sqrt))
+    conn.create_function('TAN', 1, none_guard(math.tan))
+    conn.create_aggregate('STDDEV_POP', 1, list_aggregate(statistics.pstdev))
+    conn.create_aggregate('STDDEV_SAMP', 1, list_aggregate(statistics.stdev))
+    conn.create_aggregate('VAR_POP', 1, list_aggregate(statistics.pvariance))
+    conn.create_aggregate('VAR_SAMP', 1, list_aggregate(statistics.variance))
+    conn.execute('PRAGMA foreign_keys = ON')
+    return conn","[{""var"": ""conn"", ""rename"": ""database_connection""}]"
+./django/db/backends/sqlite3/operations.py,_convert_tzname_to_sql,generate_sql_timezone_literal,87,88,"def _convert_tzname_to_sql(self, tzname):
+    return ""'%s'"" % tzname if settings.USE_TZ else 'NULL'","def generate_sql_timezone_literal(self, tzname):
+    return ""'%s'"" % tzname if settings.USE_TZ else 'NULL'",[]
+./django/db/backends/sqlite3/operations.py,datetime_cast_date_sql,generate_sql_cast_for_datetime_to_date,90,93,"def datetime_cast_date_sql(self, field_name, tzname):
+    return 'django_datetime_cast_date(%s, %s)' % (field_name, self._convert_tzname_to_sql(tzname))","def generate_sql_cast_for_datetime_to_date(self, field_name, tzname):
+    return 'django_datetime_cast_date(%s, %s)' % (field_name, self._convert_tzname_to_sql(tzname))",[]
+./django/db/backends/sqlite3/operations.py,datetime_cast_time_sql,generate_sql_casting_time_expression,95,98,"def datetime_cast_time_sql(self, field_name, tzname):
+    return 'django_datetime_cast_time(%s, %s)' % (field_name, self._convert_tzname_to_sql(tzname))","def generate_sql_casting_time_expression(self, field_name, tzname):
+    return 'django_datetime_cast_time(%s, %s)' % (field_name, self._convert_tzname_to_sql(tzname))",[]
+./django/db/backends/sqlite3/operations.py,datetime_extract_sql,generate_sql_for_datetime_extraction,100,103,"def datetime_extract_sql(self, lookup_type, field_name, tzname):
+    return ""django_datetime_extract('%s', %s, %s)"" % (lookup_type.lower(), field_name, self._convert_tzname_to_sql(tzname))","def generate_sql_for_datetime_extraction(self, lookup_type, field_name, tzname):
+    return ""django_datetime_extract('%s', %s, %s)"" % (lookup_type.lower(), field_name, self._convert_tzname_to_sql(tzname))",[]
+./django/db/backends/sqlite3/operations.py,datetime_trunc_sql,generate_sql_datetime_truncation_expression,105,108,"def datetime_trunc_sql(self, lookup_type, field_name, tzname):
+    return ""django_datetime_trunc('%s', %s, %s)"" % (lookup_type.lower(), field_name, self._convert_tzname_to_sql(tzname))","def generate_sql_datetime_truncation_expression(self, lookup_type, field_name, tzname):
+    return ""django_datetime_trunc('%s', %s, %s)"" % (lookup_type.lower(), field_name, self._convert_tzname_to_sql(tzname))",[]

@@ -1,0 +1,12 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/db/models/sql/query.py,output_field,determine_primary_output_field,234,238,"@property
+def output_field(self):
+    if len(self.select) == 1:
+        return self.select[0].field
+    elif len(self.annotation_select) == 1:
+        return next(iter(self.annotation_select.values())).output_field","@property
+def determine_primary_output_field(self):
+    if len(self.select) == 1:
+        return self.select[0].field
+    elif len(self.annotation_select) == 1:
+        return next(iter(self.annotation_select.values())).output_field",[]

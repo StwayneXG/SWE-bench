@@ -1,0 +1,42 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./astropy/wcs/wcsapi/wrappers/sliced_wcs.py,world_to_pixel_values,transform_world_coordinates_to_pixel_indices,245,269,"def world_to_pixel_values(self, *world_arrays):
+    world_arrays = tuple(map(np.asanyarray, world_arrays))
+    world_arrays_new = []
+    iworld_curr = -1
+    for iworld in range(self._wcs.world_n_dim):
+        if iworld in self._world_keep:
+            iworld_curr += 1
+            world_arrays_new.append(world_arrays[iworld_curr])
+        else:
+            world_arrays_new.append(1.0)
+    world_arrays_new = np.broadcast_arrays(*world_arrays_new)
+    pixel_arrays = list(self._wcs.world_to_pixel_values(*world_arrays_new))
+    for ipixel in range(self._wcs.pixel_n_dim):
+        if isinstance(self._slices_pixel[ipixel], slice) and self._slices_pixel[ipixel].start is not None:
+            pixel_arrays[ipixel] -= self._slices_pixel[ipixel].start
+    if isinstance(pixel_arrays, np.ndarray) and (not pixel_arrays.shape):
+        return pixel_arrays
+    pixel = tuple((pixel_arrays[ip] for ip in self._pixel_keep))
+    if self.pixel_n_dim == 1 and self._wcs.pixel_n_dim > 1:
+        pixel = pixel[0]
+    return pixel","def transform_world_coordinates_to_pixel_indices(self, *world_arrays):
+    world_arrays = tuple(map(np.asanyarray, world_arrays))
+    world_arrays_new = []
+    iworld_curr = -1
+    for iworld in range(self._wcs.world_n_dim):
+        if iworld in self._world_keep:
+            iworld_curr += 1
+            world_arrays_new.append(world_arrays[iworld_curr])
+        else:
+            world_arrays_new.append(1.0)
+    world_arrays_new = np.broadcast_arrays(*world_arrays_new)
+    pixel_arrays = list(self._wcs.world_to_pixel_values(*world_arrays_new))
+    for ipixel in range(self._wcs.pixel_n_dim):
+        if isinstance(self._slices_pixel[ipixel], slice) and self._slices_pixel[ipixel].start is not None:
+            pixel_arrays[ipixel] -= self._slices_pixel[ipixel].start
+    if isinstance(pixel_arrays, np.ndarray) and (not pixel_arrays.shape):
+        return pixel_arrays
+    pixel = tuple((pixel_arrays[ip] for ip in self._pixel_keep))
+    if self.pixel_n_dim == 1 and self._wcs.pixel_n_dim > 1:
+        pixel = pixel[0]
+    return pixel","[{""var"": ""ip"", ""rename"": ""index_pixel""}, {""var"": ""pixel_arrays"", ""rename"": ""converted_pixel_coordinates""}, {""var"": ""iworld_curr"", ""rename"": ""current_world_index""}, {""var"": ""world_arrays_new"", ""rename"": ""transformed_world_arrays""}, {""var"": ""pixel"", ""rename"": ""transformed_pixel_coordinates""}, {""var"": ""ipixel"", ""rename"": ""current_pixel_index""}, {""var"": ""iworld"", ""rename"": ""world_dim_index""}]"

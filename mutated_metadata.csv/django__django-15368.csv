@@ -1,0 +1,90 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/db/models/query.py,bulk_update,batch_update_fields_in_db,639,685,"def bulk_update(self, objs, fields, batch_size=None):
+    """"""
+        Update the given fields in each of the given objects in the database.
+        """"""
+    if batch_size is not None and batch_size < 0:
+        raise ValueError('Batch size must be a positive integer.')
+    if not fields:
+        raise ValueError('Field names must be given to bulk_update().')
+    objs = tuple(objs)
+    if any((obj.pk is None for obj in objs)):
+        raise ValueError('All bulk_update() objects must have a primary key set.')
+    fields = [self.model._meta.get_field(name) for name in fields]
+    if any((not f.concrete or f.many_to_many for f in fields)):
+        raise ValueError('bulk_update() can only be used with concrete fields.')
+    if any((f.primary_key for f in fields)):
+        raise ValueError('bulk_update() cannot be used with primary key fields.')
+    if not objs:
+        return 0
+    for obj in objs:
+        obj._prepare_related_fields_for_save(operation_name='bulk_update', fields=fields)
+    connection = connections[self.db]
+    max_batch_size = connection.ops.bulk_batch_size(['pk', 'pk'] + fields, objs)
+    batch_size = min(batch_size, max_batch_size) if batch_size else max_batch_size
+    requires_casting = connection.features.requires_casted_case_in_updates
+    batches = (objs[i:i + batch_size] for i in range(0, len(objs), batch_size))
+    updates = []
+    for batch_objs in batches:
+        update_kwargs = {}
+        for field in fields:
+            when_statements = []
+            for obj in batch_objs:
+                attr = getattr(obj, field.attname)
+                if not isinstance(attr, Expression):
+                    attr = Value(attr, output_field=field)
+                when_statements.append(When(pk=obj.pk, then=attr))
+            case_statement = Case(*when_statements, output_field=field)
+            if requires_casting:
+                case_statement = Cast(case_statement, output_field=field)
+            update_kwargs[field.attname] = case_statement
+        updates.append(([obj.pk for obj in batch_objs], update_kwargs))
+    rows_updated = 0
+    with transaction.atomic(using=self.db, savepoint=False):
+        for pks, update_kwargs in updates:
+            rows_updated += self.filter(pk__in=pks).update(**update_kwargs)
+    return rows_updated","def batch_update_fields_in_db(self, objs, fields, batch_size=None):
+    """"""
+        Update the given fields in each of the given objects in the database.
+        """"""
+    if batch_size is not None and batch_size < 0:
+        raise ValueError('Batch size must be a positive integer.')
+    if not fields:
+        raise ValueError('Field names must be given to bulk_update().')
+    objs = tuple(objs)
+    if any((obj.pk is None for obj in objs)):
+        raise ValueError('All bulk_update() objects must have a primary key set.')
+    fields = [self.model._meta.get_field(name) for name in fields]
+    if any((not f.concrete or f.many_to_many for f in fields)):
+        raise ValueError('bulk_update() can only be used with concrete fields.')
+    if any((f.primary_key for f in fields)):
+        raise ValueError('bulk_update() cannot be used with primary key fields.')
+    if not objs:
+        return 0
+    for obj in objs:
+        obj._prepare_related_fields_for_save(operation_name='bulk_update', fields=fields)
+    connection = connections[self.db]
+    max_batch_size = connection.ops.bulk_batch_size(['pk', 'pk'] + fields, objs)
+    batch_size = min(batch_size, max_batch_size) if batch_size else max_batch_size
+    requires_casting = connection.features.requires_casted_case_in_updates
+    batches = (objs[i:i + batch_size] for i in range(0, len(objs), batch_size))
+    updates = []
+    for batch_objs in batches:
+        update_kwargs = {}
+        for field in fields:
+            when_statements = []
+            for obj in batch_objs:
+                attr = getattr(obj, field.attname)
+                if not isinstance(attr, Expression):
+                    attr = Value(attr, output_field=field)
+                when_statements.append(When(pk=obj.pk, then=attr))
+            case_statement = Case(*when_statements, output_field=field)
+            if requires_casting:
+                case_statement = Cast(case_statement, output_field=field)
+            update_kwargs[field.attname] = case_statement
+        updates.append(([obj.pk for obj in batch_objs], update_kwargs))
+    rows_updated = 0
+    with transaction.atomic(using=self.db, savepoint=False):
+        for pks, update_kwargs in updates:
+            rows_updated += self.filter(pk__in=pks).update(**update_kwargs)
+    return rows_updated","[{""var"": ""connection"", ""rename"": ""database_connection""}, {""var"": ""name"", ""rename"": ""field_name_list""}, {""var"": ""field"", ""rename"": ""update_fields""}, {""var"": ""when_statements"", ""rename"": ""conditional_update_clauses""}, {""var"": ""attr"", ""rename"": ""field_value""}, {""var"": ""rows_updated"", ""rename"": ""total_rows_modified""}, {""var"": ""i"", ""rename"": ""obj_index""}, {""var"": ""pks"", ""rename"": ""primary_keys""}, {""var"": ""f"", ""rename"": ""updated_field""}, {""var"": ""batch_objs"", ""rename"": ""object_batch""}, {""var"": ""requires_casting"", ""rename"": ""requires_case_casting_in_updates""}, {""var"": ""obj"", ""rename"": ""database_objects""}, {""var"": ""case_statement"", ""rename"": ""conditional_update_case""}, {""var"": ""updates"", ""rename"": ""batched_update_instructions""}, {""var"": ""update_kwargs"", ""rename"": ""field_update_mappings""}, {""var"": ""max_batch_size"", ""rename"": ""maximum_permitted_batch_size""}, {""var"": ""batches"", ""rename"": ""object_batches""}]"

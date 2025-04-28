@@ -1,0 +1,130 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/db/models/sql/compiler.py,pre_sql_setup,prepare_conditional_sql_update,1819,1861,"def pre_sql_setup(self):
+    """"""
+        If the update depends on results from other tables, munge the ""where""
+        conditions to match the format required for (portable) SQL updates.
+
+        If multiple updates are required, pull out the id values to update at
+        this point so that they don't change as a result of the progressive
+        updates.
+        """"""
+    refcounts_before = self.query.alias_refcount.copy()
+    self.query.get_initial_alias()
+    count = self.query.count_active_tables()
+    if not self.query.related_updates and count == 1:
+        return
+    query = self.query.chain(klass=Query)
+    query.select_related = False
+    query.clear_ordering(force=True)
+    query.extra = {}
+    query.select = []
+    query.add_fields([query.get_meta().pk.name])
+    super().pre_sql_setup()
+    must_pre_select = count > 1 and (not self.connection.features.update_can_self_select)
+    self.query.clear_where()
+    if self.query.related_updates or must_pre_select:
+        idents = []
+        for rows in query.get_compiler(self.using).execute_sql(MULTI):
+            idents.extend((r[0] for r in rows))
+        self.query.add_filter('pk__in', idents)
+        self.query.related_ids = idents
+    else:
+        self.query.add_filter('pk__in', query)
+    self.query.reset_refcounts(refcounts_before)","def prepare_conditional_sql_update(self):
+    """"""
+        If the update depends on results from other tables, munge the ""where""
+        conditions to match the format required for (portable) SQL updates.
+
+        If multiple updates are required, pull out the id values to update at
+        this point so that they don't change as a result of the progressive
+        updates.
+        """"""
+    refcounts_before = self.query.alias_refcount.copy()
+    self.query.get_initial_alias()
+    count = self.query.count_active_tables()
+    if not self.query.related_updates and count == 1:
+        return
+    query = self.query.chain(klass=Query)
+    query.select_related = False
+    query.clear_ordering(force=True)
+    query.extra = {}
+    query.select = []
+    query.add_fields([query.get_meta().pk.name])
+    super().pre_sql_setup()
+    must_pre_select = count > 1 and (not self.connection.features.update_can_self_select)
+    self.query.clear_where()
+    if self.query.related_updates or must_pre_select:
+        idents = []
+        for rows in query.get_compiler(self.using).execute_sql(MULTI):
+            idents.extend((r[0] for r in rows))
+        self.query.add_filter('pk__in', idents)
+        self.query.related_ids = idents
+    else:
+        self.query.add_filter('pk__in', query)
+    self.query.reset_refcounts(refcounts_before)","[{""var"": ""count"", ""rename"": ""active_tables_count""}, {""var"": ""query"", ""rename"": ""prepared_update_query""}, {""var"": ""r"", ""rename"": ""identity_column_values""}, {""var"": ""rows"", ""rename"": ""resulting_rows""}, {""var"": ""must_pre_select"", ""rename"": ""requires_pre_select_for_update""}, {""var"": ""idents"", ""rename"": ""primary_key_ids""}, {""var"": ""refcounts_before"", ""rename"": ""initial_alias_refcounts""}]"
+./django/db/models/sql/compiler.py,as_sql,generate_query_sql_with_params,1865,1886,"def as_sql(self):
+    """"""
+        Create the SQL for this query. Return the SQL string and list of
+        parameters.
+        """"""
+    sql, params = ([], [])
+    for annotation in self.query.annotation_select.values():
+        ann_sql, ann_params = self.compile(annotation)
+        ann_sql, ann_params = annotation.select_format(self, ann_sql, ann_params)
+        sql.append(ann_sql)
+        params.extend(ann_params)
+    self.col_count = len(self.query.annotation_select)
+    sql = ', '.join(sql)
+    params = tuple(params)
+    inner_query_sql, inner_query_params = self.query.inner_query.get_compiler(self.using, elide_empty=self.elide_empty).as_sql(with_col_aliases=True)
+    sql = 'SELECT %s FROM (%s) subquery' % (sql, inner_query_sql)
+    params = params + inner_query_params
+    return (sql, params)","def generate_query_sql_with_params(self):
+    """"""
+        Create the SQL for this query. Return the SQL string and list of
+        parameters.
+        """"""
+    sql, params = ([], [])
+    for annotation in self.query.annotation_select.values():
+        ann_sql, ann_params = self.compile(annotation)
+        ann_sql, ann_params = annotation.select_format(self, ann_sql, ann_params)
+        sql.append(ann_sql)
+        params.extend(ann_params)
+    self.col_count = len(self.query.annotation_select)
+    sql = ', '.join(sql)
+    params = tuple(params)
+    inner_query_sql, inner_query_params = self.query.inner_query.get_compiler(self.using, elide_empty=self.elide_empty).as_sql(with_col_aliases=True)
+    sql = 'SELECT %s FROM (%s) subquery' % (sql, inner_query_sql)
+    params = params + inner_query_params
+    return (sql, params)","[{""var"": ""ann_params"", ""rename"": ""annotation_parameters""}, {""var"": ""inner_query_params"", ""rename"": ""subquery_parameters""}, {""var"": ""params"", ""rename"": ""query_parameters""}, {""var"": ""inner_query_sql"", ""rename"": ""subquery_sql_statement""}, {""var"": ""sql"", ""rename"": ""compiled_sql_string""}, {""var"": ""annotation"", ""rename"": ""query_annotation""}, {""var"": ""ann_sql"", ""rename"": ""annotated_sql_segment""}]"
+./django/db/models/sql/subqueries.py,get_related_updates,generate_ancestor_model_update_queries,124,139,"def get_related_updates(self):
+    """"""
+        Return a list of query objects: one for each update required to an
+        ancestor model. Each query will have the same filtering conditions as
+        the current query but will only update a single table.
+        """"""
+    if not self.related_updates:
+        return []
+    result = []
+    for model, values in self.related_updates.items():
+        query = UpdateQuery(model)
+        query.values = values
+        if self.related_ids is not None:
+            query.add_filter('pk__in', self.related_ids)
+        result.append(query)
+    return result","def generate_ancestor_model_update_queries(self):
+    """"""
+        Return a list of query objects: one for each update required to an
+        ancestor model. Each query will have the same filtering conditions as
+        the current query but will only update a single table.
+        """"""
+    if not self.related_updates:
+        return []
+    result = []
+    for model, values in self.related_updates.items():
+        query = UpdateQuery(model)
+        query.values = values
+        if self.related_ids is not None:
+            query.add_filter('pk__in', self.related_ids)
+        result.append(query)
+    return result","[{""var"": ""values"", ""rename"": ""update_values""}, {""var"": ""model"", ""rename"": ""ancestor_model""}, {""var"": ""query"", ""rename"": ""update_query""}, {""var"": ""result"", ""rename"": ""update_queries_list""}]"

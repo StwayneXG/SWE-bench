@@ -1,0 +1,71 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/db/models/fields/files.py,contribute_to_class,attach_signal_for_non_abstract_classes,438,445,"def contribute_to_class(self, cls, name, **kwargs):
+    super().contribute_to_class(cls, name, **kwargs)
+    if not cls._meta.abstract:
+        signals.post_init.connect(self.update_dimension_fields, sender=cls)","def attach_signal_for_non_abstract_classes(self, cls, name, **kwargs):
+    super().contribute_to_class(cls, name, **kwargs)
+    if not cls._meta.abstract:
+        signals.post_init.connect(self.update_dimension_fields, sender=cls)",[]
+./django/db/models/fields/files.py,update_dimension_fields,refresh_image_dimensions_on_init,447,502,"def update_dimension_fields(self, instance, force=False, *args, **kwargs):
+    """"""
+        Update field's width and height fields, if defined.
+
+        This method is hooked up to model's post_init signal to update
+        dimensions after instantiating a model instance.  However, dimensions
+        won't be updated if the dimensions fields are already populated.  This
+        avoids unnecessary recalculation when loading an object from the
+        database.
+
+        Dimensions can be forced to update with force=True, which is how
+        ImageFileDescriptor.__set__ calls this method.
+        """"""
+    has_dimension_fields = self.width_field or self.height_field
+    if not has_dimension_fields or self.attname not in instance.__dict__:
+        return
+    file = getattr(instance, self.attname)
+    if not file and (not force):
+        return
+    dimension_fields_filled = not (self.width_field and (not getattr(instance, self.width_field)) or (self.height_field and (not getattr(instance, self.height_field))))
+    if dimension_fields_filled and (not force):
+        return
+    if file:
+        width = file.width
+        height = file.height
+    else:
+        width = None
+        height = None
+    if self.width_field:
+        setattr(instance, self.width_field, width)
+    if self.height_field:
+        setattr(instance, self.height_field, height)","def refresh_image_dimensions_on_init(self, instance, force=False, *args, **kwargs):
+    """"""
+        Update field's width and height fields, if defined.
+
+        This method is hooked up to model's post_init signal to update
+        dimensions after instantiating a model instance.  However, dimensions
+        won't be updated if the dimensions fields are already populated.  This
+        avoids unnecessary recalculation when loading an object from the
+        database.
+
+        Dimensions can be forced to update with force=True, which is how
+        ImageFileDescriptor.__set__ calls this method.
+        """"""
+    has_dimension_fields = self.width_field or self.height_field
+    if not has_dimension_fields or self.attname not in instance.__dict__:
+        return
+    file = getattr(instance, self.attname)
+    if not file and (not force):
+        return
+    dimension_fields_filled = not (self.width_field and (not getattr(instance, self.width_field)) or (self.height_field and (not getattr(instance, self.height_field))))
+    if dimension_fields_filled and (not force):
+        return
+    if file:
+        width = file.width
+        height = file.height
+    else:
+        width = None
+        height = None
+    if self.width_field:
+        setattr(instance, self.width_field, width)
+    if self.height_field:
+        setattr(instance, self.height_field, height)","[{""var"": ""width"", ""rename"": ""image_width""}, {""var"": ""height"", ""rename"": ""image_height""}, {""var"": ""dimension_fields_filled"", ""rename"": ""are_dimension_fields_populated""}, {""var"": ""file"", ""rename"": ""instance_file""}, {""var"": ""has_dimension_fields"", ""rename"": ""has_valid_dimension_fields""}]"

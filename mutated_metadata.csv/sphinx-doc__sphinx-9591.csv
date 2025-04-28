@@ -1,0 +1,12 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./sphinx/domains/python.py,handle_signature,process_signature_with_annotation,859,866,"def handle_signature(self, sig: str, signode: desc_signature) -> Tuple[str, str]:
+    fullname, prefix = super().handle_signature(sig, signode)
+    typ = self.options.get('type')
+    if typ:
+        signode += addnodes.desc_annotation(typ, ': ' + typ)
+    return (fullname, prefix)","def process_signature_with_annotation(self, sig: str, signode: desc_signature) -> Tuple[str, str]:
+    fullname, prefix = super().handle_signature(sig, signode)
+    typ = self.options.get('type')
+    if typ:
+        signode += addnodes.desc_annotation(typ, ': ' + typ)
+    return (fullname, prefix)","[{""var"": ""fullname"", ""rename"": ""signature_full_identifier""}, {""var"": ""typ"", ""rename"": ""annotation_type""}, {""var"": ""prefix"", ""rename"": ""signature_prefix""}]"

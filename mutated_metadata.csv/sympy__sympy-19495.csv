@@ -1,0 +1,38 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./sympy/sets/conditionset.py,_eval_subs,substitute_symbol_in_expr,208,247,"def _eval_subs(self, old, new):
+    if not isinstance(self.sym, Expr):
+        return self
+    sym, cond, base = self.args
+    if old == sym:
+        base = base.subs(old, new)
+        if isinstance(new, Symbol):
+            if new.assumptions0 == old.assumptions0 or (len(new.assumptions0) == 1 and old.is_commutative == new.is_commutative):
+                if base != self.base_set:
+                    return self.func(sym, cond, base)
+                else:
+                    return self.func(new, cond.subs(old, new), base)
+            raise ValueError(filldedent('\n                    A dummy symbol can only be\n                    replaced with a symbol having the same\n                    assumptions or one having a single assumption\n                    having the same commutativity.\n                '))
+        return self.func(sym, cond, base)
+    cond = self.condition.subs(old, new)
+    base = self.base_set.subs(old, new)
+    if cond is S.true:
+        return ConditionSet(new, Contains(new, base), base)
+    return self.func(self.sym, cond, base)","def substitute_symbol_in_expr(self, old, new):
+    if not isinstance(self.sym, Expr):
+        return self
+    sym, cond, base = self.args
+    if old == sym:
+        base = base.subs(old, new)
+        if isinstance(new, Symbol):
+            if new.assumptions0 == old.assumptions0 or (len(new.assumptions0) == 1 and old.is_commutative == new.is_commutative):
+                if base != self.base_set:
+                    return self.func(sym, cond, base)
+                else:
+                    return self.func(new, cond.subs(old, new), base)
+            raise ValueError(filldedent('\n                    A dummy symbol can only be\n                    replaced with a symbol having the same\n                    assumptions or one having a single assumption\n                    having the same commutativity.\n                '))
+        return self.func(sym, cond, base)
+    cond = self.condition.subs(old, new)
+    base = self.base_set.subs(old, new)
+    if cond is S.true:
+        return ConditionSet(new, Contains(new, base), base)
+    return self.func(self.sym, cond, base)","[{""var"": ""base"", ""rename"": ""base_expression""}, {""var"": ""sym"", ""rename"": ""symbolic_expression""}, {""var"": ""cond"", ""rename"": ""condition_expression""}]"

@@ -1,0 +1,104 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/db/backends/base/operations.py,year_lookup_bounds_for_date_field,calculate_year_date_range_for_query,529,541,"def year_lookup_bounds_for_date_field(self, value):
+    """"""
+        Return a two-elements list with the lower and upper bound to be used
+        with a BETWEEN operator to query a DateField value using a year
+        lookup.
+
+        `value` is an int, containing the looked-up year.
+        """"""
+    first = datetime.date(value, 1, 1)
+    second = datetime.date(value, 12, 31)
+    first = self.adapt_datefield_value(first)
+    second = self.adapt_datefield_value(second)
+    return [first, second]","def calculate_year_date_range_for_query(self, value):
+    """"""
+        Return a two-elements list with the lower and upper bound to be used
+        with a BETWEEN operator to query a DateField value using a year
+        lookup.
+
+        `value` is an int, containing the looked-up year.
+        """"""
+    first = datetime.date(value, 1, 1)
+    second = datetime.date(value, 12, 31)
+    first = self.adapt_datefield_value(first)
+    second = self.adapt_datefield_value(second)
+    return [first, second]","[{""var"": ""first"", ""rename"": ""start_of_year""}, {""var"": ""second"", ""rename"": ""year_end_date""}]"
+./django/db/backends/base/operations.py,year_lookup_bounds_for_datetime_field,generate_datetime_bounds_for_year_lookup,543,559,"def year_lookup_bounds_for_datetime_field(self, value):
+    """"""
+        Return a two-elements list with the lower and upper bound to be used
+        with a BETWEEN operator to query a DateTimeField value using a year
+        lookup.
+
+        `value` is an int, containing the looked-up year.
+        """"""
+    first = datetime.datetime(value, 1, 1)
+    second = datetime.datetime(value, 12, 31, 23, 59, 59, 999999)
+    if settings.USE_TZ:
+        tz = timezone.get_current_timezone()
+        first = timezone.make_aware(first, tz)
+        second = timezone.make_aware(second, tz)
+    first = self.adapt_datetimefield_value(first)
+    second = self.adapt_datetimefield_value(second)
+    return [first, second]","def generate_datetime_bounds_for_year_lookup(self, value):
+    """"""
+        Return a two-elements list with the lower and upper bound to be used
+        with a BETWEEN operator to query a DateTimeField value using a year
+        lookup.
+
+        `value` is an int, containing the looked-up year.
+        """"""
+    first = datetime.datetime(value, 1, 1)
+    second = datetime.datetime(value, 12, 31, 23, 59, 59, 999999)
+    if settings.USE_TZ:
+        tz = timezone.get_current_timezone()
+        first = timezone.make_aware(first, tz)
+        second = timezone.make_aware(second, tz)
+    first = self.adapt_datetimefield_value(first)
+    second = self.adapt_datetimefield_value(second)
+    return [first, second]","[{""var"": ""first"", ""rename"": ""year_start_datetime""}, {""var"": ""tz"", ""rename"": ""current_timezone""}, {""var"": ""second"", ""rename"": ""end_of_year_datetime""}]"
+./django/db/backends/base/operations.py,get_db_converters,fetch_field_data_converters,561,568,"def get_db_converters(self, expression):
+    """"""
+        Return a list of functions needed to convert field data.
+
+        Some field types on some backends do not provide data in the correct
+        format, this is the hook for converter functions.
+        """"""
+    return []","def fetch_field_data_converters(self, expression):
+    """"""
+        Return a list of functions needed to convert field data.
+
+        Some field types on some backends do not provide data in the correct
+        format, this is the hook for converter functions.
+        """"""
+    return []",[]
+./django/db/models/lookups.py,year_lookup_bounds,determine_date_or_datetime_year_bounds,541,547,"def year_lookup_bounds(self, connection, year):
+    output_field = self.lhs.lhs.output_field
+    if isinstance(output_field, DateTimeField):
+        bounds = connection.ops.year_lookup_bounds_for_datetime_field(year)
+    else:
+        bounds = connection.ops.year_lookup_bounds_for_date_field(year)
+    return bounds","def determine_date_or_datetime_year_bounds(self, connection, year):
+    output_field = self.lhs.lhs.output_field
+    if isinstance(output_field, DateTimeField):
+        bounds = connection.ops.year_lookup_bounds_for_datetime_field(year)
+    else:
+        bounds = connection.ops.year_lookup_bounds_for_date_field(year)
+    return bounds","[{""var"": ""output_field"", ""rename"": ""temporal_field_type""}, {""var"": ""bounds"", ""rename"": ""year_range_bounds""}]"
+./django/db/models/lookups.py,as_sql,generate_year_bound_sql_with_params,549,561,"def as_sql(self, compiler, connection):
+    if self.rhs_is_direct_value():
+        lhs_sql, params = self.process_lhs(compiler, connection, self.lhs.lhs)
+        rhs_sql, _ = self.process_rhs(compiler, connection)
+        rhs_sql = self.get_direct_rhs_sql(connection, rhs_sql)
+        start, finish = self.year_lookup_bounds(connection, self.rhs)
+        params.extend(self.get_bound_params(start, finish))
+        return ('%s %s' % (lhs_sql, rhs_sql), params)
+    return super().as_sql(compiler, connection)","def generate_year_bound_sql_with_params(self, compiler, connection):
+    if self.rhs_is_direct_value():
+        lhs_sql, params = self.process_lhs(compiler, connection, self.lhs.lhs)
+        rhs_sql, _ = self.process_rhs(compiler, connection)
+        rhs_sql = self.get_direct_rhs_sql(connection, rhs_sql)
+        start, finish = self.year_lookup_bounds(connection, self.rhs)
+        params.extend(self.get_bound_params(start, finish))
+        return ('%s %s' % (lhs_sql, rhs_sql), params)
+    return super().as_sql(compiler, connection)","[{""var"": ""params"", ""rename"": ""sql_query_parameters""}, {""var"": ""_"", ""rename"": ""rhs_sql_placeholder""}, {""var"": ""lhs_sql"", ""rename"": ""left_hand_side_sql""}, {""var"": ""rhs_sql"", ""rename"": ""resolved_rhs_expression_sql""}, {""var"": ""finish"", ""rename"": ""end_year_bound""}, {""var"": ""start"", ""rename"": ""start_year_bound""}]"

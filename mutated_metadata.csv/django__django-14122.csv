@@ -1,0 +1,82 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/db/models/sql/compiler.py,get_group_by,generate_group_by_clauses,63,147,"def get_group_by(self, select, order_by):
+    """"""
+        Return a list of 2-tuples of form (sql, params).
+
+        The logic of what exactly the GROUP BY clause contains is hard
+        to describe in other words than ""if it passes the test suite,
+        then it is correct"".
+        """"""
+    if self.query.group_by is None:
+        return []
+    expressions = []
+    if self.query.group_by is not True:
+        for expr in self.query.group_by:
+            if not hasattr(expr, 'as_sql'):
+                expressions.append(self.query.resolve_ref(expr))
+            else:
+                expressions.append(expr)
+    ref_sources = {expr.source for expr in expressions if isinstance(expr, Ref)}
+    for expr, _, _ in select:
+        if expr in ref_sources:
+            continue
+        cols = expr.get_group_by_cols()
+        for col in cols:
+            expressions.append(col)
+    for expr, (sql, params, is_ref) in order_by:
+        if not is_ref:
+            expressions.extend(expr.get_group_by_cols())
+    having_group_by = self.having.get_group_by_cols() if self.having else ()
+    for expr in having_group_by:
+        expressions.append(expr)
+    result = []
+    seen = set()
+    expressions = self.collapse_group_by(expressions, having_group_by)
+    for expr in expressions:
+        sql, params = self.compile(expr)
+        sql, params = expr.select_format(self, sql, params)
+        params_hash = make_hashable(params)
+        if (sql, params_hash) not in seen:
+            result.append((sql, params))
+            seen.add((sql, params_hash))
+    return result","def generate_group_by_clauses(self, select, order_by):
+    """"""
+        Return a list of 2-tuples of form (sql, params).
+
+        The logic of what exactly the GROUP BY clause contains is hard
+        to describe in other words than ""if it passes the test suite,
+        then it is correct"".
+        """"""
+    if self.query.group_by is None:
+        return []
+    expressions = []
+    if self.query.group_by is not True:
+        for expr in self.query.group_by:
+            if not hasattr(expr, 'as_sql'):
+                expressions.append(self.query.resolve_ref(expr))
+            else:
+                expressions.append(expr)
+    ref_sources = {expr.source for expr in expressions if isinstance(expr, Ref)}
+    for expr, _, _ in select:
+        if expr in ref_sources:
+            continue
+        cols = expr.get_group_by_cols()
+        for col in cols:
+            expressions.append(col)
+    for expr, (sql, params, is_ref) in order_by:
+        if not is_ref:
+            expressions.extend(expr.get_group_by_cols())
+    having_group_by = self.having.get_group_by_cols() if self.having else ()
+    for expr in having_group_by:
+        expressions.append(expr)
+    result = []
+    seen = set()
+    expressions = self.collapse_group_by(expressions, having_group_by)
+    for expr in expressions:
+        sql, params = self.compile(expr)
+        sql, params = expr.select_format(self, sql, params)
+        params_hash = make_hashable(params)
+        if (sql, params_hash) not in seen:
+            result.append((sql, params))
+            seen.add((sql, params_hash))
+    return result","[{""var"": ""expressions"", ""rename"": ""group_by_expressions""}, {""var"": ""col"", ""rename"": ""column_expression""}, {""var"": ""params"", ""rename"": ""sql_parameters""}, {""var"": ""cols"", ""rename"": ""group_by_columns""}, {""var"": ""_"", ""rename"": ""group_by_results""}, {""var"": ""result"", ""rename"": ""group_by_clauses""}, {""var"": ""params_hash"", ""rename"": ""parameter_signature""}, {""var"": ""seen"", ""rename"": ""processed_expressions""}, {""var"": ""sql"", ""rename"": ""sql_fragment""}, {""var"": ""having_group_by"", ""rename"": ""having_clause_group_by_cols""}, {""var"": ""expr"", ""rename"": ""expression_node""}, {""var"": ""ref_sources"", ""rename"": ""reference_expression_sources""}, {""var"": ""is_ref"", ""rename"": ""is_order_expression_reference""}]"

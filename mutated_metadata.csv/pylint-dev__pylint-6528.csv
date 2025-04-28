@@ -1,0 +1,145 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./pylint/lint/expand_modules.py,expand_modules,analyze_and_filter_modules,49,149,"def expand_modules(files_or_modules: Sequence[str], ignore_list: list[str], ignore_list_re: list[Pattern[str]], ignore_list_paths_re: list[Pattern[str]]) -> tuple[list[ModuleDescriptionDict], list[ErrorDescriptionDict]]:
+    """"""Take a list of files/modules/packages and return the list of tuple
+    (file, module name) which have to be actually checked.
+    """"""
+    result: list[ModuleDescriptionDict] = []
+    errors: list[ErrorDescriptionDict] = []
+    path = sys.path.copy()
+    for something in files_or_modules:
+        basename = os.path.basename(something)
+        if basename in ignore_list or _is_in_ignore_list_re(os.path.basename(something), ignore_list_re) or _is_in_ignore_list_re(something, ignore_list_paths_re):
+            continue
+        module_path = get_python_path(something)
+        additional_search_path = ['.', module_path] + path
+        if os.path.exists(something):
+            try:
+                modname = '.'.join(modutils.modpath_from_file(something, path=additional_search_path))
+            except ImportError:
+                modname = os.path.splitext(basename)[0]
+            if os.path.isdir(something):
+                filepath = os.path.join(something, '__init__.py')
+            else:
+                filepath = something
+        else:
+            modname = something
+            try:
+                filepath = modutils.file_from_modpath(modname.split('.'), path=additional_search_path)
+                if filepath is None:
+                    continue
+            except (ImportError, SyntaxError) as ex:
+                errors.append({'key': 'fatal', 'mod': modname, 'ex': ex})
+                continue
+        filepath = os.path.normpath(filepath)
+        modparts = (modname or something).split('.')
+        try:
+            spec = modutils.file_info_from_modpath(modparts, path=additional_search_path)
+        except ImportError:
+            is_namespace = False
+            is_directory = os.path.isdir(something)
+        else:
+            is_namespace = modutils.is_namespace(spec)
+            is_directory = modutils.is_directory(spec)
+        if not is_namespace:
+            result.append({'path': filepath, 'name': modname, 'isarg': True, 'basepath': filepath, 'basename': modname})
+        has_init = not (modname.endswith('.__init__') or modname == '__init__') and os.path.basename(filepath) == '__init__.py'
+        if has_init or is_namespace or is_directory:
+            for subfilepath in modutils.get_module_files(os.path.dirname(filepath), ignore_list, list_all=is_namespace):
+                if filepath == subfilepath:
+                    continue
+                if _is_in_ignore_list_re(os.path.basename(subfilepath), ignore_list_re) or _is_in_ignore_list_re(subfilepath, ignore_list_paths_re):
+                    continue
+                modpath = _modpath_from_file(subfilepath, is_namespace, path=additional_search_path)
+                submodname = '.'.join(modpath)
+                result.append({'path': subfilepath, 'name': submodname, 'isarg': False, 'basepath': filepath, 'basename': modname})
+    return (result, errors)","def analyze_and_filter_modules(files_or_modules: Sequence[str], ignore_list: list[str], ignore_list_re: list[Pattern[str]], ignore_list_paths_re: list[Pattern[str]]) -> tuple[list[ModuleDescriptionDict], list[ErrorDescriptionDict]]:
+    """"""Take a list of files/modules/packages and return the list of tuple
+    (file, module name) which have to be actually checked.
+    """"""
+    result: list[ModuleDescriptionDict] = []
+    errors: list[ErrorDescriptionDict] = []
+    path = sys.path.copy()
+    for something in files_or_modules:
+        basename = os.path.basename(something)
+        if basename in ignore_list or _is_in_ignore_list_re(os.path.basename(something), ignore_list_re) or _is_in_ignore_list_re(something, ignore_list_paths_re):
+            continue
+        module_path = get_python_path(something)
+        additional_search_path = ['.', module_path] + path
+        if os.path.exists(something):
+            try:
+                modname = '.'.join(modutils.modpath_from_file(something, path=additional_search_path))
+            except ImportError:
+                modname = os.path.splitext(basename)[0]
+            if os.path.isdir(something):
+                filepath = os.path.join(something, '__init__.py')
+            else:
+                filepath = something
+        else:
+            modname = something
+            try:
+                filepath = modutils.file_from_modpath(modname.split('.'), path=additional_search_path)
+                if filepath is None:
+                    continue
+            except (ImportError, SyntaxError) as ex:
+                errors.append({'key': 'fatal', 'mod': modname, 'ex': ex})
+                continue
+        filepath = os.path.normpath(filepath)
+        modparts = (modname or something).split('.')
+        try:
+            spec = modutils.file_info_from_modpath(modparts, path=additional_search_path)
+        except ImportError:
+            is_namespace = False
+            is_directory = os.path.isdir(something)
+        else:
+            is_namespace = modutils.is_namespace(spec)
+            is_directory = modutils.is_directory(spec)
+        if not is_namespace:
+            result.append({'path': filepath, 'name': modname, 'isarg': True, 'basepath': filepath, 'basename': modname})
+        has_init = not (modname.endswith('.__init__') or modname == '__init__') and os.path.basename(filepath) == '__init__.py'
+        if has_init or is_namespace or is_directory:
+            for subfilepath in modutils.get_module_files(os.path.dirname(filepath), ignore_list, list_all=is_namespace):
+                if filepath == subfilepath:
+                    continue
+                if _is_in_ignore_list_re(os.path.basename(subfilepath), ignore_list_re) or _is_in_ignore_list_re(subfilepath, ignore_list_paths_re):
+                    continue
+                modpath = _modpath_from_file(subfilepath, is_namespace, path=additional_search_path)
+                submodname = '.'.join(modpath)
+                result.append({'path': subfilepath, 'name': submodname, 'isarg': False, 'basepath': filepath, 'basename': modname})
+    return (result, errors)","[{""var"": ""modname"", ""rename"": ""module_identifier""}, {""var"": ""is_directory"", ""rename"": ""is_directory_flag""}, {""var"": ""is_namespace"", ""rename"": ""is_namespace_module""}, {""var"": ""errors"", ""rename"": ""error_logs""}, {""var"": ""path"", ""rename"": ""system_search_path""}, {""var"": ""filepath"", ""rename"": ""module_file_path""}, {""var"": ""subfilepath"", ""rename"": ""module_file_path""}, {""var"": ""result"", ""rename"": ""modules_to_check""}, {""var"": ""modparts"", ""rename"": ""module_parts""}, {""var"": ""basename"", ""rename"": ""file_or_module_basename""}, {""var"": ""module_path"", ""rename"": ""module_resolved_path""}, {""var"": ""submodname"", ""rename"": ""submodule_full_name""}, {""var"": ""additional_search_path"", ""rename"": ""module_search_directories""}, {""var"": ""spec"", ""rename"": ""module_specification""}, {""var"": ""something"", ""rename"": ""module_or_file_path""}, {""var"": ""modpath"", ""rename"": ""module_identifier_path""}, {""var"": ""has_init"", ""rename"": ""contains_init_file""}]"
+./pylint/lint/pylinter.py,_discover_files,discover_python_modules_and_packages,568,592,"@staticmethod
+def _discover_files(files_or_modules: Sequence[str]) -> Iterator[str]:
+    """"""Discover python modules and packages in sub-directory.
+
+        Returns iterator of paths to discovered modules and packages.
+        """"""
+    for something in files_or_modules:
+        if os.path.isdir(something) and (not os.path.isfile(os.path.join(something, '__init__.py'))):
+            skip_subtrees: list[str] = []
+            for root, _, files in os.walk(something):
+                if any((root.startswith(s) for s in skip_subtrees)):
+                    continue
+                if '__init__.py' in files:
+                    skip_subtrees.append(root)
+                    yield root
+                else:
+                    yield from (os.path.join(root, file) for file in files if file.endswith('.py'))
+        else:
+            yield something","@staticmethod
+def discover_python_modules_and_packages(files_or_modules: Sequence[str]) -> Iterator[str]:
+    """"""Discover python modules and packages in sub-directory.
+
+        Returns iterator of paths to discovered modules and packages.
+        """"""
+    for something in files_or_modules:
+        if os.path.isdir(something) and (not os.path.isfile(os.path.join(something, '__init__.py'))):
+            skip_subtrees: list[str] = []
+            for root, _, files in os.walk(something):
+                if any((root.startswith(s) for s in skip_subtrees)):
+                    continue
+                if '__init__.py' in files:
+                    skip_subtrees.append(root)
+                    yield root
+                else:
+                    yield from (os.path.join(root, file) for file in files if file.endswith('.py'))
+        else:
+            yield something","[{""var"": ""s"", ""rename"": ""excluded_subtree""}, {""var"": ""root"", ""rename"": ""current_directory""}, {""var"": ""_"", ""rename"": ""discover_python_modules""}, {""var"": ""files"", ""rename"": ""discovered_python_files""}, {""var"": ""file"", ""rename"": ""py_file_path""}, {""var"": ""something"", ""rename"": ""path_or_module""}, {""var"": ""skip_subtrees"", ""rename"": ""visited_directories""}]"

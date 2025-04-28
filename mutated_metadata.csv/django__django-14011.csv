@@ -1,0 +1,54 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/core/servers/basehttp.py,__init__,initialize_stream_handling,88,99,"def __init__(self, stdin, stdout, stderr, environ, **kwargs):
+    """"""
+        Use a LimitedStream so that unread request data will be ignored at
+        the end of the request. WSGIRequest uses a LimitedStream but it
+        shouldn't discard the data since the upstream servers usually do this.
+        This fix applies only for testserver/runserver.
+        """"""
+    try:
+        content_length = int(environ.get('CONTENT_LENGTH'))
+    except (ValueError, TypeError):
+        content_length = 0
+    super().__init__(LimitedStream(stdin, content_length), stdout, stderr, environ, **kwargs)","def initialize_stream_handling(self, stdin, stdout, stderr, environ, **kwargs):
+    """"""
+        Use a LimitedStream so that unread request data will be ignored at
+        the end of the request. WSGIRequest uses a LimitedStream but it
+        shouldn't discard the data since the upstream servers usually do this.
+        This fix applies only for testserver/runserver.
+        """"""
+    try:
+        content_length = int(environ.get('CONTENT_LENGTH'))
+    except (ValueError, TypeError):
+        content_length = 0
+    super().__init__(LimitedStream(stdin, content_length), stdout, stderr, environ, **kwargs)","[{""var"": ""content_length"", ""rename"": ""request_data_length""}]"
+./django/core/servers/basehttp.py,cleanup_headers,finalize_headers_and_connection_handling,101,114,"def cleanup_headers(self):
+    super().cleanup_headers()
+    if 'Content-Length' not in self.headers:
+        self.headers['Connection'] = 'close'
+    elif not isinstance(self.request_handler.server, socketserver.ThreadingMixIn):
+        self.headers['Connection'] = 'close'
+    if self.headers.get('Connection') == 'close':
+        self.request_handler.close_connection = True","def finalize_headers_and_connection_handling(self):
+    super().cleanup_headers()
+    if 'Content-Length' not in self.headers:
+        self.headers['Connection'] = 'close'
+    elif not isinstance(self.request_handler.server, socketserver.ThreadingMixIn):
+        self.headers['Connection'] = 'close'
+    if self.headers.get('Connection') == 'close':
+        self.request_handler.close_connection = True",[]
+./django/db/backends/sqlite3/features.py,django_test_skips,collect_sqlite_test_skip_conditions,54,88,"@cached_property
+def django_test_skips(self):
+    skips = {'SQLite stores values rounded to 15 significant digits.': {'model_fields.test_decimalfield.DecimalFieldTests.test_fetch_from_db_without_float_rounding'}, 'SQLite naively remakes the table on field alteration.': {'schema.tests.SchemaTests.test_unique_no_unnecessary_fk_drops', 'schema.tests.SchemaTests.test_unique_and_reverse_m2m', 'schema.tests.SchemaTests.test_alter_field_default_doesnt_perform_queries', 'schema.tests.SchemaTests.test_rename_column_renames_deferred_sql_references'}, ""SQLite doesn't have a constraint."": {'model_fields.test_integerfield.PositiveIntegerFieldTests.test_negative_values'}, ""SQLite doesn't support negative precision for ROUND()."": {'db_functions.math.test_round.RoundTests.test_null_with_negative_precision', 'db_functions.math.test_round.RoundTests.test_decimal_with_negative_precision', 'db_functions.math.test_round.RoundTests.test_float_with_negative_precision', 'db_functions.math.test_round.RoundTests.test_integer_with_negative_precision'}}
+    if Database.sqlite_version_info < (3, 27):
+        skips.update({'Nondeterministic failure on SQLite < 3.27.': {'expressions_window.tests.WindowFunctionTests.test_subquery_row_range_rank'}})
+    if self.connection.is_in_memory_db():
+        skips.update({""the sqlite backend's close() method is a no-op when using an in-memory database"": {'servers.test_liveserverthread.LiveServerThreadTest.test_closes_connections'}})
+    return skips","@cached_property
+def collect_sqlite_test_skip_conditions(self):
+    skips = {'SQLite stores values rounded to 15 significant digits.': {'model_fields.test_decimalfield.DecimalFieldTests.test_fetch_from_db_without_float_rounding'}, 'SQLite naively remakes the table on field alteration.': {'schema.tests.SchemaTests.test_unique_no_unnecessary_fk_drops', 'schema.tests.SchemaTests.test_unique_and_reverse_m2m', 'schema.tests.SchemaTests.test_alter_field_default_doesnt_perform_queries', 'schema.tests.SchemaTests.test_rename_column_renames_deferred_sql_references'}, ""SQLite doesn't have a constraint."": {'model_fields.test_integerfield.PositiveIntegerFieldTests.test_negative_values'}, ""SQLite doesn't support negative precision for ROUND()."": {'db_functions.math.test_round.RoundTests.test_null_with_negative_precision', 'db_functions.math.test_round.RoundTests.test_decimal_with_negative_precision', 'db_functions.math.test_round.RoundTests.test_float_with_negative_precision', 'db_functions.math.test_round.RoundTests.test_integer_with_negative_precision'}}
+    if Database.sqlite_version_info < (3, 27):
+        skips.update({'Nondeterministic failure on SQLite < 3.27.': {'expressions_window.tests.WindowFunctionTests.test_subquery_row_range_rank'}})
+    if self.connection.is_in_memory_db():
+        skips.update({""the sqlite backend's close() method is a no-op when using an in-memory database"": {'servers.test_liveserverthread.LiveServerThreadTest.test_closes_connections'}})
+    return skips","[{""var"": ""skips"", ""rename"": ""sqlite_compatibility_test_exclusions""}]"

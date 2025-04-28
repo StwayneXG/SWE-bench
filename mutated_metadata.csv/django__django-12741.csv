@@ -1,0 +1,67 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/core/management/commands/flush.py,handle,flush_database_with_confirmation,27,82,"def handle(self, **options):
+    database = options['database']
+    connection = connections[database]
+    verbosity = options['verbosity']
+    interactive = options['interactive']
+    reset_sequences = options.get('reset_sequences', True)
+    allow_cascade = options.get('allow_cascade', False)
+    inhibit_post_migrate = options.get('inhibit_post_migrate', False)
+    self.style = no_style()
+    for app_config in apps.get_app_configs():
+        try:
+            import_module('.management', app_config.name)
+        except ImportError:
+            pass
+    sql_list = sql_flush(self.style, connection, only_django=True, reset_sequences=reset_sequences, allow_cascade=allow_cascade)
+    if interactive:
+        confirm = input(""You have requested a flush of the database.\nThis will IRREVERSIBLY DESTROY all data currently in the %r database,\nand return each table to an empty state.\nAre you sure you want to do this?\n\n    Type 'yes' to continue, or 'no' to cancel: "" % connection.settings_dict['NAME'])
+    else:
+        confirm = 'yes'
+    if confirm == 'yes':
+        try:
+            connection.ops.execute_sql_flush(database, sql_list)
+        except Exception as exc:
+            raise CommandError(""Database %s couldn't be flushed. Possible reasons:\n  * The database isn't running or isn't configured correctly.\n  * At least one of the expected database tables doesn't exist.\n  * The SQL was invalid.\nHint: Look at the output of 'django-admin sqlflush'. That's the SQL this command wasn't able to run.\n"" % (connection.settings_dict['NAME'],)) from exc
+        if sql_list and (not inhibit_post_migrate):
+            emit_post_migrate_signal(verbosity, interactive, database)
+    else:
+        self.stdout.write('Flush cancelled.\n')","def flush_database_with_confirmation(self, **options):
+    database = options['database']
+    connection = connections[database]
+    verbosity = options['verbosity']
+    interactive = options['interactive']
+    reset_sequences = options.get('reset_sequences', True)
+    allow_cascade = options.get('allow_cascade', False)
+    inhibit_post_migrate = options.get('inhibit_post_migrate', False)
+    self.style = no_style()
+    for app_config in apps.get_app_configs():
+        try:
+            import_module('.management', app_config.name)
+        except ImportError:
+            pass
+    sql_list = sql_flush(self.style, connection, only_django=True, reset_sequences=reset_sequences, allow_cascade=allow_cascade)
+    if interactive:
+        confirm = input(""You have requested a flush of the database.\nThis will IRREVERSIBLY DESTROY all data currently in the %r database,\nand return each table to an empty state.\nAre you sure you want to do this?\n\n    Type 'yes' to continue, or 'no' to cancel: "" % connection.settings_dict['NAME'])
+    else:
+        confirm = 'yes'
+    if confirm == 'yes':
+        try:
+            connection.ops.execute_sql_flush(database, sql_list)
+        except Exception as exc:
+            raise CommandError(""Database %s couldn't be flushed. Possible reasons:\n  * The database isn't running or isn't configured correctly.\n  * At least one of the expected database tables doesn't exist.\n  * The SQL was invalid.\nHint: Look at the output of 'django-admin sqlflush'. That's the SQL this command wasn't able to run.\n"" % (connection.settings_dict['NAME'],)) from exc
+        if sql_list and (not inhibit_post_migrate):
+            emit_post_migrate_signal(verbosity, interactive, database)
+    else:
+        self.stdout.write('Flush cancelled.\n')","[{""var"": ""connection"", ""rename"": ""db_connection""}, {""var"": ""database"", ""rename"": ""target_database_name""}, {""var"": ""inhibit_post_migrate"", ""rename"": ""suppress_post_migrate_signal""}, {""var"": ""confirm"", ""rename"": ""user_confirmation""}, {""var"": ""verbosity"", ""rename"": ""log_level""}, {""var"": ""app_config"", ""rename"": ""application_config""}, {""var"": ""sql_list"", ""rename"": ""flush_commands_list""}, {""var"": ""allow_cascade"", ""rename"": ""cascade_on_flush""}, {""var"": ""reset_sequences"", ""rename"": ""reset_db_sequences""}, {""var"": ""interactive"", ""rename"": ""user_confirmation_required""}]"
+./django/db/backends/base/operations.py,execute_sql_flush,perform_database_flush_operations,403,408,"def execute_sql_flush(self, using, sql_list):
+    """"""Execute a list of SQL statements to flush the database.""""""
+    with transaction.atomic(using=using, savepoint=self.connection.features.can_rollback_ddl):
+        with self.connection.cursor() as cursor:
+            for sql in sql_list:
+                cursor.execute(sql)","def perform_database_flush_operations(self, using, sql_list):
+    """"""Execute a list of SQL statements to flush the database.""""""
+    with transaction.atomic(using=using, savepoint=self.connection.features.can_rollback_ddl):
+        with self.connection.cursor() as cursor:
+            for sql in sql_list:
+                cursor.execute(sql)","[{""var"": ""sql"", ""rename"": ""sql_statement""}, {""var"": ""cursor"", ""rename"": ""database_command_executor""}]"

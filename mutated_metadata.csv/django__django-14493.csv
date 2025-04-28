@@ -1,0 +1,72 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/contrib/staticfiles/storage.py,post_process,cache_busting_file_processor,224,281,"def post_process(self, paths, dry_run=False, **options):
+    """"""
+        Post process the given dictionary of files (called from collectstatic).
+
+        Processing is actually two separate operations:
+
+        1. renaming files to include a hash of their content for cache-busting,
+           and copying those files to the target storage.
+        2. adjusting files which contain references to other files so they
+           refer to the cache-busting filenames.
+
+        If either of these are performed on a file, then that file is considered
+        post-processed.
+        """"""
+    if dry_run:
+        return
+    hashed_files = {}
+    adjustable_paths = [path for path in paths if matches_patterns(path, self._patterns)]
+    processed_adjustable_paths = {}
+    for name, hashed_name, processed, _ in self._post_process(paths, adjustable_paths, hashed_files):
+        if name not in adjustable_paths or isinstance(processed, Exception):
+            yield (name, hashed_name, processed)
+        else:
+            processed_adjustable_paths[name] = (name, hashed_name, processed)
+    paths = {path: paths[path] for path in adjustable_paths}
+    for i in range(self.max_post_process_passes):
+        substitutions = False
+        for name, hashed_name, processed, subst in self._post_process(paths, adjustable_paths, hashed_files):
+            processed_adjustable_paths[name] = (name, hashed_name, processed)
+            substitutions = substitutions or subst
+        if not substitutions:
+            break
+    if substitutions:
+        yield ('All', None, RuntimeError('Max post-process passes exceeded.'))
+    self.hashed_files.update(hashed_files)
+    yield from processed_adjustable_paths.values()","def cache_busting_file_processor(self, paths, dry_run=False, **options):
+    """"""
+        Post process the given dictionary of files (called from collectstatic).
+
+        Processing is actually two separate operations:
+
+        1. renaming files to include a hash of their content for cache-busting,
+           and copying those files to the target storage.
+        2. adjusting files which contain references to other files so they
+           refer to the cache-busting filenames.
+
+        If either of these are performed on a file, then that file is considered
+        post-processed.
+        """"""
+    if dry_run:
+        return
+    hashed_files = {}
+    adjustable_paths = [path for path in paths if matches_patterns(path, self._patterns)]
+    processed_adjustable_paths = {}
+    for name, hashed_name, processed, _ in self._post_process(paths, adjustable_paths, hashed_files):
+        if name not in adjustable_paths or isinstance(processed, Exception):
+            yield (name, hashed_name, processed)
+        else:
+            processed_adjustable_paths[name] = (name, hashed_name, processed)
+    paths = {path: paths[path] for path in adjustable_paths}
+    for i in range(self.max_post_process_passes):
+        substitutions = False
+        for name, hashed_name, processed, subst in self._post_process(paths, adjustable_paths, hashed_files):
+            processed_adjustable_paths[name] = (name, hashed_name, processed)
+            substitutions = substitutions or subst
+        if not substitutions:
+            break
+    if substitutions:
+        yield ('All', None, RuntimeError('Max post-process passes exceeded.'))
+    self.hashed_files.update(hashed_files)
+    yield from processed_adjustable_paths.values()","[{""var"": ""name"", ""rename"": ""original_file_name""}, {""var"": ""hashed_files"", ""rename"": ""cache_busting_hashed_files""}, {""var"": ""processed"", ""rename"": ""process_status""}, {""var"": ""path"", ""rename"": ""file_paths""}, {""var"": ""i"", ""rename"": ""post_process_iteration""}, {""var"": ""_"", ""rename"": ""post_processed_file_info""}, {""var"": ""processed_adjustable_paths"", ""rename"": ""finalized_cache_busted_paths""}, {""var"": ""subst"", ""rename"": ""substitution_made""}, {""var"": ""adjustable_paths"", ""rename"": ""cache_bust_eligible_paths""}, {""var"": ""substitutions"", ""rename"": ""refUpdatesMade""}, {""var"": ""hashed_name"", ""rename"": ""cache_busted_filename""}]"

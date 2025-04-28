@@ -1,0 +1,77 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./sympy/sets/sets.py,_complement,calculate_set_difference,188,220,"def _complement(self, other):
+    if isinstance(other, ProductSet):
+        switch_sets = ProductSet((FiniteSet(o, o - s) for s, o in zip(self.sets, other.sets)))
+        product_sets = (ProductSet(*set) for set in switch_sets)
+        return Union((p for p in product_sets if p != other))
+    elif isinstance(other, Interval):
+        if isinstance(self, Interval) or isinstance(self, FiniteSet):
+            return Intersection(other, self.complement(S.Reals))
+    elif isinstance(other, Union):
+        return Union((o - self for o in other.args))
+    elif isinstance(other, Complement):
+        return Complement(other.args[0], Union(other.args[1], self), evaluate=False)
+    elif isinstance(other, EmptySet):
+        return S.EmptySet
+    elif isinstance(other, FiniteSet):
+        return FiniteSet(*[el for el in other if self.contains(el) != True])","def calculate_set_difference(self, other):
+    if isinstance(other, ProductSet):
+        switch_sets = ProductSet((FiniteSet(o, o - s) for s, o in zip(self.sets, other.sets)))
+        product_sets = (ProductSet(*set) for set in switch_sets)
+        return Union((p for p in product_sets if p != other))
+    elif isinstance(other, Interval):
+        if isinstance(self, Interval) or isinstance(self, FiniteSet):
+            return Intersection(other, self.complement(S.Reals))
+    elif isinstance(other, Union):
+        return Union((o - self for o in other.args))
+    elif isinstance(other, Complement):
+        return Complement(other.args[0], Union(other.args[1], self), evaluate=False)
+    elif isinstance(other, EmptySet):
+        return S.EmptySet
+    elif isinstance(other, FiniteSet):
+        return FiniteSet(*[el for el in other if self.contains(el) != True])","[{""var"": ""s"", ""rename"": ""current_set""}, {""var"": ""o"", ""rename"": ""current_element""}, {""var"": ""el"", ""rename"": ""element""}, {""var"": ""p"", ""rename"": ""filtered_product_set""}, {""var"": ""product_sets"", ""rename"": ""transformed_product_sets""}, {""var"": ""switch_sets"", ""rename"": ""flipped_product_sets""}, {""var"": ""set"", ""rename"": ""element_sets""}]"
+./sympy/sets/sets.py,symmetric_difference,calculate_symmetric_difference_set,222,244,"def symmetric_difference(self, other):
+    """"""
+        Returns symmetric difference of `self` and `other`.
+
+        Examples
+        ========
+
+        >>> from sympy import Interval, S
+        >>> Interval(1, 3).symmetric_difference(S.Reals)
+        Union(Interval.open(-oo, 1), Interval.open(3, oo))
+        >>> Interval(1, 10).symmetric_difference(S.Reals)
+        Union(Interval.open(-oo, 1), Interval.open(10, oo))
+
+        >>> from sympy import S, EmptySet
+        >>> S.Reals.symmetric_difference(EmptySet())
+        S.Reals
+
+        References
+        ==========
+        .. [1] https://en.wikipedia.org/wiki/Symmetric_difference
+
+        """"""
+    return SymmetricDifference(self, other)","def calculate_symmetric_difference_set(self, other):
+    """"""
+        Returns symmetric difference of `self` and `other`.
+
+        Examples
+        ========
+
+        >>> from sympy import Interval, S
+        >>> Interval(1, 3).symmetric_difference(S.Reals)
+        Union(Interval.open(-oo, 1), Interval.open(3, oo))
+        >>> Interval(1, 10).symmetric_difference(S.Reals)
+        Union(Interval.open(-oo, 1), Interval.open(10, oo))
+
+        >>> from sympy import S, EmptySet
+        >>> S.Reals.symmetric_difference(EmptySet())
+        S.Reals
+
+        References
+        ==========
+        .. [1] https://en.wikipedia.org/wiki/Symmetric_difference
+
+        """"""
+    return SymmetricDifference(self, other)",[]

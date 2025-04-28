@@ -1,0 +1,47 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/utils/decorators.py,_multi_decorate,apply_multiple_decorators,22,50,"def _multi_decorate(decorators, method):
+    """"""
+    Decorate `method` with one or more function decorators. `decorators` can be
+    a single decorator or an iterable of decorators.
+    """"""
+    if hasattr(decorators, '__iter__'):
+        decorators = decorators[::-1]
+    else:
+        decorators = [decorators]
+
+    def _wrapper(self, *args, **kwargs):
+        bound_method = partial(method.__get__(self, type(self)))
+        for dec in decorators:
+            bound_method = dec(bound_method)
+        return bound_method(*args, **kwargs)
+    for dec in decorators:
+        _update_method_wrapper(_wrapper, dec)
+    update_wrapper(_wrapper, method)
+    return _wrapper","def apply_multiple_decorators(decorators, method):
+    """"""
+    Decorate `method` with one or more function decorators. `decorators` can be
+    a single decorator or an iterable of decorators.
+    """"""
+    if hasattr(decorators, '__iter__'):
+        decorators = decorators[::-1]
+    else:
+        decorators = [decorators]
+
+    def _wrapper(self, *args, **kwargs):
+        bound_method = partial(method.__get__(self, type(self)))
+        for dec in decorators:
+            bound_method = dec(bound_method)
+        return bound_method(*args, **kwargs)
+    for dec in decorators:
+        _update_method_wrapper(_wrapper, dec)
+    update_wrapper(_wrapper, method)
+    return _wrapper","[{""var"": ""dec"", ""rename"": ""decorator_function""}, {""var"": ""bound_method"", ""rename"": ""decorated_bound_method""}]"
+./django/utils/decorators.py,_wrapper,apply_decorators_and_invoke,35,43,"def _wrapper(self, *args, **kwargs):
+    bound_method = partial(method.__get__(self, type(self)))
+    for dec in decorators:
+        bound_method = dec(bound_method)
+    return bound_method(*args, **kwargs)","def apply_decorators_and_invoke(self, *args, **kwargs):
+    bound_method = partial(method.__get__(self, type(self)))
+    for dec in decorators:
+        bound_method = dec(bound_method)
+    return bound_method(*args, **kwargs)","[{""var"": ""dec"", ""rename"": ""decorator_function""}, {""var"": ""bound_method"", ""rename"": ""decorated_bound_method""}]"

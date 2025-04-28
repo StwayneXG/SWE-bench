@@ -1,0 +1,133 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/contrib/admindocs/utils.py,trim_docstring,normalize_docstring_indentation,27,39,"def trim_docstring(docstring):
+    """"""
+    Uniformly trim leading/trailing whitespace from docstrings.
+
+    Based on https://www.python.org/dev/peps/pep-0257/#handling-docstring-indentation
+    """"""
+    if not docstring or not docstring.strip():
+        return ''
+    lines = docstring.expandtabs().splitlines()
+    indent = min((len(line) - len(line.lstrip()) for line in lines if line.lstrip()))
+    trimmed = [lines[0].lstrip()] + [line[indent:].rstrip() for line in lines[1:]]
+    return '\n'.join(trimmed).strip()","def normalize_docstring_indentation(docstring):
+    """"""
+    Uniformly trim leading/trailing whitespace from docstrings.
+
+    Based on https://www.python.org/dev/peps/pep-0257/#handling-docstring-indentation
+    """"""
+    if not docstring or not docstring.strip():
+        return ''
+    lines = docstring.expandtabs().splitlines()
+    indent = min((len(line) - len(line.lstrip()) for line in lines if line.lstrip()))
+    trimmed = [lines[0].lstrip()] + [line[indent:].rstrip() for line in lines[1:]]
+    return '\n'.join(trimmed).strip()","[{""var"": ""trimmed"", ""rename"": ""standardized_docstring_lines""}, {""var"": ""line"", ""rename"": ""docstring_line""}, {""var"": ""lines"", ""rename"": ""docstring_lines""}, {""var"": ""indent"", ""rename"": ""common_leading_spaces""}]"
+./django/contrib/admindocs/views.py,get_context_data,generate_model_insights_context,185,314,"def get_context_data(self, **kwargs):
+    model_name = self.kwargs['model_name']
+    try:
+        app_config = apps.get_app_config(self.kwargs['app_label'])
+    except LookupError:
+        raise Http404(_('App %(app_label)r not found') % self.kwargs)
+    try:
+        model = app_config.get_model(model_name)
+    except LookupError:
+        raise Http404(_('Model %(model_name)r not found in app %(app_label)r') % self.kwargs)
+    opts = model._meta
+    title, body, metadata = utils.parse_docstring(model.__doc__)
+    title = title and utils.parse_rst(title, 'model', _('model:') + model_name)
+    body = body and utils.parse_rst(body, 'model', _('model:') + model_name)
+    fields = []
+    for field in opts.fields:
+        if isinstance(field, models.ForeignKey):
+            data_type = field.remote_field.model.__name__
+            app_label = field.remote_field.model._meta.app_label
+            verbose = utils.parse_rst(_('the related `%(app_label)s.%(data_type)s` object') % {'app_label': app_label, 'data_type': data_type}, 'model', _('model:') + data_type)
+        else:
+            data_type = get_readable_field_data_type(field)
+            verbose = field.verbose_name
+        fields.append({'name': field.name, 'data_type': data_type, 'verbose': verbose or '', 'help_text': field.help_text})
+    for field in opts.many_to_many:
+        data_type = field.remote_field.model.__name__
+        app_label = field.remote_field.model._meta.app_label
+        verbose = _('related `%(app_label)s.%(object_name)s` objects') % {'app_label': app_label, 'object_name': data_type}
+        fields.append({'name': '%s.all' % field.name, 'data_type': 'List', 'verbose': utils.parse_rst(_('all %s') % verbose, 'model', _('model:') + opts.model_name)})
+        fields.append({'name': '%s.count' % field.name, 'data_type': 'Integer', 'verbose': utils.parse_rst(_('number of %s') % verbose, 'model', _('model:') + opts.model_name)})
+    methods = []
+    for func_name, func in model.__dict__.items():
+        if inspect.isfunction(func) or isinstance(func, property):
+            try:
+                for exclude in MODEL_METHODS_EXCLUDE:
+                    if func_name.startswith(exclude):
+                        raise StopIteration
+            except StopIteration:
+                continue
+            verbose = func.__doc__
+            verbose = verbose and utils.parse_rst(utils.trim_docstring(verbose), 'model', _('model:') + opts.model_name)
+            if isinstance(func, property):
+                fields.append({'name': func_name, 'data_type': get_return_data_type(func_name), 'verbose': verbose or ''})
+            elif method_has_no_args(func) and (not func_accepts_kwargs(func)) and (not func_accepts_var_args(func)):
+                fields.append({'name': func_name, 'data_type': get_return_data_type(func_name), 'verbose': verbose or ''})
+            else:
+                arguments = get_func_full_args(func)
+                print_arguments = ', '.join(['='.join([arg_el[0], *map(repr, arg_el[1:])]) for arg_el in arguments])
+                methods.append({'name': func_name, 'arguments': print_arguments, 'verbose': verbose or ''})
+    for rel in opts.related_objects:
+        verbose = _('related `%(app_label)s.%(object_name)s` objects') % {'app_label': rel.related_model._meta.app_label, 'object_name': rel.related_model._meta.object_name}
+        accessor = rel.get_accessor_name()
+        fields.append({'name': '%s.all' % accessor, 'data_type': 'List', 'verbose': utils.parse_rst(_('all %s') % verbose, 'model', _('model:') + opts.model_name)})
+        fields.append({'name': '%s.count' % accessor, 'data_type': 'Integer', 'verbose': utils.parse_rst(_('number of %s') % verbose, 'model', _('model:') + opts.model_name)})
+    return super().get_context_data(**{**kwargs, 'name': '%s.%s' % (opts.app_label, opts.object_name), 'summary': title, 'description': body, 'fields': fields, 'methods': methods})","def generate_model_insights_context(self, **kwargs):
+    model_name = self.kwargs['model_name']
+    try:
+        app_config = apps.get_app_config(self.kwargs['app_label'])
+    except LookupError:
+        raise Http404(_('App %(app_label)r not found') % self.kwargs)
+    try:
+        model = app_config.get_model(model_name)
+    except LookupError:
+        raise Http404(_('Model %(model_name)r not found in app %(app_label)r') % self.kwargs)
+    opts = model._meta
+    title, body, metadata = utils.parse_docstring(model.__doc__)
+    title = title and utils.parse_rst(title, 'model', _('model:') + model_name)
+    body = body and utils.parse_rst(body, 'model', _('model:') + model_name)
+    fields = []
+    for field in opts.fields:
+        if isinstance(field, models.ForeignKey):
+            data_type = field.remote_field.model.__name__
+            app_label = field.remote_field.model._meta.app_label
+            verbose = utils.parse_rst(_('the related `%(app_label)s.%(data_type)s` object') % {'app_label': app_label, 'data_type': data_type}, 'model', _('model:') + data_type)
+        else:
+            data_type = get_readable_field_data_type(field)
+            verbose = field.verbose_name
+        fields.append({'name': field.name, 'data_type': data_type, 'verbose': verbose or '', 'help_text': field.help_text})
+    for field in opts.many_to_many:
+        data_type = field.remote_field.model.__name__
+        app_label = field.remote_field.model._meta.app_label
+        verbose = _('related `%(app_label)s.%(object_name)s` objects') % {'app_label': app_label, 'object_name': data_type}
+        fields.append({'name': '%s.all' % field.name, 'data_type': 'List', 'verbose': utils.parse_rst(_('all %s') % verbose, 'model', _('model:') + opts.model_name)})
+        fields.append({'name': '%s.count' % field.name, 'data_type': 'Integer', 'verbose': utils.parse_rst(_('number of %s') % verbose, 'model', _('model:') + opts.model_name)})
+    methods = []
+    for func_name, func in model.__dict__.items():
+        if inspect.isfunction(func) or isinstance(func, property):
+            try:
+                for exclude in MODEL_METHODS_EXCLUDE:
+                    if func_name.startswith(exclude):
+                        raise StopIteration
+            except StopIteration:
+                continue
+            verbose = func.__doc__
+            verbose = verbose and utils.parse_rst(utils.trim_docstring(verbose), 'model', _('model:') + opts.model_name)
+            if isinstance(func, property):
+                fields.append({'name': func_name, 'data_type': get_return_data_type(func_name), 'verbose': verbose or ''})
+            elif method_has_no_args(func) and (not func_accepts_kwargs(func)) and (not func_accepts_var_args(func)):
+                fields.append({'name': func_name, 'data_type': get_return_data_type(func_name), 'verbose': verbose or ''})
+            else:
+                arguments = get_func_full_args(func)
+                print_arguments = ', '.join(['='.join([arg_el[0], *map(repr, arg_el[1:])]) for arg_el in arguments])
+                methods.append({'name': func_name, 'arguments': print_arguments, 'verbose': verbose or ''})
+    for rel in opts.related_objects:
+        verbose = _('related `%(app_label)s.%(object_name)s` objects') % {'app_label': rel.related_model._meta.app_label, 'object_name': rel.related_model._meta.object_name}
+        accessor = rel.get_accessor_name()
+        fields.append({'name': '%s.all' % accessor, 'data_type': 'List', 'verbose': utils.parse_rst(_('all %s') % verbose, 'model', _('model:') + opts.model_name)})
+        fields.append({'name': '%s.count' % accessor, 'data_type': 'Integer', 'verbose': utils.parse_rst(_('number of %s') % verbose, 'model', _('model:') + opts.model_name)})
+    return super().get_context_data(**{**kwargs, 'name': '%s.%s' % (opts.app_label, opts.object_name), 'summary': title, 'description': body, 'fields': fields, 'methods': methods})","[{""var"": ""app_config"", ""rename"": ""application_configuration""}, {""var"": ""fields"", ""rename"": ""model_field_descriptors""}, {""var"": ""model"", ""rename"": ""extracted_model_definition""}, {""var"": ""arg_el"", ""rename"": ""function_argument_element""}, {""var"": ""exclude"", ""rename"": ""method_exclusion_prefix""}, {""var"": ""data_type"", ""rename"": ""field_data_type""}, {""var"": ""title"", ""rename"": ""model_doc_title""}, {""var"": ""rel"", ""rename"": ""related_objects""}, {""var"": ""metadata"", ""rename"": ""documentation_metadata""}, {""var"": ""verbose"", ""rename"": ""field_description""}, {""var"": ""opts"", ""rename"": ""model_metadata""}, {""var"": ""body"", ""rename"": ""model_description""}, {""var"": ""methods"", ""rename"": ""model_methods_metadata""}, {""var"": ""func_name"", ""rename"": ""model_method_name""}, {""var"": ""arguments"", ""rename"": ""function_parameters_list""}, {""var"": ""print_arguments"", ""rename"": ""formatted_method_arguments""}, {""var"": ""app_label"", ""rename"": ""application_label""}, {""var"": ""field"", ""rename"": ""model_field_descriptions""}, {""var"": ""func"", ""rename"": ""model_function_map""}, {""var"": ""accessor"", ""rename"": ""related_accessor_name""}, {""var"": ""model_name"", ""rename"": ""target_model_name""}]"

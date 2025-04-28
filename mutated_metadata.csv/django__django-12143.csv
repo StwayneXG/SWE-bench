@@ -1,0 +1,8 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/contrib/admin/options.py,_get_edited_object_pks,extract_editable_list_primary_keys_from_post,1632,1635,"def _get_edited_object_pks(self, request, prefix):
+    """"""Return POST data values of list_editable primary keys.""""""
+    pk_pattern = re.compile('{}-\\d+-{}$'.format(prefix, self.model._meta.pk.name))
+    return [value for key, value in request.POST.items() if pk_pattern.match(key)]","def extract_editable_list_primary_keys_from_post(self, request, prefix):
+    """"""Return POST data values of list_editable primary keys.""""""
+    pk_pattern = re.compile('{}-\\d+-{}$'.format(prefix, self.model._meta.pk.name))
+    return [value for key, value in request.POST.items() if pk_pattern.match(key)]","[{""var"": ""pk_pattern"", ""rename"": ""primary_key_post_pattern""}, {""var"": ""value"", ""rename"": ""editable_pk_values""}, {""var"": ""key"", ""rename"": ""post_data_key""}]"

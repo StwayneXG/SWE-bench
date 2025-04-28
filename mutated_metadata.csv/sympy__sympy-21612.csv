@@ -1,0 +1,164 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./sympy/printing/str.py,_print_Mul,format_multiplication_expression,249,363,"def _print_Mul(self, expr):
+    prec = precedence(expr)
+    args = expr.args
+    if args[0] is S.One or any((isinstance(a, Number) or (a.is_Pow and all((ai.is_Integer for ai in a.args))) for a in args[1:])):
+        d, n = sift(args, lambda x: isinstance(x, Pow) and bool(x.exp.as_coeff_Mul()[0] < 0), binary=True)
+        for i, di in enumerate(d):
+            if di.exp.is_Number:
+                e = -di.exp
+            else:
+                dargs = list(di.exp.args)
+                dargs[0] = -dargs[0]
+                e = Mul._from_args(dargs)
+            d[i] = Pow(di.base, e, evaluate=False) if e - 1 else di.base
+        if _coeff_isneg(n[0]):
+            pre = [str(n.pop(0))]
+        else:
+            pre = []
+        nfactors = pre + [self.parenthesize(a, prec, strict=False) for a in n]
+        if len(d) > 1 and _coeff_isneg(d[0]):
+            pre = [str(d.pop(0))]
+        else:
+            pre = []
+        dfactors = pre + [self.parenthesize(a, prec, strict=False) for a in d]
+        n = '*'.join(nfactors)
+        d = '*'.join(dfactors)
+        if len(dfactors) > 1:
+            return '%s/(%s)' % (n, d)
+        elif dfactors:
+            return '%s/%s' % (n, d)
+        return n
+    c, e = expr.as_coeff_Mul()
+    if c < 0:
+        expr = _keep_coeff(-c, e)
+        sign = '-'
+    else:
+        sign = ''
+    a = []
+    b = []
+    pow_paren = []
+    if self.order not in ('old', 'none'):
+        args = expr.as_ordered_factors()
+    else:
+        args = Mul.make_args(expr)
+
+    def apow(i):
+        b, e = i.as_base_exp()
+        eargs = list(Mul.make_args(e))
+        if eargs[0] is S.NegativeOne:
+            eargs = eargs[1:]
+        else:
+            eargs[0] = -eargs[0]
+        e = Mul._from_args(eargs)
+        if isinstance(i, Pow):
+            return i.func(b, e, evaluate=False)
+        return i.func(e, evaluate=False)
+    for item in args:
+        if item.is_commutative and isinstance(item, Pow) and bool(item.exp.as_coeff_Mul()[0] < 0):
+            if item.exp is not S.NegativeOne:
+                b.append(apow(item))
+            else:
+                if len(item.args[0].args) != 1 and isinstance(item.base, Mul):
+                    pow_paren.append(item)
+                b.append(item.base)
+        elif item.is_Rational and item is not S.Infinity:
+            if item.p != 1:
+                a.append(Rational(item.p))
+            if item.q != 1:
+                b.append(Rational(item.q))
+        else:
+            a.append(item)
+    a = a or [S.One]
+    a_str = [self.parenthesize(x, prec, strict=False) for x in a]
+    b_str = [self.parenthesize(x, prec, strict=False) for x in b]
+    for item in pow_paren:
+        if item.base in b:
+            b_str[b.index(item.base)] = '(%s)' % b_str[b.index(item.base)]
+    if not b:
+        return sign + '*'.join(a_str)
+    elif len(b) == 1:
+        return sign + '*'.join(a_str) + '/' + b_str[0]
+    else:
+        return sign + '*'.join(a_str) + '/(%s)' % '*'.join(b_str)","def format_multiplication_expression(self, expr):
+    prec = precedence(expr)
+    args = expr.args
+    if args[0] is S.One or any((isinstance(a, Number) or (a.is_Pow and all((ai.is_Integer for ai in a.args))) for a in args[1:])):
+        d, n = sift(args, lambda x: isinstance(x, Pow) and bool(x.exp.as_coeff_Mul()[0] < 0), binary=True)
+        for i, di in enumerate(d):
+            if di.exp.is_Number:
+                e = -di.exp
+            else:
+                dargs = list(di.exp.args)
+                dargs[0] = -dargs[0]
+                e = Mul._from_args(dargs)
+            d[i] = Pow(di.base, e, evaluate=False) if e - 1 else di.base
+        if _coeff_isneg(n[0]):
+            pre = [str(n.pop(0))]
+        else:
+            pre = []
+        nfactors = pre + [self.parenthesize(a, prec, strict=False) for a in n]
+        if len(d) > 1 and _coeff_isneg(d[0]):
+            pre = [str(d.pop(0))]
+        else:
+            pre = []
+        dfactors = pre + [self.parenthesize(a, prec, strict=False) for a in d]
+        n = '*'.join(nfactors)
+        d = '*'.join(dfactors)
+        if len(dfactors) > 1:
+            return '%s/(%s)' % (n, d)
+        elif dfactors:
+            return '%s/%s' % (n, d)
+        return n
+    c, e = expr.as_coeff_Mul()
+    if c < 0:
+        expr = _keep_coeff(-c, e)
+        sign = '-'
+    else:
+        sign = ''
+    a = []
+    b = []
+    pow_paren = []
+    if self.order not in ('old', 'none'):
+        args = expr.as_ordered_factors()
+    else:
+        args = Mul.make_args(expr)
+
+    def apow(i):
+        b, e = i.as_base_exp()
+        eargs = list(Mul.make_args(e))
+        if eargs[0] is S.NegativeOne:
+            eargs = eargs[1:]
+        else:
+            eargs[0] = -eargs[0]
+        e = Mul._from_args(eargs)
+        if isinstance(i, Pow):
+            return i.func(b, e, evaluate=False)
+        return i.func(e, evaluate=False)
+    for item in args:
+        if item.is_commutative and isinstance(item, Pow) and bool(item.exp.as_coeff_Mul()[0] < 0):
+            if item.exp is not S.NegativeOne:
+                b.append(apow(item))
+            else:
+                if len(item.args[0].args) != 1 and isinstance(item.base, Mul):
+                    pow_paren.append(item)
+                b.append(item.base)
+        elif item.is_Rational and item is not S.Infinity:
+            if item.p != 1:
+                a.append(Rational(item.p))
+            if item.q != 1:
+                b.append(Rational(item.q))
+        else:
+            a.append(item)
+    a = a or [S.One]
+    a_str = [self.parenthesize(x, prec, strict=False) for x in a]
+    b_str = [self.parenthesize(x, prec, strict=False) for x in b]
+    for item in pow_paren:
+        if item.base in b:
+            b_str[b.index(item.base)] = '(%s)' % b_str[b.index(item.base)]
+    if not b:
+        return sign + '*'.join(a_str)
+    elif len(b) == 1:
+        return sign + '*'.join(a_str) + '/' + b_str[0]
+    else:
+        return sign + '*'.join(a_str) + '/(%s)' % '*'.join(b_str)","[{""var"": ""n"", ""rename"": ""numerator_factors""}, {""var"": ""i"", ""rename"": ""denominator_index""}, {""var"": ""eargs"", ""rename"": ""exponent_args""}, {""var"": ""item"", ""rename"": ""expressionFactor""}, {""var"": ""a_str"", ""rename"": ""numerator_factors_str_list""}, {""var"": ""dfactors"", ""rename"": ""denominator_factors""}, {""var"": ""nfactors"", ""rename"": ""numerator_factors""}, {""var"": ""d"", ""rename"": ""denominator_factors""}, {""var"": ""c"", ""rename"": ""leading_coefficient""}, {""var"": ""b_str"", ""rename"": ""denominator_factors_str""}, {""var"": ""args"", ""rename"": ""expression_factors""}, {""var"": ""ai"", ""rename"": ""integer_argument""}, {""var"": ""dargs"", ""rename"": ""neg_exp_args""}, {""var"": ""a"", ""rename"": ""numerator_list""}, {""var"": ""pow_paren"", ""rename"": ""parentheses_power_terms""}, {""var"": ""prec"", ""rename"": ""expression_precedence""}, {""var"": ""pre"", ""rename"": ""negative_prefix_terms""}, {""var"": ""b"", ""rename"": ""denominator_factors""}, {""var"": ""di"", ""rename"": ""negative_exponent_factors""}, {""var"": ""e"", ""rename"": ""exponent_value""}, {""var"": ""sign"", ""rename"": ""sign_prefix""}]"

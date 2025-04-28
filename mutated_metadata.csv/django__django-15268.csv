@@ -1,0 +1,7 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/db/migrations/operations/models.py,reduce,check_operation_reference_or_reduce,34,38,"def reduce(self, operation, app_label):
+    return super().reduce(operation, app_label) or not operation.references_model(self.name, app_label)","def check_operation_reference_or_reduce(self, operation, app_label):
+    return super().reduce(operation, app_label) or not operation.references_model(self.name, app_label)",[]
+./django/db/migrations/operations/models.py,__init__,initialize_with_name_and_constraints,539,540,"def __init__(self, name, unique_together):
+    super().__init__(name, unique_together)","def initialize_with_name_and_constraints(self, name, unique_together):
+    super().__init__(name, unique_together)",[]

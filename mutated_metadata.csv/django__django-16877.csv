@@ -1,0 +1,18 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/template/defaultfilters.py,force_escape,escape_html_immediately,449,455,"@register.filter(is_safe=True)
+@stringfilter
+def force_escape(value):
+    """"""
+    Escape a string's HTML. Return a new string containing the escaped
+    characters (as opposed to ""escape"", which marks the content for later
+    possible escaping).
+    """"""
+    return escape(value)","@register.filter(is_safe=True)
+@stringfilter
+def escape_html_immediately(value):
+    """"""
+    Escape a string's HTML. Return a new string containing the escaped
+    characters (as opposed to ""escape"", which marks the content for later
+    possible escaping).
+    """"""
+    return escape(value)",[]

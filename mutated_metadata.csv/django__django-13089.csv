@@ -1,0 +1,37 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/core/cache/backends/db.py,_cull,prune_expired_and_excess_entries,255,272,"def _cull(self, db, cursor, now):
+    if self._cull_frequency == 0:
+        self.clear()
+    else:
+        connection = connections[db]
+        table = connection.ops.quote_name(self._table)
+        cursor.execute('DELETE FROM %s WHERE expires < %%s' % table, [connection.ops.adapt_datetimefield_value(now)])
+        cursor.execute('SELECT COUNT(*) FROM %s' % table)
+        num = cursor.fetchone()[0]
+        if num > self._max_entries:
+            cull_num = num // self._cull_frequency
+            cursor.execute(connection.ops.cache_key_culling_sql() % table, [cull_num])
+            cursor.execute('DELETE FROM %s WHERE cache_key < %%s' % table, [cursor.fetchone()[0]])","def prune_expired_and_excess_entries(self, db, cursor, now):
+    if self._cull_frequency == 0:
+        self.clear()
+    else:
+        connection = connections[db]
+        table = connection.ops.quote_name(self._table)
+        cursor.execute('DELETE FROM %s WHERE expires < %%s' % table, [connection.ops.adapt_datetimefield_value(now)])
+        cursor.execute('SELECT COUNT(*) FROM %s' % table)
+        num = cursor.fetchone()[0]
+        if num > self._max_entries:
+            cull_num = num // self._cull_frequency
+            cursor.execute(connection.ops.cache_key_culling_sql() % table, [cull_num])
+            cursor.execute('DELETE FROM %s WHERE cache_key < %%s' % table, [cursor.fetchone()[0]])","[{""var"": ""num"", ""rename"": ""total_entries_in_cache""}, {""var"": ""cull_num"", ""rename"": ""entries_to_cull""}, {""var"": ""connection"", ""rename"": ""database_connection_instance""}, {""var"": ""table"", ""rename"": ""quoted_table_name""}]"
+./django/core/cache/backends/db.py,clear,clear_cache_table_data,274,279,"def clear(self):
+    db = router.db_for_write(self.cache_model_class)
+    connection = connections[db]
+    table = connection.ops.quote_name(self._table)
+    with connection.cursor() as cursor:
+        cursor.execute('DELETE FROM %s' % table)","def clear_cache_table_data(self):
+    db = router.db_for_write(self.cache_model_class)
+    connection = connections[db]
+    table = connection.ops.quote_name(self._table)
+    with connection.cursor() as cursor:
+        cursor.execute('DELETE FROM %s' % table)","[{""var"": ""connection"", ""rename"": ""database_connection_handler""}, {""var"": ""db"", ""rename"": ""database_connection_identifier""}, {""var"": ""cursor"", ""rename"": ""database_cleanup_cursor""}, {""var"": ""table"", ""rename"": ""quoted_table_name""}]"

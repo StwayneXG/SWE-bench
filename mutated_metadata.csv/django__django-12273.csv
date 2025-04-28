@@ -1,0 +1,4 @@
+file,method_name,new_method_name,start_line,end_line,original_code,code,var
+./django/db/models/base.py,_set_pk_val,assign_primary_key_value,571,572,"def _set_pk_val(self, value):
+    return setattr(self, self._meta.pk.attname, value)","def assign_primary_key_value(self, value):
+    return setattr(self, self._meta.pk.attname, value)",[]
