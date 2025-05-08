@@ -144,19 +144,28 @@ def run_instance(
         container.start()
         logger.info(f"Container for {instance_id} started: {container.id}")
 
-        if os.path.exists(f"mutated_metadata/{instance_id}.csv"):
+        # Install 'libcst' in the container
+        logger.info("Installing libcst in container...")
+        val = container.exec_run(
+            "pip install libcst",
+            workdir=DOCKER_WORKDIR,
+            user=DOCKER_USER,
+        )
+
+        csv_file_path = f"/home/irtaza11/irtaza/exps/SXG_Agentless/Agentless/mo2/{instance_id}.csv"
+        modify_files_path = f"/home/irtaza11/irtaza/exps/SXG_Agentless/Agentless/modify_files.py"
+        if os.path.exists(csv_file_path):
             logger.info(f"Modify files for {instance_id}")
             # Copy the CSV file to the container
-            copy_to_container(container, Path(f"mutated_metadata/{instance_id}.csv"), PurePosixPath(DOCKER_WORKDIR) / f"mutated_metadata/{instance_id}.csv")
+            copy_to_container(container, Path(csv_file_path), PurePosixPath(DOCKER_WORKDIR) / f"mo2/{instance_id}.csv")
 
             # Copy modify_files.py to the container
-            copy_to_container(container, Path("modify_files.py"), PurePosixPath(DOCKER_WORKDIR) / "modify_files.py")
+            copy_to_container(container, Path(modify_files_path), PurePosixPath(DOCKER_WORKDIR) / "modify_files.py")
 
             # Run the modify_files script
             val = container.exec_run(f"python modify_files.py --csv_filename mo2/{instance_id}.csv", workdir=DOCKER_WORKDIR, user=DOCKER_USER)
-
-
-
+            print(val.output.decode(UTF8))
+            
         # Copy model prediction as patch file to container
         patch_file = Path(log_dir / "patch.diff")
         patch_file.write_text(pred[KEY_PREDICTION] or "")
